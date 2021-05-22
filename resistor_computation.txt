@@ -1,0 +1,20 @@
+Motor needs:
+116mA bei 6v (laut Angabe)
+
+126mA bei 9v (selbst gemessen)
+
+Bei 12v dürften es dann max ca. 140-150 mA sein.
+Bei 19v dürften sind es ca. 300 mA.
+-- BC337
+--> minimale Stromverstärkung ist hFe = 100. Den Wert durch 3.3 Teilen (siehe auich mikrocontreoller.net zur Abschätzung, wenn h_FESat nicht angegeben ist.
+--> Max Vce(sat) ist 0.7V
+--> Ic = 130 mA
+--> Ib = 130 mA / (hFE / 3.3) = 130 / 30.3 = 4,29 mA
+Wir wenden 10 % Tolleranz auf den Arduino pin output an
+--> Rb = ((5V * 0.9)- Vce(sat)) / Ib = 3.8 V / 4,29 mA = 791,66 Ohm
+Für 12v mit Ic = 150mA:
+--> Rb = ((5V * 0.9)- Vce(sat)) / Ib = 3.8 V / 4,95 mA = 767,52 Ohm
+Für 19v mit Ic = 270mA:
+--> Rb = ((5V * 0.9)- Vce(sat)) / Ib = 3.8 V / 8,91 mA = 427hm
+
+--> Um alles von 9 bis 19v abzudecken nehmen wir einen 470 Ohm resistor. Das ist auch der nächst kleinere zu 791 Ohm bzw. 767 Ohm.
