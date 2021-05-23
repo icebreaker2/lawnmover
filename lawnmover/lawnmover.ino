@@ -30,7 +30,7 @@ const int LED_BUNDLE_2 = A1;
 const int LED_BUNDLE_3 = A2;
 Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
 
-const int IR_COMMAND_RECV = A4;
+const int IR_COMMAND_RECV = 6;
 
 // Debug
 const int DEBUG_PIN_1 = 2;
@@ -147,28 +147,36 @@ void setup() {
 }
 
 void loop() {
-    _moverService.changeLeftPwmRate(255);
-    _moverService.changeRightPwmRate(255);
-    Serial.println("change to 255");
-    delay(1500);
+    // DEBUG START
+    //    _moverService.changeLeftPwmRate(255);
+    //    _moverService.changeRightPwmRate(255);
+    //    Serial.println("change to 255");
+    //    delay(1500);
+    //
+    //    _moverService.changeLeftPwmRate(128);
+    //    _moverService.changeRightPwmRate(128);
+    //    Serial.println("change to 128");
+    //    delay(1500);
+    //
+    //    _moverService.changeLeftPwmRate(56);
+    //    _moverService.changeRightPwmRate(56);
+    //    Serial.println("change to 56");
+    //    delay(1500);
+    //
+    //    _moverService.changeLeftPwmRate(28);
+    //    _moverService.changeRightPwmRate(28);
+    //    Serial.println("change to 28");
+    //    delay(2500);
+    //
+    //    _moverService.changeLeftPwmRate(0);
+    //    _moverService.changeRightPwmRate(0);
+    //    Serial.println("change to 0");
+    //    delay(1000);
 
-    _moverService.changeLeftPwmRate(128);
-    _moverService.changeRightPwmRate(128);
-    Serial.println("change to 128");
-    delay(1500);
+    // DEBUG END
 
-    _moverService.changeLeftPwmRate(56);
-    _moverService.changeRightPwmRate(56);
-    Serial.println("change to 56");
-    delay(1500);
+    checkAndApplyIRCommand();
 
-    _moverService.changeLeftPwmRate(28);
-    _moverService.changeRightPwmRate(28);
-    Serial.println("change to 28");
-    delay(2500);
-
-    _moverService.changeLeftPwmRate(0);
-    _moverService.changeRightPwmRate(0);
-    Serial.println("change to 0");
-    delay(1000);
+    // tick timers
+    auto ticks = _timer.tick();
 }

@@ -15,6 +15,9 @@ MotorService::MotorService(const int motorPin, Timer<> &timer) :
         uniqueMotorService->checkAndResetMotorCmd();
         return true; // to repeat the action - false to stop
     });
+
+    Serial.print("Setup MotorService with Pin ");
+    Serial.println(kMotorPin);
 }
 
 MotorService::~MotorService() {
@@ -39,12 +42,12 @@ void MotorService::spinMotor() {
 }
 
 void MotorService::checkAndResetMotorCmd() {
-    //        Serial.print("MotorCtr after ");
-    //        Serial.print(MOTOR_SPIN_CHECK_TIME_DELAY);
-    //        Serial.print(" ms was: ");
-    //        Serial.print(motorSpinCmdReceived);
-    //        Serial.print("/");
-    //        Serial.println(MOTOR_SPIN_CHECK_THRESHOLD);
+    Serial.print("MotorCtr after ");
+    Serial.print(MOTOR_SPIN_CHECK_TIME_DELAY);
+    Serial.print(" ms was: ");
+    Serial.print(_motorSpinCmdReceived);
+    Serial.print("/");
+    Serial.println(MOTOR_SPIN_CHECK_THRESHOLD);
     if (_motorSpinCmdReceived < MOTOR_SPIN_CHECK_THRESHOLD) {
         stopMotor();
     }

@@ -13,6 +13,19 @@ MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int
     pinMode(kRightFwdPin, OUTPUT);
     pinMode(kRightBwdPin, OUTPUT);
 
+    Serial.print("Set up MoverService with leftFwdPin ");
+    Serial.print(kLeftFwdPin);
+    Serial.print(" and leftBwdPin with ");
+    Serial.print(kLeftBwdPin);
+    Serial.print(" and rightFwdPin with ");
+    Serial.print(kRightFwdPin);
+    Serial.print(" and rightBwdPin with ");
+    Serial.print(kRightBwdPin);
+    Serial.print(" and leftPwmPin with ");
+    Serial.print(kLeftPwmPin);
+    Serial.print(" and rightPwmPin with ");
+    Serial.println(kRightPwmPin);
+    
     // break initially
     //    stopMovement();
 }
@@ -75,9 +88,17 @@ void MoverService::moveBackward() {
 }
 
 void MoverService::changeLeftPwmRate(const int rate) {
+    Serial.print("Changing Pin ");
+    Serial.print(kLeftPwmPin);
+    Serial.print(" to ");
+    Serial.println(rate);
     analogWrite(kLeftPwmPin, rate);
 }
 
 void MoverService::changeRightPwmRate(const int rate) {
+    Serial.print("Changing Pin ");
+    Serial.print(kRightPwmPin);
+    Serial.print(" to ");
+    Serial.println(rate);
     analogWrite(kRightPwmPin, rate);
 }

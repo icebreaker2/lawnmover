@@ -24,7 +24,7 @@ class MotorService {
         void checkAndResetMotorCmd();
 
     private:
-        const int &kMotorPin;
+        const int kMotorPin;
         Timer<> _timer;
         volatile int _motorSpinCmdReceived = 0;
 };
