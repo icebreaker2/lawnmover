@@ -28,7 +28,6 @@ MotorService _motorService(MOTOR_PIN, _timer);
 const int LED_BUNDLE_1 = A0;
 const int LED_BUNDLE_2 = A1;
 const int LED_BUNDLE_3 = A2;
-Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
 
 const int IR_COMMAND_RECV = 6;
 
@@ -68,15 +67,15 @@ void checkAndApplyIRCommand() {
                 if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
                     // We have an unknown protocol here, print more info
                     if (!rawSpinCheck()) {
-                        Serial.print("0: ");
-                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
-                        Serial.print(", 1: ");
-                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
-                        Serial.print(", 2: ");
-                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
-                        Serial.print(", 3: ");
-                        Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
-                        IrReceiver.printIRResultRawFormatted(&Serial, true);
+//                        Serial.print("0: ");
+//                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
+//                        Serial.print(", 1: ");
+//                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
+//                        Serial.print(", 2: ");
+//                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
+//                        Serial.print(", 3: ");
+//                        Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
+//                        IrReceiver.printIRResultRawFormatted(&Serial, true);
                     }
                 }
             }
@@ -108,16 +107,16 @@ void checkAndApplyIRCommand() {
                 //IrReceiver.printIRResultShort(&Serial);
                 if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
                     // Print a short summary of received data
-                    Serial.print("0: ");
-                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
-                    Serial.print(", 1: ");
-                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
-                    Serial.print(", 2: ");
-                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
-                    Serial.print(", 3: ");
-                    Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
+//                    Serial.print("0: ");
+//                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
+//                    Serial.print(", 1: ");
+//                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
+//                    Serial.print(", 2: ");
+//                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
+//                    Serial.print(", 3: ");
+//                    Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
                     // We have an unknown protocol here, print more info
-                    IrReceiver.printIRResultRawFormatted(&Serial, true);
+//                    IrReceiver.printIRResultRawFormatted(&Serial, true);
                 }
             }
         }
@@ -129,13 +128,13 @@ void setup() {
     // sr debug
     Serial.begin(9600);
 
+    Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
+
     // IR remote commands
     IrReceiver.begin(IR_COMMAND_RECV, ENABLE_LED_FEEDBACK, USE_DEFAULT_FEEDBACK_LED_PIN);
 
     _moverService.stopMovement();
-    Serial.println("Stop");
     _moverService.moveForward();
-    Serial.println("Move");
 
     // debug pin always high
     pinMode(DEBUG_PIN_1, OUTPUT);

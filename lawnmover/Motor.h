@@ -25,7 +25,6 @@ class MotorService {
 
     private:
         const int kMotorPin;
-        Timer<> _timer;
         volatile int _motorSpinCmdReceived = 0;
 };
 

@@ -6,7 +6,6 @@ MotorService *uniqueMotorService;
 MotorService::MotorService(const int motorPin, Timer<> &timer) :
     kMotorPin(motorPin) {
     stopMotor();
-    _timer = timer;
 
     uniqueMotorService = this;
 
@@ -16,7 +15,7 @@ MotorService::MotorService(const int motorPin, Timer<> &timer) :
         return true; // to repeat the action - false to stop
     });
 
-    Serial.print("Setup MotorService with Pin ");
+    Serial.print("Setup MotorService with Pin: ");
     Serial.println(kMotorPin);
 }
 

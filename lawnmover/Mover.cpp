@@ -25,7 +25,7 @@ MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int
     Serial.print(kLeftPwmPin);
     Serial.print(" and rightPwmPin with ");
     Serial.println(kRightPwmPin);
-    
+
     // break initially
     //    stopMovement();
 }
@@ -45,19 +45,19 @@ void MoverService::stopMovement() {
 }
 
 void MoverService::turnLeft() {
-    Serial.println("left / previous");
     stopMovement();
+    Serial.println("left / previous");
 
     digitalWrite(kLeftBwdPin, HIGH);
-    digitalWrite(kRightBwdPin, HIGH);
+    digitalWrite(kRightFwdPin, HIGH);
 
     //    delay(MOVEMENT_DURATION);
     //    stopMovement();
 }
 
 void MoverService::turnRight() {
-    Serial.println("right / next");
     stopMovement();
+    Serial.println("right / next");
 
     digitalWrite(kLeftFwdPin, HIGH);
     digitalWrite(kRightBwdPin, HIGH);
@@ -67,8 +67,8 @@ void MoverService::turnRight() {
 }
 
 void MoverService::moveForward() {
-    Serial.println("forward / up");
     stopMovement();
+    Serial.println("forward / up");
 
     digitalWrite(kLeftFwdPin, HIGH);
     digitalWrite(kRightFwdPin, HIGH);
@@ -78,8 +78,9 @@ void MoverService::moveForward() {
 }
 
 void MoverService::moveBackward() {
-    Serial.println("backwards / down");
     stopMovement();
+    Serial.println("backwards / down");
+
     digitalWrite(kLeftBwdPin, HIGH);
     digitalWrite(kRightBwdPin, HIGH);
 

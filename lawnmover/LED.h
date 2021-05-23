@@ -18,7 +18,6 @@ class Led3Service {
         const int kLed3Pin;
 
         volatile int _nextState = 0;
-        Timer<> _timer;
 };
 
 #endif // LED_H
