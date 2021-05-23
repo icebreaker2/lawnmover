@@ -7,8 +7,15 @@
 
 auto _timer = timer_create_default();
 
-const int LEFT_FWD_PIN = 13; // is no PWM
-const int LEFT_BWD_PIN = 12; // is no PWM
+/**
+ * Note: I had major issues using pin 13 while using IR. Pin 13 was always high. Maybe my arduino 
+ * is not feeling well or simple wants to annoy me but, I changed the left pins from 13 and 12 
+ * to 5 and 4 -- fixed the issue. Did not traced the issue any further for reasons of time.
+ */
+const int DANGEROUS_PINS_WITH_IR_LIB = 13;
+
+const int LEFT_FWD_PIN = 5; // is PWM
+const int LEFT_BWD_PIN = 4; // is no PWM
 const int LEFT_PWM_PIN = 11; // is PWM
 const int RIGHT_PWM_PIN = 10; // is PWM
 const int RIGHT_FWD_PIN = 9; // is PWM
@@ -67,15 +74,15 @@ void checkAndApplyIRCommand() {
                 if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
                     // We have an unknown protocol here, print more info
                     if (!rawSpinCheck()) {
-                        //                        Serial.print("0: ");
-                        //                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
-                        //                        Serial.print(", 1: ");
-                        //                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
-                        //                        Serial.print(", 2: ");
-                        //                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
-                        //                        Serial.print(", 3: ");
-                        //                        Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
-                        //                        IrReceiver.printIRResultRawFormatted(&Serial, true);
+                        // Serial.print("0: ");
+                        // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
+                        // Serial.print(", 1: ");
+                        // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
+                        // Serial.print(", 2: ");
+                        // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
+                        // Serial.print(", 3: ");
+                        // Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
+                        // IrReceiver.printIRResultRawFormatted(&Serial, true);
                     }
                 }
             }
@@ -107,16 +114,16 @@ void checkAndApplyIRCommand() {
                 //IrReceiver.printIRResultShort(&Serial);
                 if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
                     // Print a short summary of received data
-                    //                    Serial.print("0: ");
-                    //                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
-                    //                    Serial.print(", 1: ");
-                    //                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
-                    //                    Serial.print(", 2: ");
-                    //                    Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
-                    //                    Serial.print(", 3: ");
-                    //                    Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
+                    // Serial.print("0: ");
+                    // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
+                    // Serial.print(", 1: ");
+                    // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
+                    // Serial.print(", 2: ");
+                    // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
+                    // Serial.print(", 3: ");
+                    // Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
                     // We have an unknown protocol here, print more info
-                    //                    IrReceiver.printIRResultRawFormatted(&Serial, true);
+                    // IrReceiver.printIRResultRawFormatted(&Serial, true);
                 }
             }
         }
@@ -124,18 +131,19 @@ void checkAndApplyIRCommand() {
     }
 }
 
+
+
 void setup() {
     // sr debug
     Serial.begin(9600);
     _moverService.printInit();
     _motorService.printInit();
-
     Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
+
+    _moverService.stopMovement();
 
     // IR remote commands
     IrReceiver.begin(IR_COMMAND_RECV, ENABLE_LED_FEEDBACK, USE_DEFAULT_FEEDBACK_LED_PIN);
-
-    _moverService.stopMovement();
 
     // debug pin always high
     pinMode(DEBUG_PIN_1, OUTPUT);
@@ -182,7 +190,6 @@ void loop() {
     //    Serial.println("change to 0");
     //    delay(1000);
     // DEBUG END
-
     checkAndApplyIRCommand();
 
     // tick timers
