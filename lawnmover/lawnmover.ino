@@ -20,7 +20,7 @@ const int RIGHT_FWD_PWM = 255; // maximum
 const int RIGHT_BWD_PWM = 255; // maximum
 
 MoverService _moverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
-                           RIGHT_BWD_PIN, LEFT_FWD_PWM, LEFT_BWD_PWM, RIGHT_FWD_PWM, RIGHT_BWD_PWM);
+                           RIGHT_BWD_PIN, LEFT_FWD_PWM, LEFT_BWD_PWM, RIGHT_FWD_PWM, RIGHT_BWD_PWM, true);
 
 const int MOTOR_PIN = 7; // no PWM / control with 5v only
 MotorService _motorService(MOTOR_PIN, _timer, false);
@@ -146,10 +146,11 @@ void setup() {
     digitalWrite(DEBUG_PIN_3, HIGH);
 
     // DEBUG START
-    //    _moverService.moveForward();
-        _moverService.moveBackward();
-    //_moverService.turnLeft();
-//    _moverService.turnRight();
+    _moverService.moveForward();
+    _moverService.moveBackward();
+    _moverService.turnRight();
+    _moverService.turnLeft();
+
     _motorService.startMotor();
     // DEBUG END
 }

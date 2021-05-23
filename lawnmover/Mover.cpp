@@ -1,10 +1,11 @@
 #include "Mover.h"
 
 MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin, const int rightFwdPin,
-                           const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm, const int rightFwdPwm, const int rightBwdPwm) :
+                           const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm, const int rightFwdPwm, const int rightBwdPwm,
+                           const bool debug) :
     kLeftFwdPin(leftFwdPin), kLeftBwdPin(leftBwdPin), kLeftPwmPin(leftPwmPin), kRightPwmPin(rightPwmPin),
     kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin), kLeftFwdPwm(leftFwdPwm), kLeftBwdPwm(leftBwdPwm),
-    kRightFwdPwm(rightFwdPwm), kRightBwdPwm(rightBwdPwm) {
+    kRightFwdPwm(rightFwdPwm), kRightBwdPwm(rightBwdPwm), kDebug(debug) {
 
     pinMode(kLeftFwdPin, OUTPUT);
     pinMode(kLeftBwdPin, OUTPUT);
@@ -15,7 +16,7 @@ MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int
 
     changeLeftPwmRate(kLeftFwdPwm);
     changeRightPwmRate(kRightFwdPwm);
-    
+
     printInit();
 
     // break initially
@@ -40,6 +41,29 @@ void MoverService::printInit() {
     Serial.print(" pwm for left and ");
     Serial.print(currentRightPwm);
     Serial.println(" pwm for right.");
+
+    printState();
+}
+
+void MoverService::printState() {
+    if (kDebug) {
+        Serial.print("Pin ");
+        Serial.print(kLeftFwdPin);
+        Serial.print(": ");
+        Serial.print(digitalRead(kLeftFwdPin));
+        Serial.print(", Pin ");
+        Serial.print(kLeftBwdPin);
+        Serial.print(": ");
+        Serial.print(digitalRead(kLeftBwdPin));
+        Serial.print(", Pin ");
+        Serial.print(kRightFwdPin);
+        Serial.print(": ");
+        Serial.print(digitalRead(kRightFwdPin));
+        Serial.print(", Pin ");
+        Serial.print(kRightBwdPin);
+        Serial.print(": ");
+        Serial.println(digitalRead(kRightBwdPin));
+    }
 }
 
 MoverService::~MoverService() {
@@ -54,6 +78,8 @@ void MoverService::stopMovement() {
     digitalWrite(kRightFwdPin, LOW);
     digitalWrite(kRightBwdPin, LOW);
     delay(100);
+
+    printState();
 }
 
 void MoverService::turnLeft() {
@@ -65,6 +91,8 @@ void MoverService::turnLeft() {
 
     //    delay(MOVEMENT_DURATION);
     //    stopMovement();
+
+    printState();
 }
 
 void MoverService::turnRight() {
@@ -76,6 +104,8 @@ void MoverService::turnRight() {
 
     //    delay(MOVEMENT_DURATION);
     //    stopMovement();
+
+    printState();
 }
 
 void MoverService::moveForward() {
@@ -87,6 +117,8 @@ void MoverService::moveForward() {
 
     //delay(MOVEMENT_DURATION);
     //stopMovement();
+
+    printState();
 }
 
 void MoverService::moveBackward() {
@@ -98,6 +130,8 @@ void MoverService::moveBackward() {
 
     //delay(MOVEMENT_DURATION);
     //stopMovement();
+
+    printState();
 }
 
 void MoverService::changeLeftPwmRate(const int rate) {
@@ -107,6 +141,8 @@ void MoverService::changeLeftPwmRate(const int rate) {
     Serial.println(rate);
     analogWrite(kLeftPwmPin, rate);
     currentLeftPwm = rate;
+
+    printState();
 }
 
 void MoverService::changeRightPwmRate(const int rate) {
@@ -116,4 +152,6 @@ void MoverService::changeRightPwmRate(const int rate) {
     Serial.println(rate);
     analogWrite(kRightPwmPin, rate);
     currentRightPwm = rate;
+
+    printState();
 }
