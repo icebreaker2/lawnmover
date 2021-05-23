@@ -11,9 +11,11 @@ class MotorService {
     public:
         MotorService();
 
-        MotorService(const int motorPin, Timer<> &timer);
+        MotorService(const int motorPin, Timer<> &timer, const bool deadMansSwitch);
 
         ~MotorService();
+
+        void printInit() ;
 
         void startMotor();
 

@@ -2,25 +2,32 @@
 
 // TODO This is bad. Fox the timer lib to take this or at least make singleton of this service if timer.every still wont work passing this or a callback / lambda into it
 MotorService *uniqueMotorService;
+bool _deadMansSwitch;
 
-MotorService::MotorService(const int motorPin, Timer<> &timer) :
+MotorService::MotorService(const int motorPin, Timer<> &timer, const bool deadMansSwitch) :
     kMotorPin(motorPin) {
     stopMotor();
 
     uniqueMotorService = this;
-
+    _deadMansSwitch = deadMansSwitch;
     timer.every(MOTOR_SPIN_CHECK_TIME_DELAY, [](void*) -> bool {
         //        checkAndResetMotorCmd();
-        uniqueMotorService->checkAndResetMotorCmd();
+        if (_deadMansSwitch) {
+            uniqueMotorService->checkAndResetMotorCmd();
+        }
         return true; // to repeat the action - false to stop
     });
 
-    Serial.print("Setup MotorService with Pin: ");
-    Serial.println(kMotorPin);
+    printInit();
 }
 
 MotorService::~MotorService() {
     stopMotor();
+}
+
+void MotorService::printInit() {
+    Serial.print("Setup MotorService with Pin: ");
+    Serial.println(kMotorPin);
 }
 
 void MotorService::startMotor() {

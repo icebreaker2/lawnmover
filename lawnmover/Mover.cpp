@@ -13,21 +13,33 @@ MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int
     pinMode(kRightFwdPin, OUTPUT);
     pinMode(kRightBwdPin, OUTPUT);
 
-    Serial.print("Set up MoverService with leftFwdPin ");
-    Serial.print(kLeftFwdPin);
-    Serial.print(" and leftBwdPin with ");
-    Serial.print(kLeftBwdPin);
-    Serial.print(" and rightFwdPin with ");
-    Serial.print(kRightFwdPin);
-    Serial.print(" and rightBwdPin with ");
-    Serial.print(kRightBwdPin);
-    Serial.print(" and leftPwmPin with ");
-    Serial.print(kLeftPwmPin);
-    Serial.print(" and rightPwmPin with ");
-    Serial.println(kRightPwmPin);
+    changeLeftPwmRate(kLeftFwdPwm);
+    changeRightPwmRate(kRightFwdPwm);
+    
+    printInit();
 
     // break initially
     //    stopMovement();
+}
+
+void MoverService::printInit() {
+    Serial.print("Set up MoverService with leftFwdPin(");
+    Serial.print(kLeftFwdPin);
+    Serial.print("), leftBwdPin(");
+    Serial.print(kLeftBwdPin);
+    Serial.print("), rightFwdPin(");
+    Serial.print(kRightFwdPin);
+    Serial.print("), rightBwdPin(");
+    Serial.print(kRightBwdPin);
+    Serial.print("), leftPwmPin(");
+    Serial.print(kLeftPwmPin);
+    Serial.print("), rightPwmPin(");
+    Serial.print(kRightPwmPin);
+    Serial.print(") while at ");
+    Serial.print(currentLeftPwm);
+    Serial.print(" pwm for left and ");
+    Serial.print(currentRightPwm);
+    Serial.println(" pwm for right.");
 }
 
 MoverService::~MoverService() {
@@ -94,6 +106,7 @@ void MoverService::changeLeftPwmRate(const int rate) {
     Serial.print(" to ");
     Serial.println(rate);
     analogWrite(kLeftPwmPin, rate);
+    currentLeftPwm = rate;
 }
 
 void MoverService::changeRightPwmRate(const int rate) {
@@ -102,4 +115,5 @@ void MoverService::changeRightPwmRate(const int rate) {
     Serial.print(" to ");
     Serial.println(rate);
     analogWrite(kRightPwmPin, rate);
+    currentRightPwm = rate;
 }

@@ -12,6 +12,8 @@ class MoverService {
                      const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm, const int rightFwdPwm, const int rightBwdPwm);
         ~MoverService();
 
+        void printInit();
+
         void stopMovement();
 
         void turnLeft();
@@ -38,6 +40,9 @@ class MoverService {
         const int kLeftBwdPwm;
         const int kRightFwdPwm;
         const int kRightBwdPwm;
+
+        int currentLeftPwm = 0;
+        int currentRightPwm = 0;
 };
 
 #endif // MOVER_H
