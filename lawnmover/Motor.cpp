@@ -6,6 +6,8 @@ bool _deadMansSwitch;
 
 MotorService::MotorService(const int motorPin, Timer<> &timer, const bool deadMansSwitch) :
     kMotorPin(motorPin) {
+
+    pinMode(kMotorPin, OUTPUT);
     stopMotor();
 
     uniqueMotorService = this;
@@ -17,7 +19,7 @@ MotorService::MotorService(const int motorPin, Timer<> &timer, const bool deadMa
         }
         return true; // to repeat the action - false to stop
     });
-
+    
     printInit();
 }
 
@@ -37,7 +39,7 @@ void MotorService::startMotor() {
 }
 
 void MotorService::stopMotor() {
-    Serial.println("motor stop / pause");
+    Serial.println("motor Func / stop");
     digitalWrite(kMotorPin, LOW);
 }
 
