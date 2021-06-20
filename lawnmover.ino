@@ -21,8 +21,8 @@ const int RIGHT_PWM_PIN = 10; // is PWM
 const int RIGHT_FWD_PIN = 5; // is PWM
 const int RIGHT_BWD_PIN = 4; // is no PWM
 
-const int LEFT_FWD_PWM = 224; // maximum
-const int LEFT_BWD_PWM = 224; // maximum
+const int LEFT_FWD_PWM = 255; // maximum
+const int LEFT_BWD_PWM = 255; // maximum
 const int RIGHT_FWD_PWM = 255; // maximum
 const int RIGHT_BWD_PWM = 255; // maximum
 
@@ -68,25 +68,37 @@ void checkAndApplyIRCommand() {
             } else if (IrReceiver.decodedIRData.command == 0x47) {
                 // Func / stop (motor)
                 _motorService.stopMotor();
-            } else if (IrReceiver.decodedIRData.command == 0x4) {
+            } else if (IrReceiver.decodedIRData.command == 0x44) {
+                // left / previous
+                _moverService.turnLeft();
+            } else if (IrReceiver.decodedIRData.command == 0x43) {
+                // right / next
+                _moverService.turnRight();
+            } else if (IrReceiver.decodedIRData.command == 0x9) {
+                // forward / up
+                _moverService.moveForward();
+            } else if (IrReceiver.decodedIRData.command == 0x7) {
+                // backwards / down
+                _moverService.moveBackward();
+            } else if (IrReceiver.decodedIRData.command == 0x40) {
                 // movement stop / play and pause
                 Serial.println("play / pause");
                 _moverService.stopMovement();
             } else {
-                //Serial.println("Unknown repeat command");
-                //IrReceiver.printIRResultShort(&Serial);
+                Serial.println("Unknown repeat command");
+                IrReceiver.printIRResultShort(&Serial);
                 if (IrReceiver.decodedIRData.protocol == UNKNOWN) {
                     // We have an unknown protocol here, print more info
                     if (!rawSpinCheck()) {
-                        // Serial.print("0: ");
-                        // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
-                        // Serial.print(", 1: ");
-                        // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
-                        // Serial.print(", 2: ");
-                        // Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
-                        // Serial.print(", 3: ");
-                        // Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
-                        // IrReceiver.printIRResultRawFormatted(&Serial, true);
+                        Serial.print("0: ");
+                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[0]);
+                        Serial.print(", 1: ");
+                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[1]);
+                        Serial.print(", 2: ");
+                        Serial.print(IrReceiver.decodedIRData.rawDataPtr->rawbuf[2]);
+                        Serial.print(", 3: ");
+                        Serial.println(IrReceiver.decodedIRData.rawDataPtr->rawbuf[3]);
+                        IrReceiver.printIRResultRawFormatted(&Serial, true);
                     }
                 }
             }
@@ -132,6 +144,8 @@ void checkAndApplyIRCommand() {
             }
         }
         IrReceiver.resume(); // Enable receiving of the next value
+    } else {
+        //        Serial.println("(Debug) No signal received");
     }
 }
 
@@ -155,17 +169,19 @@ void setup() {
     //    pinMode(DEBUG_PIN_3, OUTPUT);
     //    digitalWrite(DEBUG_PIN_3, HIGH);
 
+    _motorService.stopMotor();
+    _moverService.stopMovement();
+
+    // TODO enable dead mens button check again
+
     // DEBUG START
     //    _moverService.moveForward();
     //    _moverService.moveBackward();
     //    _moverService.turnRight();
     //    _moverService.turnLeft();
 
-    //    _motorService.startMotor();
+    _motorService.startMotor();
     // DEBUG END
-
-    _motorService.stopMotor();
-    _moverService.stopMovement();
 }
 
 void loop() {
@@ -197,6 +213,7 @@ void loop() {
     // DEBUG END
     checkAndApplyIRCommand();
 
+    //    Serial.println("(Debug) Turn");
     // tick timers
     auto ticks = _timer.tick();
 }
