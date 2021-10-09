@@ -1,4 +1,4 @@
-#include <arduino-timer.h>
+#include <arduino_timer_uno.h>
 #include <IRremote.h>
 
 #include "Mover.h"
@@ -153,7 +153,7 @@ void checkAndApplyIRCommand() {
 
 void setup() {
     // sr debug
-    Serial.begin(9600);
+    Serial.begin(115200);
     _moverService.printInit();
     _motorService.printInit();
     Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
@@ -180,37 +180,47 @@ void setup() {
     //    _moverService.turnRight();
     //    _moverService.turnLeft();
 
-    _motorService.startMotor();
+//    _motorService.startMotor();
     // DEBUG END
 }
 
 void loop() {
     // DEBUG START
-    //    _moverService.changeLeftPwmRate(255);
-    //    _moverService.changeRightPwmRate(255);
-    //    Serial.println("change to 255");
-    //    delay(1500);
+    //        _moverService.changeLeftPwmRate(255);
+    //        _moverService.changeRightPwmRate(255);
+    //        Serial.println("change to 255");
+    //        delay(1500);
     //
-    //    _moverService.changeLeftPwmRate(128);
-    //    _moverService.changeRightPwmRate(128);
-    //    Serial.println("change to 128");
-    //    delay(1500);
+    //        _moverService.changeLeftPwmRate(128);
+    //        _moverService.changeRightPwmRate(128);
+    //        Serial.println("change to 128");
+    //        delay(1500);
     //
-    //    _moverService.changeLeftPwmRate(56);
-    //    _moverService.changeRightPwmRate(56);
-    //    Serial.println("change to 56");
-    //    delay(1500);
+    //        _moverService.changeLeftPwmRate(56);
+    //        _moverService.changeRightPwmRate(56);
+    //        Serial.println("change to 56");
+    //        delay(1500);
     //
-    //    _moverService.changeLeftPwmRate(28);
-    //    _moverService.changeRightPwmRate(28);
-    //    Serial.println("change to 28");
-    //    delay(2500);
+    //        _moverService.changeLeftPwmRate(28);
+    //        _moverService.changeRightPwmRate(28);
+    //        Serial.println("change to 28");
+    //        delay(2500);
     //
-    //    _moverService.changeLeftPwmRate(0);
-    //    _moverService.changeRightPwmRate(0);
-    //    Serial.println("change to 0");
-    //    delay(1000);
+    //        _moverService.changeLeftPwmRate(0);
+    //        _moverService.changeRightPwmRate(0);
+    //        Serial.println("change to 0");
+    //        delay(1000);
+
+    _moverService.moveForward();
+    delay(3000);
+    _moverService.turnRight();
+    delay(3000);
+    _moverService.turnLeft();
+    delay(3000);
+    _moverService.moveBackward();
+    delay(3000);
     // DEBUG END
+
     checkAndApplyIRCommand();
 
     //    Serial.println("(Debug) Turn");

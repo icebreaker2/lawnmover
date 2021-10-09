@@ -2,7 +2,7 @@
 #define LED_H
 
 #include <Arduino.h>
-#include <arduino-timer.h>
+#include <arduino_timer_uno.h>
 
 #define LED_INTRA_ROTATION_TIME_DELAY 100
 

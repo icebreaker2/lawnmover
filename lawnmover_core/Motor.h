@@ -2,7 +2,7 @@
 #define MOTOR_H
 
 #include <Arduino.h>
-#include <arduino-timer.h>
+#include <arduino_timer_uno.h>
 
 #define MOTOR_SPIN_CHECK_TIME_DELAY 700
 #define MOTOR_SPIN_CHECK_THRESHOLD 5
