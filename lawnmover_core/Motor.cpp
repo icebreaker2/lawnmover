@@ -1,6 +1,7 @@
 #include "Motor.h"
+#include <SerialLogger.h>
 
-// TODO This is bad. Fox the timer lib to take this or at least make singleton of this service if timer.every still wont work passing this or a callback / lambda into it
+// TODO This is bad. The timer accept C-like function pointer only. I replaced it with a version using std::function for esp32 but this will not compile due to missing function headers in classic arduino compiler.
 MotorService *uniqueMotorService;
 bool _deadMansSwitch;
 
@@ -19,8 +20,6 @@ MotorService::MotorService(const int motorPin, Timer<> &timer, const bool deadMa
         }
         return true; // to repeat the action - false to stop
     });
-    
-    printInit();
 }
 
 MotorService::~MotorService() {
@@ -28,34 +27,28 @@ MotorService::~MotorService() {
 }
 
 void MotorService::printInit() {
-    Serial.print("Setup MotorService with Pin: ");
-    Serial.println(kMotorPin);
+    SerialLogger::info("Setup MotorService with Pin: %d", kMotorPin);
 }
 
 void MotorService::startMotor() {
     _motorSpinCmdReceived++;
-    Serial.println("start motor (ST/REPT)");
+    SerialLogger::info("start motor (ST/REPT)");
     digitalWrite(kMotorPin, HIGH);
 }
 
 void MotorService::stopMotor() {
-    Serial.println("motor Func / stop");
+    SerialLogger::info("motor Func / stop");
     digitalWrite(kMotorPin, LOW);
 }
 
 void MotorService::spinMotor() {
     _motorSpinCmdReceived++;
-    Serial.println("motor spin / ST/REPT");
+    SerialLogger::debug("motor spin / ST/REPT");
     digitalWrite(kMotorPin, HIGH);
 }
 
 void MotorService::checkAndResetMotorCmd() {
-    Serial.print("MotorCtr after ");
-    Serial.print(MOTOR_SPIN_CHECK_TIME_DELAY);
-    Serial.print(" ms was: ");
-    Serial.print(_motorSpinCmdReceived);
-    Serial.print("/");
-    Serial.println(MOTOR_SPIN_CHECK_THRESHOLD);
+    SerialLogger::debug("MotorCtr after %d %s %d/%d", MOTOR_SPIN_CHECK_TIME_DELAY, "ms was:", _motorSpinCmdReceived, MOTOR_SPIN_CHECK_THRESHOLD);
     if (_motorSpinCmdReceived < MOTOR_SPIN_CHECK_THRESHOLD) {
         stopMotor();
     }

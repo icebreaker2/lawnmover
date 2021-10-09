@@ -9,8 +9,7 @@
 class MoverService {
     public:
         MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin, const int rightFwdPin,
-                     const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm, const int rightFwdPwm, const int rightBwdPwm,
-                     const bool debug);
+                     const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm, const int rightFwdPwm, const int rightBwdPwm);
         ~MoverService();
 
         void printInit();
@@ -43,8 +42,6 @@ class MoverService {
         const int kLeftBwdPwm;
         const int kRightFwdPwm;
         const int kRightBwdPwm;
-
-        const bool kDebug;
 
         int currentLeftPwm = 0;
         int currentRightPwm = 0;

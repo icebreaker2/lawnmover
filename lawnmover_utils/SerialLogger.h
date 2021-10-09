@@ -3,19 +3,19 @@
 
 #include <Arduino.h>
 
-#define MAX_FMT_SIZE 24576
-
 class SerialLogger {
     public:
 
         enum LOG_LEVEL {
-          DEBUG,
-          INFO,
-          WARNING,
-          ERROR
+            DEBUG,
+            INFO,
+            WARNING,
+            ERROR
         };
 
-        SerialLogger(const int speed) = delete;
+        SerialLogger() = delete;
+
+        static void init(const int speed);
 
         static void init(const int speed, const LOG_LEVEL logLevel);
 
@@ -30,6 +30,7 @@ class SerialLogger {
     private:
         static LOG_LEVEL logLevel;
 
+        static void log(const char *format, va_list argptr);
 };
 
 #endif // SERIALLOGGER_H
