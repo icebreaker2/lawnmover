@@ -1,7 +1,8 @@
 /**
    arduino-timer - library for delaying function calls
 
-   Copyright (c) 2018, Michael Contreras
+   Original Copyright (c) 2018, Michael Contreras
+   Modified Copyright (c) 2021, Hendrik Kahlen
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
