@@ -1,114 +1,68 @@
 #include "SerialLogger.h"
+#include <stdarg.h>
+#include <stdio.h>
 
-void initLogger(const int speed) {
-  Serial.begin(speed);
+SerialLogger::LOG_LEVEL SerialLogger::logLevel = SerialLogger::LOG_LEVEL::INFO;
+
+
+void SerialLogger::init(const int speed, const SerialLogger::LOG_LEVEL logLevel) {
+    Serial.begin(speed);
+    SerialLogger::logLevel = logLevel;
 }
 
-SerialLogger::SerialLogger(const int speed) {
-    init(speed);
-}
+// TODO find a solution without code dupletes....
+void SerialLogger::debug(const char * format, ...) {
+    if (SerialLogger::logLevel <= SerialLogger::LOG_LEVEL::DEBUG) {
+        // TODO this is rather bad, try to determine length at least and then check if printing in chunks is a better option
+        char formatted_string[MAX_FMT_SIZE];
 
-SerialLogger::~SerialLogger() {
-    // nothing to do ...
-}
+        va_list argptr;
+        va_start(argptr, format);
+        vsprintf(formatted_string, format, argptr);
+        va_end(argptr);
 
-void SerialLogger::init(const int speed) {
-  Serial.begin(speed);
-}
-
-void SerialLogger::logPrint(const String list[], const int size) {
-    for (int i = 0; i < size; i++) {
-        Serial.print(list[i]);
+        Serial.println("DEBUG: " + String(formatted_string));
     }
-    Serial.println("");
 }
 
-void SerialLogger::logPrint(const String string1) {
-    Serial.println(string1);
+void SerialLogger::info(const char * format, ...) {
+    if (SerialLogger::logLevel <= SerialLogger::LOG_LEVEL::INFO) {
+        // TODO this is rather bad, try to determine length at least and then check if printing in chunks is a better option
+        char formatted_string[MAX_FMT_SIZE];
+
+        va_list argptr;
+        va_start(argptr, format);
+        vsprintf(formatted_string, format, argptr);
+        va_end(argptr);
+
+        Serial.println("INFO:  " + String(formatted_string));
+    }
 }
 
-void SerialLogger::logPrint(const String string1, const String string2) {
-    Serial.print(string1);
-    Serial.println(string2);
+void SerialLogger::warn(const char * format, ...) {
+    if (SerialLogger::logLevel <= SerialLogger::LOG_LEVEL::WARNING) {
+        // TODO this is rather bad, try to determine length at least and then check if printing in chunks is a better option
+        char formatted_string[MAX_FMT_SIZE];
+
+        va_list argptr;
+        va_start(argptr, format);
+        vsprintf(formatted_string, format, argptr);
+        va_end(argptr);
+
+        Serial.println("WARN:  " + String(formatted_string));
+    }
 }
 
-void SerialLogger::logPrint(const String string1, const String string2, const String string3) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.println(string3);
-}
+void SerialLogger::error(const char * format, ...) {
+    if (SerialLogger::logLevel <= SerialLogger::LOG_LEVEL::ERROR) {
+        // TODO this is rather bad, try to determine length at least and then check if printing in chunks is a better option
+        char formatted_string[MAX_FMT_SIZE];
 
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.println(string4);
-}
+        va_list argptr;
+        va_start(argptr, format);
+        vsprintf(formatted_string, format, argptr);
+        va_end(argptr);
 
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4, const String string5) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.print(string4);
-    Serial.println(string5);
-}
-
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4, const String string5,
-                            const String string6) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.print(string4);
-    Serial.print(string5);
-    Serial.println(string6);
-}
-
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4, const String string5,
-                            const String string6, const String string7) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.print(string4);
-    Serial.print(string5);
-    Serial.print(string6);
-    Serial.println(string7);
-}
-
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4, const String string5,
-                            const String string6, const String string7, const String string8) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.print(string4);
-    Serial.print(string5);
-    Serial.print(string6);
-    Serial.print(string7);
-    Serial.println(string8);
-}
-
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4, const String string5,
-                            const String string6, const String string7, const String string8, const String string9) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.print(string4);
-    Serial.print(string5);
-    Serial.print(string6);
-    Serial.print(string7);
-    Serial.print(string8);
-    Serial.println(string9);
-}
-
-void SerialLogger::logPrint(const String string1, const String string2, const String string3, const String string4, const String string5,
-                            const String string6, const String string7, const String string8, const String string9, const String string10) {
-    Serial.print(string1);
-    Serial.print(string2);
-    Serial.print(string3);
-    Serial.print(string4);
-    Serial.print(string5);
-    Serial.print(string6);
-    Serial.print(string7);
-    Serial.print(string8);
-    Serial.print(string9);
-    Serial.println(string10);
+        Serial.println("ERROR: " + String(formatted_string));
+    }
 }
