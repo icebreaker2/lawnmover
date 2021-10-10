@@ -2,26 +2,22 @@
 #define ESP32_PS4_CONTROLLER_H
 
 #include <Arduino.h>
-// Cannot use this library because it modifies the pins used by this board. Not compatible with Az Delivery ESP32 D1 R32 WROOM-32
-// TODO find another timer library or check the actual timers on board (iff present)
 #include <arduino_timer_esp32.h>
-
-#include <functional>
-#include <iostream>
 
 class ESP32_PS4_Controller {
     public:
-        ESP32_PS4_Controller(const char *masterMac, const unsigned long timerDelay = 100, const int readyPin = 2,
-                             const int connectedPin = 2, const int commandReceivedPin = 2, const bool debug = false);
+        ESP32_PS4_Controller(Timer<> &timer, const char *masterMac, const unsigned long timerDelay = 100,
+                             const int readyPin = 2, const int connectedPin = 2,
+                             const int commandReceivedPin = 2, const bool debug = false);
 
         ~ESP32_PS4_Controller();
 
-        void waitAndRead();
-
     private:
         bool readState();
+        bool checkCommandStates();
+        bool checkAuxiliaryStates();
 
-        const String k_masterMac;
+        const char *k_masterMac;
         const unsigned long k_timerDelay;
 
         const int k_readyPin;
@@ -31,7 +27,15 @@ class ESP32_PS4_Controller {
         const bool k_debug;
         bool _connected = false;
 
-        std::function<bool()> _internal_timer_handler;
+        bool m_isCharging = false;
+        bool m_isAudioConnected = false;
+        bool m_isMicConnected = false;
+        int m_batteryLevel = -1;
+
+        int m_lStickX = 0;
+        int m_lStickY = 0;
+        int m_rStickX = 0;
+        int m_rStickY = 0;
 };
 
 #endif // ESP32_PS4_CONTROLLER_H
