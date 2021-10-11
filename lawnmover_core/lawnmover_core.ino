@@ -49,7 +49,7 @@ void ps4_bt_controller_callback(const int slavePin, const int delayPerSpiRead) {
     char buf [20];
     SPI.transfer (1);   // initiate transmission
     for (int pos = 0; pos < sizeof (buf) - 1; pos++) {
-        // TODO can this be lower?
+        // TODO can this be lower? Is transfer not blocking already?
         delayMicroseconds (delayPerSpiRead);
         buf [pos] = SPI.transfer (0);
         if (buf [pos] == 0) {
