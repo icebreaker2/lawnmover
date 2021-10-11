@@ -39,30 +39,7 @@ auto _timer = timer_create_default();
 MoverService *_moverService;
 MotorService *_motorService;
 
-void ps4_bt_controller_callback(const int slavePin, const int delayPerSpiRead) {
-    //Starts communication with Slave connected to master (slave select)
-    digitalWrite(slavePin, LOW);
 
-    //Mastereceive = SPI.transfer(Mastersend);
-    SerialLogger::info("SPI master send-receive to-from slave connected to pin %d", slavePin);
-
-    char buf [20];
-    SPI.transfer (1);   // initiate transmission
-    for (int pos = 0; pos < sizeof (buf) - 1; pos++) {
-        // TODO can this be lower? Is transfer not blocking already?
-        delayMicroseconds (delayPerSpiRead);
-        buf [pos] = SPI.transfer (0);
-        if (buf [pos] == 0) {
-            break;
-        }
-    }
-
-    buf [sizeof (buf) - 1] = 0;  // ensure terminating null
-    SerialLogger::info("SPI master received: %s", buf);
-
-    // disable Slave Select again until next step
-    digitalWrite(slavePin, HIGH);
-}
 
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::INFO);
