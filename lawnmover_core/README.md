@@ -1,5 +1,8 @@
 # Lawnmover
 
+## SPI consumption
+https://www.arduino.cc/en/reference/SPI
+
 ## Power-Consumption:
 * Arduino (Battery Active + Motor Active + LED Active Pin + LED + PWM + MotorCtrl connected)
   * At 8V 
