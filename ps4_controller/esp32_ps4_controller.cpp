@@ -71,27 +71,54 @@ bool ESP32_PS4_Controller::readState() {
 
 bool  ESP32_PS4_Controller::checkCommandStates() {
     bool stateChanged = false;
-    if (PS4.Right()) {
-        SerialLogger::debug("Right Button");
-        stateChanged = true;
-    }
-    if (PS4.Down()) {
-        SerialLogger::debug("Down Button");
-        stateChanged = true;
-    }
-    if (PS4.Up()) {
-        SerialLogger::debug("Up Button");
-        stateChanged = true;
-    }
-    if (PS4.Left()) {
-        SerialLogger::debug("Left Button");
-        stateChanged = true;
-    }
+
+    const bool rightButtonPressed = PS4.Right();
+    const bool leftButtonPressed = PS4.Left();
+    const bool downButtonPressed = PS4.Down();
+    const bool upButtonPressed = PS4.Up();
 
     const int lStickX = PS4.LStickX();
     const int lStickY = PS4.LStickY();
     const int rStickX = PS4.RStickX();
     const int rStickY = PS4.RStickY();
+
+    const bool squareButtonPressed = PS4.Square();
+    const bool crossButtonPressed = PS4.Cross();
+    const bool circleButtonPressed = PS4.Circle();
+    const bool triangleButtonPressed = PS4.Triangle();
+    const bool lbButtonPressed = PS4.L1();
+    const bool rbButtonPressed = PS4.R1();
+    const bool ltButtonPressed = PS4.L2();
+    const int ltValue = PS4.L2Value();
+    const bool rtButtonPressed = PS4.R2();
+    const int rtValue = PS4.R2Value();
+    const bool l3ButtonPressed = PS4.L3();
+    const bool r3ButtonPressed = PS4.R3();
+    const bool shareButtonPressed = PS4.Share();
+    const bool optionsButtonPressed = PS4.Options();
+    const bool psButtonPressed = PS4.PSButton();
+    const bool touchpadButtonPressed = PS4.Touchpad();
+
+    if (rightButtonPressed != m_rightButtonPressed) {
+        m_rightButtonPressed = rightButtonPressed;
+        SerialLogger::debug("Right Button");
+        stateChanged = true;
+    }
+    if (leftButtonPressed != m_leftButtonPressed) {
+        m_leftButtonPressed = leftButtonPressed;
+        SerialLogger::debug("Left Button");
+        stateChanged = true;
+    }
+    if (downButtonPressed != m_downButtonPressed) {
+        m_downButtonPressed = downButtonPressed;
+        SerialLogger::debug("Down Button");
+        stateChanged = true;
+    }
+    if (upButtonPressed != m_upButtonPressed) {
+        m_upButtonPressed = upButtonPressed;
+        SerialLogger::debug("Up Button");
+        stateChanged = true;
+    }
 
     // The axis sticks are highly sensitive. Make less sensitive changes by checking range over exact value
     if (!(m_lStickX - 2 < lStickX  && lStickX  < m_lStickX + 2)) {
@@ -115,64 +142,76 @@ bool  ESP32_PS4_Controller::checkCommandStates() {
         stateChanged = true;
     }
 
-    if (PS4.Square()) {
+    if (squareButtonPressed != m_squareButtonPressed) {
+        m_squareButtonPressed = squareButtonPressed;
         SerialLogger::debug("Square Button");
         stateChanged = true;
     }
-    if (PS4.Cross()) {
+    if (crossButtonPressed != m_crossButtonPressed) {
+        m_crossButtonPressed = crossButtonPressed;
         SerialLogger::debug("Cross Button");
         stateChanged = true;
     }
-    if (PS4.Circle()) {
+    if (circleButtonPressed != m_circleButtonPressed) {
+        m_circleButtonPressed = circleButtonPressed;
         SerialLogger::debug("Circle Button");
         stateChanged = true;
     }
-    if (PS4.Triangle()) {
+
+    if (triangleButtonPressed != m_triangleButtonPressed) {
+        m_triangleButtonPressed = triangleButtonPressed;
         SerialLogger::debug("Triangle Button");
         stateChanged = true;
     }
-
-    if (PS4.L1()) {
+    if (lbButtonPressed != m_lbButtonPressed) {
+        m_lbButtonPressed = lbButtonPressed;
         SerialLogger::debug("LB Button");
         stateChanged = true;
     }
-    if (PS4.R1()) {
+    if (rbButtonPressed != m_rbButtonPressed) {
+        m_rbButtonPressed = rbButtonPressed;
         SerialLogger::debug("RB Button");
         stateChanged = true;
     }
-
-    if (PS4.L2()) {
-        SerialLogger::debug("LT button at %d", PS4.L2Value());
+    if (ltButtonPressed != m_ltButtonPressed || m_ltValue != ltValue) {
+        m_ltButtonPressed = ltButtonPressed;
+        m_ltValue = ltValue;
+        SerialLogger::debug("LT button at %d", m_ltValue);
         stateChanged = true;
     }
-    if (PS4.R2()) {
-        SerialLogger::debug("RT button at %d", PS4.R2Value());
+    if (rtButtonPressed != m_rtButtonPressed || m_rtValue != rtValue) {
+        m_rtButtonPressed = rtButtonPressed;
+        m_rtValue = rtValue;
+        SerialLogger::debug("RT button at %d", m_rtValue);
         stateChanged = true;
     }
-
-    if (PS4.L3()) {
+    if (l3ButtonPressed != m_l3ButtonPressed) {
+        m_l3ButtonPressed = l3ButtonPressed;
         SerialLogger::debug("L3 Button");
         stateChanged = true;
     }
-    if (PS4.R3()) {
+    if (r3ButtonPressed != m_r3ButtonPressed) {
+        m_r3ButtonPressed = r3ButtonPressed;
         SerialLogger::debug("R3 Button");
         stateChanged = true;
     }
-
-    if (PS4.Share()) {
+    if (shareButtonPressed != m_shareButtonPressed) {
+        m_shareButtonPressed = shareButtonPressed;
         SerialLogger::debug("Share Button");
         stateChanged = true;
     }
-    if (PS4.Options()) {
+    if (optionsButtonPressed != m_optionsButtonPressed) {
+        m_optionsButtonPressed = optionsButtonPressed;
         SerialLogger::debug("Options Button");
         stateChanged = true;
     }
-
-    if (PS4.PSButton()) {
+    if (psButtonPressed != m_psButtonPressed) {
+        m_psButtonPressed = psButtonPressed;
         SerialLogger::debug("PS Button");
         stateChanged = true;
     }
-    if (PS4.Touchpad()) {
+    if (touchpadButtonPressed != m_touchpadButtonPressed) {
+        m_touchpadButtonPressed = touchpadButtonPressed;
         SerialLogger::debug("Touch Pad Button");
         stateChanged = true;
     }
@@ -181,36 +220,36 @@ bool  ESP32_PS4_Controller::checkCommandStates() {
 
 bool ESP32_PS4_Controller::checkAuxiliaryStates() {
     bool stateChanged = false;
-    const bool isCharging = PS4.Charging();
-    const bool isAudioConnected = PS4.Audio();
-    const bool isMicConnected = PS4.Mic();
+    const bool charging = PS4.Charging();
+    const bool audioConnected = PS4.Audio();
+    const bool micConnected = PS4.Mic();
     const int batteryLevel = PS4.Battery();
 
-    if (m_isCharging != isCharging) {
-        if (isCharging) {
+    if (m_charging != charging) {
+        if (charging) {
             SerialLogger::info("The controller is charging");
         } else {
             SerialLogger::info("The controller is not charging (anymore)");
         }
-        m_isCharging = isCharging;
+        m_charging = charging;
         stateChanged = true;
     }
-    if (m_isAudioConnected != isAudioConnected) {
-        if (isAudioConnected) {
+    if (m_audioConnected != audioConnected) {
+        if (audioConnected) {
             SerialLogger::info("The controller has headphones attached");
         } else {
             SerialLogger::info("The controller has no headphones attached (anymore)");
         }
-        m_isAudioConnected = isAudioConnected;
+        m_audioConnected = audioConnected;
         stateChanged = true;
     }
-    if (m_isMicConnected != isMicConnected) {
-        if (isMicConnected) {
+    if (m_micConnected != micConnected) {
+        if (micConnected) {
             SerialLogger::info("The controller has a mic attached");
         } else {
             SerialLogger::info("The controller has no mic attached (anymore)");
         }
-        m_isMicConnected = isMicConnected;
+        m_micConnected = micConnected;
         stateChanged = true;
     }
 

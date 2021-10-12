@@ -39,7 +39,7 @@ void set_buffer() {
 
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
-    //esp32Ps4Ctrl = new ESP32_PS4_Controller (_timer, masterMac);
+    esp32Ps4Ctrl = new ESP32_PS4_Controller (_timer, masterMac);
 
     // to use DMA buffer, use these methods to allocate buffer
     spi_master_tx_buf = master.allocDMABuffer(BUFFER_SIZE);
@@ -49,7 +49,7 @@ void setup() {
 
     set_buffer();
 
-    delay(5000);
+    delay(1000);
 
     master.setDataMode(SPI_MODE0);
     // master.setFrequency(SPI_MASTER_FREQ_8M); // too fast for bread board...
@@ -106,7 +106,7 @@ void loop() {
         }
         Serial.printf("\n");
     */
-    delay(50);
+    delay(1);
     counter += chunk_size;
     // tick timers
     auto ticks = _timer.tick();
