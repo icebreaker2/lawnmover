@@ -4,7 +4,7 @@
 #include "Mover.h"
 #include "Motor.h"
 #include "LED.h"
-#include "SpiMaster.h"
+#include "SpiSlave.h"
 
 // To not mix with internally used pins
 const int SCLK_SPI_INTERNAL_PIN = 13;
@@ -43,18 +43,20 @@ MotorService *_motorService;
 
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::INFO);
-    _motorService = new MotorService(MOTOR_PIN, _timer, false);
-    _motorService->printInit();
-    _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
-                                     RIGHT_BWD_PIN, LEFT_FWD_PWM, LEFT_BWD_PWM, RIGHT_FWD_PWM, RIGHT_BWD_PWM);
-    _moverService->printInit();
-    Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
-    SpiMaster spiMaster;
-    spiMaster.addSlave(DEFAULT_SS_PIN_SPI_INTERNAL_PIN, SPI_REQUEST_FREQENCY, _timer, &ps4_bt_controller_callback);
+    //_motorService = new MotorService(MOTOR_PIN, _timer, false);
+    //_motorService->printInit();
+    //_moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
+    //                                 RIGHT_BWD_PIN, LEFT_FWD_PWM, LEFT_BWD_PWM, RIGHT_FWD_PWM, RIGHT_BWD_PWM);
+    //_moverService->printInit();
+    //Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
+    //SpiMaster spiMaster;
+    //spiMaster.addSlave(DEFAULT_SS_PIN_SPI_INTERNAL_PIN, SPI_REQUEST_FREQENCY, _timer, &ps4_bt_controller_callback);
+
+    SpiSlave spiSlave;
 
     // debug pin always high
-    pinMode(DEBUG_PIN, OUTPUT);
-    digitalWrite(DEBUG_PIN, HIGH);
+    //pinMode(DEBUG_PIN, OUTPUT);
+    //digitalWrite(DEBUG_PIN, HIGH);
 
     // DEBUG START
     // _moverService->moveForward();
