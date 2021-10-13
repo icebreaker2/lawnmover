@@ -1,10 +1,10 @@
 #include <arduino_timer_uno.h>
-#include <SerialLogger.h>
+#include <serial_logger.h>
 
-#include "Mover.h"
-#include "Motor.h"
-#include "LED.h"
-#include "SpiSlave.h"
+#include "mover.h"
+#include "motor.h"
+#include "led.h"
+#include "spi_slave.h"
 
 // To not mix with internally used pins
 const int SCLK_SPI_INTERNAL_PIN = 13;

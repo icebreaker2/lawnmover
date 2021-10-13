@@ -1,4 +1,4 @@
-#include "SpiSlave.h"
+#include "spi_slave.h"
 #include <Arduino.h>
 #include <SPI.h>
 
@@ -11,7 +11,7 @@
 #define US unsigned short
 
 
-volatile char buf [20] = "Hello, world!";
+volatile char buf [20] = "Hello world!lalalal";
 volatile int pos;
 volatile bool active;
 
@@ -46,26 +46,33 @@ void arduino_spi_slave() {
 ISR (SPI_STC_vect) {
     byte c = SPDR;
 
+    Serial.print("Received: ");
+    Serial.println(c);
     if (c == 1) {
         // starting new sequence?
         active = true;
         pos = 0;
-        SPDR = buf [pos++];   // send first byte
-        Serial.printf("Resetting and sending first character %s\n", buf [pos]);
-        return;
-    }
-
-    if (!active) {
-        Serial.printf("Slave not yet activated\n");
+        Serial.println("Resetting");
+    } else if (c == 0) {
+        Serial.println("Received 0. Omitting to prevent bad command interpretation. Returning 0");
         SPDR = 0;
         return;
+    } else {
+        if (!active) {
+            Serial.println("Slave not yet activated");
+            SPDR = 0;
+            return;
+        }
+        if (buf [pos] == '\0') {
+            Serial.println("End of transmitted String reached");
+            active = false;
+        }
     }
 
+    Serial.print("Sending back: ");
+    Serial.println(buf [pos]);
     SPDR = buf [pos];
-    if (buf [pos] == 0 || ++pos >= sizeof (buf)) {
-        Serial.printf("End of transmitted String reached\n");
-        active = false;
-    }
+    pos++;
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
 SpiSlave::SpiSlave() {

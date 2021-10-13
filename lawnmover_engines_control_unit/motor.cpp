@@ -1,5 +1,5 @@
-#include "Motor.h"
-#include <SerialLogger.h>
+#include "motor.h"
+#include <serial_logger.h>
 
 // TODO This is bad. The timer accept C-like function pointer only. I replaced it with a version using std::function for esp32 but this will not compile due to missing function headers in classic arduino compiler.
 MotorService *uniqueMotorService;

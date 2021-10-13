@@ -1,4 +1,4 @@
-# PS4 Controller
+# Main Core Unit
 
 ## ESP32 Support for Arduino IDE
 * ESP for arduino: https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/
@@ -8,6 +8,11 @@
   * https://chewett.co.uk/blog/1049/wemos-d1-mini-not-recognised-windows-no-com-port/
   * https://www.wemos.cc/en/latest/tutorials/d1/get_started_with_arduino_d1.html
 * Choose Esp32vn IoT Uno as Board for AZ Delivery D1 R32 Esp32 board
+
+## ESP32 SPI
+* https://github.com/hideakitai/ESP32DMASPI (wrapper of clasic esp-idf)
+* https://github.com/espressif/arduino-esp32/blob/master/libraries/SPI/src/SPI.h
+* We Use VSPI
 
 ## Connect PS4 Controller
 * use your ps4 do get to know the controllers master mac address (the ps4 address)
@@ -25,4 +30,13 @@ If you now flash your board with the implementation and then push the home butto
   * At 8V
   * Operating Current as of datasheet (https://cdn.shopify.com/s/files/1/1509/1638/files/D1_R32_Board_Datenblatt_AZ-Delivery_Vertriebs_GmbH.pdf?v=1606741744): 250 mA 
   * Bluetooth Disconnected (20 mA) / Bluetooth Connected (55 mA)
+
+## Pin Connection
+// TODO
+* Power Supply pins for slaves (3.3 V)
+* SPI VSPI pins (3.3 V, keep that in mind for any slave and use resistors or Logic Level Converter)
+  * MOSI = GPIO23
+  * MISO = GPIO19
+  * CLK/SCK = GPIO18
+  * CS/SS = GPIO5
 

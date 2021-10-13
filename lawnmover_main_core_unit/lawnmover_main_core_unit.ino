@@ -1,5 +1,5 @@
-#include <SerialLogger.h>
-#include "ESP32_PS4_Controller.h"
+#include <serial_logger.h>
+#include "esp32_ps4_controller.h"
 
 #define MOSI  23
 #define MISO  19

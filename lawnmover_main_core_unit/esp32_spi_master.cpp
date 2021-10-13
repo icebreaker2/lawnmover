@@ -1,7 +1,7 @@
 #include "esp32_spi_master.h"
 
 #include <Arduino.h>
-#include <SerialLogger.h>
+#include <serial_logger.h>
 
 int _delayPerSpiRead;
 // TODO Fix the timer lib to handle capture arguments....

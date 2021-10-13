@@ -1,5 +1,5 @@
-#include "LED.h"
-#include <SerialLogger.h>
+#include "led.h"
+#include <serial_logger.h>
 
 int _led1Pin = 0;
 int _led2Pin = 0;

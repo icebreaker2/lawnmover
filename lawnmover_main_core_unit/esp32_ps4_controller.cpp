@@ -1,6 +1,6 @@
-#include "ESP32_PS4_Controller.h"
+#include "esp32_ps4_controller.h"
 #include <PS4Controller.h>
-#include <SerialLogger.h>
+#include <serial_logger.h>
 
 void toggle(const int pin) {
     if (digitalRead(pin) == 0) {

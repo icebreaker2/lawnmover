@@ -1,4 +1,4 @@
-# Lawnmover
+# Engines Control Unit
 
 ## SPI consumption
 https://www.arduino.cc/en/reference/SPI

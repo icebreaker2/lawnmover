@@ -1,5 +1,5 @@
-#include "Mover.h"
-#include <SerialLogger.h>
+#include "mover.h"
+#include <serial_logger.h>
 
 MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
                            const int rightFwdPin, const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm,
