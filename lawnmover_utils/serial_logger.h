@@ -7,6 +7,7 @@ class SerialLogger {
     public:
 
         enum LOG_LEVEL {
+            TRACE,
             DEBUG,
             INFO,
             WARNING,
@@ -18,6 +19,8 @@ class SerialLogger {
         static void init(const int speed);
 
         static void init(const int speed, const LOG_LEVEL logLevel);
+
+        static void trace(const char * format, ...);
 
         static void debug(const char * format, ...);
 

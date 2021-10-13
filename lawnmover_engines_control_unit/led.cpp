@@ -31,42 +31,42 @@ Led3Service::Led3Service(const int led1Pin, const int led2Pin, const int led3Pin
                 digitalWrite(_led2Pin, HIGH);
                 digitalWrite(_led3Pin, LOW);
                 __nextState++;
-                SerialLogger::debug("Led turn: 1/6");
+                SerialLogger::trace("Led turn: 1/6");
                 break;
             case 1:
                 digitalWrite(_led1Pin, HIGH);
                 digitalWrite(_led2Pin, LOW);
                 digitalWrite(_led3Pin, LOW);
                 __nextState++;
-                SerialLogger::debug("Led turn: 2/6");
+                SerialLogger::trace("Led turn: 2/6");
                 break;
             case 2:
                 digitalWrite(_led1Pin, LOW);
                 digitalWrite(_led2Pin, LOW);
                 digitalWrite(_led3Pin, LOW);
                 __nextState++;
-                SerialLogger::debug("Led turn: 3/6");
+                SerialLogger::trace("Led turn: 3/6");
                 break;
             case 3:
                 digitalWrite(_led1Pin, LOW);
                 digitalWrite(_led2Pin, LOW);
                 digitalWrite(_led3Pin, HIGH);
                 __nextState++;
-                SerialLogger::debug("Led turn: 4/6");
+                SerialLogger::trace("Led turn: 4/6");
                 break;
             case 4:
                 digitalWrite(_led1Pin, LOW);
                 digitalWrite(_led2Pin, HIGH);
                 digitalWrite(_led3Pin, HIGH);
                 __nextState++;
-                SerialLogger::debug("Led turn: 5/6");
+                SerialLogger::trace("Led turn: 5/6");
                 break;
             case 5:
                 digitalWrite(_led1Pin, HIGH);
                 digitalWrite(_led2Pin, HIGH);
                 digitalWrite(_led3Pin, HIGH);
                 __nextState = 0;
-                SerialLogger::debug("Led turn: 6/6");
+                SerialLogger::trace("Led turn: 6/6");
                 break;
             default:
                 SerialLogger::warn("Unwanted default entered. Led turn: %d/6", __nextState);

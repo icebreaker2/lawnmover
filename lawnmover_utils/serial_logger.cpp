@@ -14,6 +14,17 @@ void SerialLogger::init(const int speed, const SerialLogger::LOG_LEVEL logLevel)
     SerialLogger::logLevel = logLevel;
 }
 
+void SerialLogger::trace(const char * format, ...) {
+    if (SerialLogger::logLevel <= SerialLogger::LOG_LEVEL::TRACE) {
+        va_list argptr;
+        va_start(argptr, format);
+
+        Serial.print("TRACE: ");
+        log(format, argptr);
+        //va_end(argptr);
+    }
+}
+
 void SerialLogger::debug(const char * format, ...) {
     if (SerialLogger::logLevel <= SerialLogger::LOG_LEVEL::DEBUG) {
         va_list argptr;

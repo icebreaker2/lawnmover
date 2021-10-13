@@ -3,109 +3,116 @@
 #include <Arduino.h>
 #include <serial_logger.h>
 
-int _delayPerSpiRead;
-// TODO Fix the timer lib to handle capture arguments....
-int _slavePin1 = -1;
-SPIClass *_spiClass1 = nullptr;
-SPISettings _spiSettings1;
-void (*_slaveCallback1)(const int, const int, SPIClass*) = nullptr;
-int _slavePin2 = -1;
-SPIClass *_spiClass2 = nullptr;
-SPISettings _spiSettings2;
-void (*_slaveCallback2)(const int, const int, SPIClass*) = nullptr;
-int _slavePin3 = -1;
-SPIClass *_spiClass3 = nullptr;
-SPISettings _spiSettings3;
-void (*_slaveCallback3)(const int, const int, SPIClass*) = nullptr;
+// See: https://forum.arduino.cc/t/esp32-spi-comunication-on-sd-module/598345
+/*  The default pins for SPI on the ESP32.
+    HSPI
+    MOSI = GPIO13
+    MISO = GPIO12
+    CLK = GPIO14
+    CD = GPIO15
 
-Esp32SpiMaster::Esp32SpiMaster(const int clockPin, const int misoPin, const int mosiPin, const long frequency, const int delayPerSpiRead) :
-    k_clockPin(clockPin), k_misoPin(misoPin), k_mosiPin(mosiPin), k_frequency(frequency), k_delayPerSpiRead(delayPerSpiRead) {
-    // Quick & dirty handle spi delay for timers C-like functional pointer (post to outer scope)
-    _delayPerSpiRead = k_delayPerSpiRead;
+    VSPI
+    MOSI = GPIO23
+    MISO = GPIO19
+    CLK/SCK = GPIO18
+    CS/SS = GPIO5
+*/
 
+Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, const long frequency,
+                               const int dma_channel , const int queue_size, const uint8_t spi_mode,
+                               const int tx_rx_buffer_size, const int chunk_size) :
+    k_clock_pin(clock_pin), k_miso_pin(miso_pin), k_mosi_pin(mosi_pin), k_frequency(frequency),
+    k_dma_channel(dma_channel), k_queue_size(queue_size), k_spi_mode(spi_mode),
+    k_tx_rx_buffer_size(tx_rx_buffer_size), k_chunk_size(chunk_size) {
+    // to use DMA buffer, use these methods to allocate buffer
+    spi_master_rx_buf_ = (uint8_t*)heap_caps_malloc(k_tx_rx_buffer_size, MALLOC_CAP_DMA);
+    memset(spi_master_rx_buf_, 0, k_tx_rx_buffer_size);
+    delay(1000);
 }
 
 Esp32SpiMaster::~Esp32SpiMaster() {
-    //for (auto spiClass : m_spiSlaves) {
-    //    delete spiClass;
-    //}
+    for (int i = 0; i < sizeof(masters_) / sizeof(masters_[0]); i++) {
+        delete masters_[i];
+    }
 }
 
-void Esp32SpiMaster::addSlave(const int slavePin, const int readStateDelay, const long clockDivider,
-                              Timer<> &timer, void (*slaveCallback)(const int, const int, SPIClass *spiClass)) {
-    // See: https://forum.arduino.cc/t/esp32-spi-comunication-on-sd-module/598345
-    /*
-        The default pins for SPI on the ESP32.
-        HSPI
-        MOSI = GPIO13
-        MISO = GPIO12
-        CLK = GPIO14
-        CD = GPIO15
+long counter = 0;
+// TODO fix with semaphore
+volatile boolean silly_semaphore_single_threaded = false;
+// Reference: https://rabbit-note.com/2019/01/20/esp32-arduino-spi-slave/
+/**
+    Method to add slave communication to timer given the intervall, where suppliers yield the
+    commands to send and consumer consumes the results read from slave. Consumer must respond
+    with if received values were valid (true) or not (false).
 
-        VSPI
-        MOSI = GPIO23
-        MISO = GPIO19
-        CLK/SCK = GPIO18
-        CS/SS = GPIO5
-    */
+    Note: std::function use was not possible or we will face weird core dumps if we call with more than
+    one std::function -- even if function gets never called. If we pass one std::function, everything works.
+    Thus, downgraded to C-like function pointers.
+*/
+void Esp32SpiMaster::addSlave(const int slave_pin, const int interval, const long clock_divider, Timer<> &timer,
+                              uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long)) {
+    ESP32DMASPI::Master *master = new ESP32DMASPI::Master();
+    if (mastersCounter_ < sizeof(masters_) / sizeof(masters_[0])) {
+        Serial.println(mastersCounter_);
+        masters_[mastersCounter_++] = master;
+        master->setDataMode(k_spi_mode);
+        master->setFrequency(k_frequency);
+        master->setMaxTransferSize(k_tx_rx_buffer_size);
+        // Disabling DMA limits to 64 bytes per transaction only
+        master->setDMAChannel(k_dma_channel);  // 1 or 2 only
+        master->setQueueSize(k_queue_size);   // transaction queue size
+        // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
+        master->begin(VSPI, k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin);
 
-    SPIClass *spiClass = new SPIClass(VSPI);
-    // Put SCK, MOSI, SS pins into output mode also put SCK, MOSI into LOW state, and SS into HIGH state.
-    // Then put SPI hardware into Master mode and turn SPI on Begins the SPI communication
-    spiClass->begin(k_clockPin, k_misoPin, k_mosiPin, slavePin);
-    //Sets clock for SPI communication at 8 (16/8=2Mhz)
-    // TODO: No need to set it if we already set frequency?!?!
-    //spiClass->setClockDivider(clockDivider);
+        // For some f***ing reason, we cannot pass this without producing core dumps....
+        const int chunk_size = k_chunk_size;
+        uint8_t* rx_buffer = spi_master_rx_buf_;
+        long tx_rx_buffer_size = -1;
+        uint8_t *tx_buffer = (*supplier)(tx_rx_buffer_size);
+        SerialLogger::debug("Received tx buffer with size %d", tx_rx_buffer_size);
+        if (tx_rx_buffer_size  < 0) {
+            SerialLogger::error("Cannot create spi slave communication. Supplier returned bad buffer_size %d", tx_rx_buffer_size);
+        } else if (tx_rx_buffer_size  > k_tx_rx_buffer_size ) {
+            SerialLogger::error("Cannot create spi slave communication. Supplier returned buffer size greater than master can handle. Requested %d but can only handle %d", tx_rx_buffer_size, k_tx_rx_buffer_size);
+        } else {
+            timer.every(interval, [slave_pin, chunk_size, tx_rx_buffer_size, rx_buffer, tx_buffer, master, consumer](void*) -> bool {
+                if (!silly_semaphore_single_threaded && (silly_semaphore_single_threaded = true)) {
+                    // TODO implement
+                    // set buffer data here
+                    // TODO set buffer
+                    // start and wait to complete transaction
+                    uint8_t *rxPointer;
+                    uint8_t *txPointer;
+                    if (counter < tx_rx_buffer_size) {
+                        Serial.println("Increasing pointer");
+                        rxPointer = rx_buffer + counter;
+                        txPointer = tx_buffer + counter;
+                    } else {
+                        Serial.println("Resetting pointer");
+                        rxPointer = rx_buffer;
+                        txPointer  = tx_buffer;
+                        counter = 0;
+                        if ((*consumer)(rx_buffer, tx_rx_buffer_size)) {
+                            SerialLogger::debug("Slave on slave select pin %d did return correct results!", slave_pin);
+                        } else {
+                            SerialLogger::error("Slave did not return correct results. Shutting slave on slave-select pin %d down!", slave_pin);
+                            // TODO set power supply for slave to low
+                            return false;
+                        }
+                    }
 
-    // Setting SlaveSelect as HIGH (So master doesnt connect with slave)
-    digitalWrite(slavePin, HIGH);
-
-    // TODO fix timer lib to use captures
-    if (_slaveCallback1 == nullptr) {
-        _slavePin1 = slavePin;
-        _slaveCallback1 = slaveCallback;
-        _spiClass1 = spiClass;
-        _spiSettings1 = SPISettings(k_frequency, MSBFIRST, SPI_MODE0);
-        timer.every(readStateDelay, [](void*) -> bool {
-            //use it as you would the regular arduino SPI API
-            _spiClass1->beginTransaction(_spiSettings1);
-            digitalWrite(_slavePin1, LOW); //pull SS slow to prep other end for transfer
-            (*_slaveCallback1)(_slavePin1, _delayPerSpiRead, _spiClass1);
-            digitalWrite(_slavePin1, HIGH); //pull ss high to signify end of data transfer
-            _spiClass1->endTransaction();
-            return true; // to repeat the action - false to stop
-        });
-    } else if (_slaveCallback2 == nullptr) {
-        _slavePin2 = slavePin;
-        _slaveCallback2 = slaveCallback;
-        _spiClass2 = spiClass;
-        _spiSettings2 = SPISettings(k_frequency, MSBFIRST, SPI_MODE0);
-        timer.every(readStateDelay, [](void*) -> bool {
-            //use it as you would the regular arduino SPI API
-            _spiClass2->beginTransaction(_spiSettings2);
-            digitalWrite(_slavePin2, LOW); //pull SS slow to prep other end for transfer
-            (*_slaveCallback2)(_slavePin2, _delayPerSpiRead, _spiClass2);
-            digitalWrite(_slavePin2, HIGH); //pull ss high to signify end of data transfer
-            _spiClass2->endTransaction();
-            return true; // to repeat the action - false to stop
-        });
-    } else if (_slaveCallback3 == nullptr) {
-        _slavePin3 = slavePin;
-        _slaveCallback3 = slaveCallback;
-        _spiClass3 = spiClass;
-        _spiSettings3 = SPISettings(k_frequency, MSBFIRST, SPI_MODE0);
-        timer.every(readStateDelay, [](void*) -> bool {
-            //use it as you would the regular arduino SPI API
-            _spiClass3->beginTransaction(_spiSettings3);
-            digitalWrite(_slavePin3, LOW); //pull SS slow to prep other end for transfer
-            (*_slaveCallback3)(_slavePin3, _delayPerSpiRead, _spiClass3);
-            digitalWrite(_slavePin3, HIGH); //pull ss high to signify end of data transfer
-            _spiClass3->endTransaction();
-            return true; // to repeat the action - false to stop
-        });
+                    Serial.printf("Transfering %d (counter: %d)\n", txPointer[0], counter);
+                    size_t sendBytes = master->transfer(txPointer, rxPointer, chunk_size);
+                    Serial.printf("Received %d bytes\n", sendBytes);
+                    counter += chunk_size;
+                    silly_semaphore_single_threaded = false;
+                } else {
+                    SerialLogger::warn("Bus busy. Skipping slave on slave-select pin %d", slave_pin);
+                }
+                return true; // to repeat the action - false to stop
+            });
+        }
     } else {
-        SerialLogger::error("Cannot add new Slave to SPI on pin: %d", slavePin);
+        SerialLogger::error("Cannot add a new master to internal array. Reached max of %d masters", mastersCounter_);
     }
-
-    //m_spiSlaves.push_back(spiClass);
 }

@@ -1,113 +1,75 @@
 #include <serial_logger.h>
 #include "esp32_ps4_controller.h"
+#include "esp32_spi_master.h"
 
-#define MOSI  23
-#define MISO  19
-#define SCK 18
-#define SS  5
+// TODO make system lib
+#include "spi_commands.h"
+
+const int MOSI_PIN  = 23;
+const int MISO_PIN =  19;
+const int SCK_PIN =  18;
+const int SS_PIN = 5;
 const long frequency = 2000000;
 const long clock_divide = SPI_CLOCK_DIV8;
+const int engine_control_unit_interval = 10;
 
 auto _timer = timer_create_default();
 const char *masterMac = "ac:89:95:b8:7f:be";
-
 ESP32_PS4_Controller *esp32Ps4Ctrl;
 
-#include <ESP32DMASPIMaster.h>
-#include <ESP32DMASPISlave.h>
-
-ESP32DMASPI::Master master;
-//ESP32DMASPI::Slave slave;
-
-// Reference: https://rabbit-note.com/2019/01/20/esp32-arduino-spi-slave/
-static const uint32_t BUFFER_SIZE = 20;
-uint8_t* spi_master_tx_buf;
-uint8_t* spi_master_rx_buf;
-//uint8_t* spi_slave_tx_buf;
-//uint8_t* spi_slave_rx_buf;
-
-void set_buffer() {
-    for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
-        spi_master_tx_buf[i] = (i % 12) & 0xFF;
-        //spi_master_tx_buf[i] = (i % 2) & 0xFF;
-        //spi_slave_tx_buf[i] = (0xFF - i) & 0xFF;
-    }
-    memset(spi_master_rx_buf, 0, BUFFER_SIZE);
-    //memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
+uint8_t *engine_control_tx_buffer;
+long engine_control_tx_buffer_size;
+uint8_t *engine_control_unit_supplier(long &buffer_size) {
+    buffer_size = engine_control_tx_buffer_size;
+    return engine_control_tx_buffer;
 }
 
+bool engine_control_unit_consumer(uint8_t *slave_response_buffer, long buffer_size) {
+    // TODO check if the responses match the specific type
+    // TODO return false upon failure in verification (causing the master to disconnect the slave (from power))
+    // TODO return true only on success
+    return true;
+}
+
+void setup_buffer() {
+    engine_control_tx_buffer = new uint8_t[SpiCommands::ENGINE_CONTROL_UNIT_BUFFER_SIZE];
+    engine_control_tx_buffer_size = sizeof(engine_control_tx_buffer) / sizeof(engine_control_tx_buffer[0]);
+}
+
+uint8_t *example_tx_buffer = new uint8_t[12] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+long example_tx_buffer_size = 12;
+uint8_t *example_supplier(long &buffer_size) {
+    buffer_size = example_tx_buffer_size;
+    return example_tx_buffer;
+}
+
+bool example_consumer(uint8_t *slave_response_buffer, long buffer_size) {
+    Serial.printf("Rx internal status: ");
+    for (size_t i = 0; i < buffer_size; ++i) {
+        Serial.printf("%c", slave_response_buffer[i]);
+    }
+    Serial.printf("\n");
+    Serial.printf("Tx internal status: ");
+    for (size_t i = 0; i < example_tx_buffer_size; ++i) {
+        Serial.printf("%d ", example_tx_buffer[i]);
+    }
+    Serial.printf("\n");
+    return true;
+}
 
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
-    esp32Ps4Ctrl = new ESP32_PS4_Controller (_timer, masterMac);
-
-    // to use DMA buffer, use these methods to allocate buffer
-    spi_master_tx_buf = master.allocDMABuffer(BUFFER_SIZE);
-    spi_master_rx_buf = master.allocDMABuffer(BUFFER_SIZE);
-    //spi_slave_tx_buf = slave.allocDMABuffer(BUFFER_SIZE);
-    //spi_slave_rx_buf = slave.allocDMABuffer(BUFFER_SIZE);
-
-    set_buffer();
-
-    delay(1000);
-
-    master.setDataMode(SPI_MODE0);
-    // master.setFrequency(SPI_MASTER_FREQ_8M); // too fast for bread board...
-    master.setFrequency(10000);
-    master.setMaxTransferSize(BUFFER_SIZE);
-    // Disabling DMA limits to 64 bytes per transaction only
-    master.setDMAChannel(0);  // 1 or 2 only
-    master.setQueueSize(10);   // transaction queue size
-    // begin() after setting
-    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    master.begin(VSPI);
-
-    //slave.setDataMode(SPI_MODE3);
-    //slave.setMaxTransferSize(BUFFER_SIZE);
-    //slave.setDMAChannel(2);  // 1 or 2 only
-    //slave.setQueueSize(1);   // transaction queue size
-    // begin() after setting
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    //slave.begin(HSPI);
-
-    // connect same name pins each other
-    // CS - CS, CLK - CLK, MOSI - MOSI, MISO - MISO
+    setup_buffer();
+    esp32Ps4Ctrl = new ESP32_PS4_Controller(_timer, masterMac);
+    Esp32SpiMaster esp32_spi_master(SCK_PIN, MISO_PIN, MOSI_PIN, frequency);
+    //esp32_spi_master.addSlave(SS_PIN, engine_control_unit_interval, clock_divide, _timer,
+    //                         &engine_control_unit_supplier, &engine_control_unit_consumer);
+    esp32_spi_master.addSlave(SS_PIN, engine_control_unit_interval, clock_divide, _timer,
+                              &example_supplier, &example_consumer);
 }
 
-long counter = BUFFER_SIZE;
-const int chunk_size = 1;
-void loop() {
-    // set buffer data here
-    // TODO set buffer
-    // start and wait to complete transaction
-    uint8_t *rxPointer;
-    uint8_t *txPointer;
-    if (counter < BUFFER_SIZE) {
-        rxPointer = spi_master_rx_buf + counter;
-        txPointer = spi_master_tx_buf + counter;
-    } else {
-        rxPointer = spi_master_rx_buf;
-        txPointer  = spi_master_tx_buf;
-        counter = 0;
-    }
 
-    Serial.printf("Transfering %d (counter: %d)\n", txPointer[0], counter);
-    size_t sendBytes = master.transfer(txPointer, rxPointer, chunk_size);
-    Serial.printf("Received %d bytes\n", sendBytes);
-    // do something here with received data (if needed)
-    Serial.printf("Rx internal status: ");
-    for (size_t i = 0; i < BUFFER_SIZE; ++i) {
-        Serial.printf("%c", spi_master_rx_buf[i]);
-    }
-    Serial.printf("\n");
-    /*  Serial.printf("Tx internal status: ");
-        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
-        Serial.printf("%d ", spi_master_tx_buf[i]);
-        }
-        Serial.printf("\n");
-    */
-    delay(1);
-    counter += chunk_size;
+void loop() {
     // tick timers
     auto ticks = _timer.tick();
 }
