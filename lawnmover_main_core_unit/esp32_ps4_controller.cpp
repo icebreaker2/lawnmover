@@ -10,10 +10,10 @@ void toggle(const int pin) {
     }
 }
 
-ESP32_PS4_Controller::ESP32_PS4_Controller(Timer<> &timer, const char *masterMac, const unsigned long timerDelay,
-        const int readyPin, const int connectedPin, const int commandReceivedPin, const bool debug)  :
+ESP32_PS4_Controller::ESP32_PS4_Controller(const char *masterMac, Timer<> &timer, const unsigned long timerDelay,
+        const int readyPin, const int connectedPin, const int commandReceivedPin)  :
     k_masterMac(masterMac), k_timerDelay(timerDelay), k_readyPin(), k_connectedPin(connectedPin),
-    k_commandReceivedPin(commandReceivedPin), k_debug(debug) {
+    k_commandReceivedPin(commandReceivedPin) {
 
     // LEDs (all on initially)
     pinMode(k_readyPin, OUTPUT);
@@ -77,10 +77,10 @@ bool  ESP32_PS4_Controller::checkCommandStates() {
     const bool downButtonPressed = PS4.Down();
     const bool upButtonPressed = PS4.Up();
 
-    const int lStickX = PS4.LStickX();
-    const int lStickY = PS4.LStickY();
-    const int rStickX = PS4.RStickX();
-    const int rStickY = PS4.RStickY();
+    const int16_t lStickX = PS4.LStickX();
+    const int16_t lStickY = PS4.LStickY();
+    const int16_t rStickX = PS4.RStickX();
+    const int16_t rStickY = PS4.RStickY();
 
     const bool squareButtonPressed = PS4.Square();
     const bool crossButtonPressed = PS4.Cross();
@@ -89,9 +89,9 @@ bool  ESP32_PS4_Controller::checkCommandStates() {
     const bool lbButtonPressed = PS4.L1();
     const bool rbButtonPressed = PS4.R1();
     const bool ltButtonPressed = PS4.L2();
-    const int ltValue = PS4.L2Value();
+    const int16_t ltValue = PS4.L2Value();
     const bool rtButtonPressed = PS4.R2();
-    const int rtValue = PS4.R2Value();
+    const int16_t rtValue = PS4.R2Value();
     const bool l3ButtonPressed = PS4.L3();
     const bool r3ButtonPressed = PS4.R3();
     const bool shareButtonPressed = PS4.Share();

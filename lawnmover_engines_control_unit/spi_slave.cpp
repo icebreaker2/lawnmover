@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <serial_logger.h>
 
-volatile char buf [20] = "Hello world!lalalal";
-volatile int pos;
+volatile char buf [8] = {0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x01};
+volatile int pos = 0;
 volatile bool active;
 
 SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin) {
@@ -43,30 +43,39 @@ void SpiSlave::AddArduinoSpiSlave(const int sck_pin, const int miso_pin, const i
 }
 
 // SPI interrupt routine
+uint8_t id_bytes [2] = {0};
+uint8_t value_bytes [4] = {0};
 ISR (SPI_STC_vect) {
     const byte c = SPDR;
     SerialLogger::debug("Received: %d", c);
-    if (c == 1) {
-        // starting new sequence?
-        active = true;
-        pos = 0;
-        SerialLogger::debug("Resetting");
-    } else if (c == 0) {
-        SerialLogger::warn("Received 0. Omitting to prevent bad command interpretation. Returning 0");
-        SPDR = 0;
-        return;
+    if (pos == 0 || pos == 1) {
+        id_bytes[pos] = c;
+        SPDR = c;
+    } else if (pos < 6) {
+        value_bytes[pos] = c;
+        SPDR = c;
     } else {
-        if (!active) {
-            SerialLogger::warn("Slave not yet activated");
-            SPDR = 0;
-            return;
+        if (c != 0xFF) {
+            SerialLogger::warn("Received bad ack id request id byte %c", c);
         }
-        if (buf [pos] == '\0') {
-            SerialLogger::info("End of transmitted String reached");
-            active = false;
-        }
+        SPDR = id_bytes[pos % 2];
     }
-    SerialLogger::debug("Sending back: %c", buf[pos]);
-    SPDR = buf[pos];
-    pos++;
+
+    if (pos == 7) {
+        pos = 0;
+        Serial.print("Received: ");
+        Serial.print(id_bytes[0], HEX);
+        Serial.print(id_bytes[1], HEX);
+        Serial.print(value_bytes[0], HEX);
+        Serial.print(value_bytes[1], HEX);
+        Serial.print(value_bytes[2], HEX);
+        Serial.print(value_bytes[3], HEX);
+        Serial.print(id_bytes[0], HEX);
+        Serial.print(id_bytes[1], HEX);
+        Serial.println("");
+        SerialLogger::debug("Resetting");
+    } else {
+        pos++;
+    }
+
 }  // end of interrupt service routine (ISR) SPI_STC_vect

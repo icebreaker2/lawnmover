@@ -25,7 +25,7 @@ Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const in
     k_dma_channel(dma_channel), k_queue_size(queue_size), k_spi_mode(spi_mode),
     k_tx_rx_buffer_size(tx_rx_buffer_size), k_chunk_size(chunk_size) {
     // to use DMA buffer, use these methods to allocate buffer
-    spi_master_rx_buf_ = (uint8_t*)heap_caps_malloc(k_tx_rx_buffer_size, MALLOC_CAP_DMA);
+    spi_master_rx_buf_ = (uint8_t*) heap_caps_malloc(k_tx_rx_buffer_size, MALLOC_CAP_DMA);
     memset(spi_master_rx_buf_, 0, k_tx_rx_buffer_size);
     delay(1000);
 }
@@ -69,7 +69,7 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int interval, const lon
         uint8_t* rx_buffer = spi_master_rx_buf_;
         long tx_rx_buffer_size = -1;
         uint8_t *tx_buffer = (*supplier)(tx_rx_buffer_size);
-        SerialLogger::debug("Received tx buffer with size %d", tx_rx_buffer_size);
+        SerialLogger::debug("Setting up tx buffer with size %d", tx_rx_buffer_size);
         if (tx_rx_buffer_size  < 0) {
             SerialLogger::error("Cannot create spi slave communication. Supplier returned bad buffer_size %d", tx_rx_buffer_size);
         } else if (tx_rx_buffer_size  > k_tx_rx_buffer_size ) {
@@ -84,19 +84,18 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int interval, const lon
                     uint8_t *rxPointer;
                     uint8_t *txPointer;
                     if (counter < tx_rx_buffer_size) {
-                        Serial.println("Increasing pointer");
+                        SerialLogger::trace("Increasing pointer");
                         rxPointer = rx_buffer + counter;
                         txPointer = tx_buffer + counter;
                     } else {
-                        Serial.println("Resetting pointer");
+                        SerialLogger::trace("Resetting pointer");
                         rxPointer = rx_buffer;
                         txPointer  = tx_buffer;
                         counter = 0;
                         if ((*consumer)(rx_buffer, tx_rx_buffer_size)) {
-                            SerialLogger::debug("Slave on slave select pin %d did return correct results!", slave_pin);
+                            SerialLogger::debug("Slave on slave select pin %d did return correct results!", slave_pin);                            
                         } else {
-                            SerialLogger::error("Slave did not return correct results. Shutting slave on slave-select pin %d down!", slave_pin);
-                            // TODO set power supply for slave to low
+                            SerialLogger::error("Slave did not return correct results on slave-select pin %d!", slave_pin);
                             return false;
                         }
                     }

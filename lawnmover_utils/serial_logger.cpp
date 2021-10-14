@@ -90,7 +90,7 @@ void SerialLogger::log(const char *format, va_list argptr) {
                 } else if ( *c == 'c' ) {
                     Serial.print(va_arg( argptr, int ));
                 } else if ( *c == 'f' ) {
-                    Serial.print(va_arg( argptr, float ), 6);
+                    Serial.print(va_arg( argptr, double ), 6);
                 }
             } else {
                 Serial.print(*c);

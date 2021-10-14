@@ -12,14 +12,15 @@ Some utils to install globally and use in a multi-project setup like the Lawnmov
 SerialLogger is a "helper" (^^) to provide a static logging mechanism. 
 Logging is prevented if selected log level is above Log-Command. 
 Methods are based on standard printf usage. Log-Commands are:
+* void trace(const char * format, ...)
 * void debug(const char * format, ...)
 * void info(const char * format, ...)
 * void warn(const char * format, ...)
 * void error(const char * format, ...)
 
 # spi_commands
-* Lookup table for 6-Byte commands to 
-  * Ack Byte to be returned for each of the four bytes
+* Lookup table for 8-Byte commands to 
+  * Ack Byte to be returned for each of the bytes
   * Interpretation of the bytes (e. g. bool, int, long, float)
-* Each 6 Byte command conists of 2 byte command id and 4 byte command value 
+* Each 8 Byte command conists of 2 byte command id, 4 byte command value and tailing 2 byte command id for acknowledging the command
 

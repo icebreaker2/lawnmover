@@ -29,5 +29,4 @@ class Esp32SpiMaster {
         const int k_chunk_size;
         const int k_tx_rx_buffer_size;
         uint8_t* spi_master_rx_buf_;
-
 };
