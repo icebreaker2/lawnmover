@@ -3,10 +3,6 @@
 #include <Arduino.h>
 #include <serial_logger.h>
 
-volatile char buf [8] = {0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x01};
-volatile int pos = 0;
-volatile bool active;
-
 SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin) {
     AddArduinoSpiSlave(sck_pin, miso_pin, mosi_pin, ss_pin);
 }
@@ -43,39 +39,102 @@ void SpiSlave::AddArduinoSpiSlave(const int sck_pin, const int miso_pin, const i
 }
 
 // SPI interrupt routine
-uint8_t id_bytes [2] = {0};
-uint8_t value_bytes [4] = {0};
+volatile int pos = 0;
+uint8_t id_bytes [2];
+uint8_t value_bytes [4];
+uint8_t rx_buffer [9];
+uint8_t tx_buffer [9];
 ISR (SPI_STC_vect) {
-    const byte c = SPDR;
-    SerialLogger::debug("Received: %d", c);
+    // TODO Printing consumes too much time. Slave does not respond in time.
+    const uint8_t c = SPDR;
+    //SerialLogger::debug("Received: %d", c);
+    rx_buffer[pos] = c;
     if (pos == 0 || pos == 1) {
         id_bytes[pos] = c;
+        //Serial.println(pos);
+        //Serial.print("Response: ");
+        //Serial.println(c, HEX);
+
         SPDR = c;
+        tx_buffer[pos] = c;
     } else if (pos < 6) {
-        value_bytes[pos] = c;
+        value_bytes[pos - 2] = c;
+        //Serial.println(pos);
+        //Serial.print("Response: ");
+        //Serial.println(c, HEX);
         SPDR = c;
-    } else {
+        tx_buffer[pos] = c;
+    } else if (pos < 8) {
         if (c != 0xFF) {
             SerialLogger::warn("Received bad ack id request id byte %c", c);
         }
         SPDR = id_bytes[pos % 2];
+        tx_buffer[pos] = id_bytes[pos % 2];
+        //Serial.println(pos);
+        //Serial.print("Response: ");
+        //Serial.println(id_bytes[pos % 2], HEX);
+    } else {
+        //Serial.println(pos);
+        // For the master to receive the nth byte we need to send a n+1 byte
+        SPDR = 0;
+        //Serial.println("Initiating new communication");
     }
 
-    if (pos == 7) {
+    if (pos == 8) {
         pos = 0;
-        Serial.print("Received: ");
-        Serial.print(id_bytes[0], HEX);
-        Serial.print(id_bytes[1], HEX);
-        Serial.print(value_bytes[0], HEX);
-        Serial.print(value_bytes[1], HEX);
-        Serial.print(value_bytes[2], HEX);
-        Serial.print(value_bytes[3], HEX);
-        Serial.print(id_bytes[0], HEX);
-        Serial.print(id_bytes[1], HEX);
-        Serial.println("");
-        SerialLogger::debug("Resetting");
+        /*  Serial.print("Received: ");
+            Serial.print(rx_buffer[0], HEX);
+            Serial.print(rx_buffer[1], HEX);
+            Serial.print(rx_buffer[2], HEX);
+            Serial.print(rx_buffer[3], HEX);
+            Serial.print(rx_buffer[4], HEX);
+            Serial.print(rx_buffer[5], HEX);
+            Serial.print(rx_buffer[6], HEX);
+            Serial.print(rx_buffer[7], HEX);
+            Serial.print(rx_buffer[8], HEX);
+            Serial.println("");
+            Serial.print("Send: ");
+            Serial.print(tx_buffer[0], HEX);
+            Serial.print(tx_buffer[1], HEX);
+            Serial.print(tx_buffer[2], HEX);
+            Serial.print(tx_buffer[3], HEX);
+            Serial.print(tx_buffer[4], HEX);
+            Serial.print(tx_buffer[5], HEX);
+            Serial.print(tx_buffer[6], HEX);
+            Serial.print(tx_buffer[7], HEX);
+            Serial.print(tx_buffer[8], HEX);
+            Serial.println("");
+            SerialLogger::debug("Resetting");*/
     } else {
         pos++;
     }
 
 }  // end of interrupt service routine (ISR) SPI_STC_vect
+
+void SpiSlave::addSlavePrinting(Timer<> &timer, const int interval) {
+    timer.every(interval, [](void*) -> bool {
+        Serial.print("Received: ");
+        Serial.print(rx_buffer[0], HEX);
+        Serial.print(rx_buffer[1], HEX);
+        Serial.print(rx_buffer[2], HEX);
+        Serial.print(rx_buffer[3], HEX);
+        Serial.print(rx_buffer[4], HEX);
+        Serial.print(rx_buffer[5], HEX);
+        Serial.print(rx_buffer[6], HEX);
+        Serial.print(rx_buffer[7], HEX);
+        Serial.print(rx_buffer[8], HEX);
+        Serial.println("");
+        Serial.print("Send: ");
+        Serial.print(tx_buffer[0], HEX);
+        Serial.print(tx_buffer[1], HEX);
+        Serial.print(tx_buffer[2], HEX);
+        Serial.print(tx_buffer[3], HEX);
+        Serial.print(tx_buffer[4], HEX);
+        Serial.print(tx_buffer[5], HEX);
+        Serial.print(tx_buffer[6], HEX);
+        Serial.print(tx_buffer[7], HEX);
+        Serial.print(tx_buffer[8], HEX);
+        Serial.println("");
+        return true; // to repeat the action - false to stop
+    });
+}

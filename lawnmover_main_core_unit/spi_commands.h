@@ -5,8 +5,9 @@
 
 #define COMMAND_FRAME_ID_SIZE 2
 #define COMMAND_FRAME_VALUE_SIZE 4
-#define COMMAND_FRAME_SIZE 8
-#define ENGINE_CONTROL_UNIT_BUFFER_SIZE 24
+// For the master to receive the nth byte we need to send a n+1 byte
+#define COMMAND_SPI_RX_OFFSET 1
+#define COMMAND_FRAME_SIZE 9
 #define LEFT_WHEEL_STEERING_COMMAND (int16_t) 1
 #define RIGHT_WHEEL_STEERING_COMMAND (int16_t) 2
 #define MOTOR_SPEED_COMMAND (int16_t) 3
@@ -96,28 +97,11 @@ bool SpiCommands::valueToBytes(const T value, byte *bytes) {
 
 template<typename T>
 void SpiCommands::putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer) {
-    byte bytes[COMMAND_FRAME_SIZE] = {0};
+    uint8_t bytes[COMMAND_FRAME_SIZE] = {0};
 
     SpiCommands::valueToBytes(commandId, bytes);
     SpiCommands::valueToBytes(commandValue, bytes + COMMAND_FRAME_ID_SIZE);
     SpiCommands::valueToBytes((int16_t) - 1, bytes + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE);
-    Serial.printf("CommandId: %d\n", commandId);
-    Serial.print("CommandValue: ");
-    Serial.println(commandValue);
-    Serial.printf("AckId: %d\n", (int16_t) - 1);
-
-    Serial.print("Setting ");
-    Serial.print(COMMAND_FRAME_SIZE);
-    Serial.print(" command from index: ");
-    Serial.print(bytes[0], HEX);
-    Serial.print(bytes[1], HEX);
-    Serial.print(bytes[2], HEX);
-    Serial.print(bytes[3], HEX);
-    Serial.print(bytes[4], HEX);
-    Serial.print(bytes[5], HEX);
-    Serial.print(bytes[6], HEX);
-    Serial.print(bytes[7], HEX);
-    Serial.println("");
 
     memcpy(buffer, bytes, COMMAND_FRAME_SIZE);
 }

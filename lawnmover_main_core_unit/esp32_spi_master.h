@@ -2,7 +2,7 @@
 #include <esp32-hal-spi.h>
 // See https://github.com/espressif/arduino-esp32/blob/master/libraries/SPI/src/SPI.h
 #include <SPI.h>
-#include <ESP32DMASPIMaster.h>
+#include "ESP32DMASPIMaster.h"
 
 class Esp32SpiMaster {
     public:

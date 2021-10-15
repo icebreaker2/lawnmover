@@ -25,7 +25,7 @@ Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const in
     k_dma_channel(dma_channel), k_queue_size(queue_size), k_spi_mode(spi_mode),
     k_tx_rx_buffer_size(tx_rx_buffer_size), k_chunk_size(chunk_size) {
     // to use DMA buffer, use these methods to allocate buffer
-    spi_master_rx_buf_ = (uint8_t*) heap_caps_malloc(k_tx_rx_buffer_size, MALLOC_CAP_DMA);
+    spi_master_rx_buf_ = (uint8_t*) malloc(sizeof(uint8_t) * k_tx_rx_buffer_size);
     memset(spi_master_rx_buf_, 0, k_tx_rx_buffer_size);
     delay(1000);
 }
@@ -36,7 +36,6 @@ Esp32SpiMaster::~Esp32SpiMaster() {
     }
 }
 
-long counter = 0;
 // TODO fix with semaphore
 volatile boolean silly_semaphore_single_threaded = false;
 // Reference: https://rabbit-note.com/2019/01/20/esp32-arduino-spi-slave/
@@ -67,50 +66,39 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int interval, const lon
         // For some f***ing reason, we cannot pass this without producing core dumps....
         const int chunk_size = k_chunk_size;
         uint8_t* rx_buffer = spi_master_rx_buf_;
-        long tx_rx_buffer_size = -1;
-        uint8_t *tx_buffer = (*supplier)(tx_rx_buffer_size);
-        SerialLogger::debug("Setting up tx buffer with size %d", tx_rx_buffer_size);
-        if (tx_rx_buffer_size  < 0) {
-            SerialLogger::error("Cannot create spi slave communication. Supplier returned bad buffer_size %d", tx_rx_buffer_size);
-        } else if (tx_rx_buffer_size  > k_tx_rx_buffer_size ) {
-            SerialLogger::error("Cannot create spi slave communication. Supplier returned buffer size greater than master can handle. Requested %d but can only handle %d", tx_rx_buffer_size, k_tx_rx_buffer_size);
-        } else {
-            timer.every(interval, [slave_pin, chunk_size, tx_rx_buffer_size, rx_buffer, tx_buffer, master, consumer](void*) -> bool {
+        int max_tx_rx_buffer_size = k_tx_rx_buffer_size;
+        timer.every(interval, [slave_pin, chunk_size, max_tx_rx_buffer_size, rx_buffer, master, supplier, consumer](void*) -> bool {
+            bool repeat = true;
+            long tx_rx_buffer_size = -1;
+            uint8_t *tx_buffer = (*supplier)(tx_rx_buffer_size);
+            if (tx_rx_buffer_size  < 0) {
+                SerialLogger::error("Cannot create spi slave communication. Supplier returned bad buffer_size %d", tx_rx_buffer_size);
+                repeat = false;
+            } else if (tx_rx_buffer_size  > max_tx_rx_buffer_size) {
+                SerialLogger::error("Cannot create spi slave communication. Supplier returned buffer size greater than master can handle. Requested %d but can only handle %d", tx_rx_buffer_size, max_tx_rx_buffer_size);
+                repeat = false;
+            } else {
                 if (!silly_semaphore_single_threaded && (silly_semaphore_single_threaded = true)) {
-                    // TODO implement
-                    // set buffer data here
-                    // TODO set buffer
-                    // start and wait to complete transaction
-                    uint8_t *rxPointer;
-                    uint8_t *txPointer;
-                    if (counter < tx_rx_buffer_size) {
-                        SerialLogger::trace("Increasing pointer");
-                        rxPointer = rx_buffer + counter;
-                        txPointer = tx_buffer + counter;
-                    } else {
-                        SerialLogger::trace("Resetting pointer");
-                        rxPointer = rx_buffer;
-                        txPointer  = tx_buffer;
-                        counter = 0;
-                        if ((*consumer)(rx_buffer, tx_rx_buffer_size)) {
-                            SerialLogger::debug("Slave on slave select pin %d did return correct results!", slave_pin);                            
-                        } else {
-                            SerialLogger::error("Slave did not return correct results on slave-select pin %d!", slave_pin);
-                            return false;
-                        }
+                    for (long counter = 0; counter < tx_rx_buffer_size; counter += chunk_size) {
+                        //Serial.printf("Transfering %d (counter: %d)\n", txPointer[0], counter);
+                        size_t sendBytes = master->transfer(tx_buffer + counter,  rx_buffer + counter, chunk_size);
+                        //Serial.printf("Received %d bytes: %x\n", sendBytes, *rxPointer);
+                        // TODO can we omit small delays?
+                        delayMicroseconds(10);
                     }
-
-                    Serial.printf("Transfering %d (counter: %d)\n", txPointer[0], counter);
-                    size_t sendBytes = master->transfer(txPointer, rxPointer, chunk_size);
-                    Serial.printf("Received %d bytes\n", sendBytes);
-                    counter += chunk_size;
-                    silly_semaphore_single_threaded = false;
+                    if ((*consumer)(rx_buffer, tx_rx_buffer_size)) {
+                        SerialLogger::debug("Slave on slave select pin %d did return correct results!", slave_pin);
+                    } else {
+                        SerialLogger::error("Slave did not return correct results on slave-select pin %d!", slave_pin);
+                        repeat = false;
+                    }
                 } else {
                     SerialLogger::warn("Bus busy. Skipping slave on slave-select pin %d", slave_pin);
                 }
-                return true; // to repeat the action - false to stop
-            });
-        }
+                silly_semaphore_single_threaded = false;
+            }
+            return repeat; // to repeat the action - false to stop
+        });
     } else {
         SerialLogger::error("Cannot add a new master to internal array. Reached max of %d masters", mastersCounter_);
     }

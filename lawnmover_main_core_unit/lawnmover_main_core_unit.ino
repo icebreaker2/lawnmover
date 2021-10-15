@@ -11,18 +11,24 @@ const int SCK_PIN =  18;
 const int ENGINE_CONTROL_SS_PIN = 5;
 const long frequency = 2000000;
 const long clock_divide = SPI_CLOCK_DIV8;
-const int engine_control_unit_interval = 10;
+const int engine_control_unit_interval = 200;
 
 auto _timer = timer_create_default();
 const char *masterMac = "ac:89:95:b8:7f:be";
 ESP32_PS4_Controller *esp32Ps4Ctrl;
 
-uint8_t *engine_control_tx_buffer = new uint8_t[ENGINE_CONTROL_UNIT_BUFFER_SIZE];
-long engine_control_tx_buffer_size = ENGINE_CONTROL_UNIT_BUFFER_SIZE;
+
+long engine_control_tx_buffer_size = 3 * (COMMAND_FRAME_SIZE);
+uint8_t *engine_control_tx_buffer = new uint8_t[engine_control_tx_buffer_size];
 uint8_t *engine_control_unit_supplier(long &buffer_size) {
     SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, esp32Ps4Ctrl->getLStickY(), engine_control_tx_buffer);
+    engine_control_tx_buffer[COMMAND_FRAME_SIZE - 1] = 0xFF;
+
     SpiCommands::putCommandToBuffer(RIGHT_WHEEL_STEERING_COMMAND, esp32Ps4Ctrl->getRStickY(), engine_control_tx_buffer + COMMAND_FRAME_SIZE);
+    engine_control_tx_buffer[COMMAND_FRAME_SIZE * 2 - 1] = 0xFF;
+
     SpiCommands::putCommandToBuffer(MOTOR_SPEED_COMMAND, esp32Ps4Ctrl->getRtValue(), engine_control_tx_buffer + 2 * COMMAND_FRAME_SIZE);
+    engine_control_tx_buffer[COMMAND_FRAME_SIZE * 3 - 1] = 0xFF;
 
     buffer_size = engine_control_tx_buffer_size;
     return engine_control_tx_buffer;
@@ -35,41 +41,21 @@ bool engine_control_unit_consumer(uint8_t *slave_response_buffer, long buffer_si
         valid = false;
     } else {
         valid = SpiCommands::master_interpret_communication(engine_control_tx_buffer, slave_response_buffer, buffer_size);
+    }
+
+    if (!valid) {
         SerialLogger::error("Shutting slave on slave-select pin %d down!", ENGINE_CONTROL_SS_PIN);
         // TODO set power supply for slave to low
     }
     return valid;
 }
 
-uint8_t *example_tx_buffer = new uint8_t[12] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-long example_tx_buffer_size = 12;
-uint8_t *example_supplier(long &buffer_size) {
-    buffer_size = example_tx_buffer_size;
-    return example_tx_buffer;
-}
-
-bool example_consumer(uint8_t *slave_response_buffer, long buffer_size) {
-    Serial.printf("Rx internal status: ");
-    for (size_t i = 0; i < buffer_size; ++i) {
-        Serial.printf("%c", slave_response_buffer[i]);
-    }
-    Serial.printf("\n");
-    Serial.printf("Tx internal status: ");
-    for (size_t i = 0; i < example_tx_buffer_size; ++i) {
-        Serial.printf("%d ", example_tx_buffer[i]);
-    }
-    Serial.printf("\n");
-    return true;
-}
-
 void setup() {
-    SerialLogger::init(9600, SerialLogger::LOG_LEVEL::TRACE);
+    SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
     esp32Ps4Ctrl = new ESP32_PS4_Controller(masterMac, _timer);
     Esp32SpiMaster esp32_spi_master(SCK_PIN, MISO_PIN, MOSI_PIN, frequency);
     esp32_spi_master.addSlave(ENGINE_CONTROL_SS_PIN, engine_control_unit_interval, clock_divide, _timer,
                               &engine_control_unit_supplier, &engine_control_unit_consumer);
-    //esp32_spi_master.addSlave(ENGINE_CONTROL_SS_PIN, engine_control_unit_interval, clock_divide, _timer,
-    //                          &example_supplier, &example_consumer);
 }
 
 

@@ -51,7 +51,7 @@ void setup() {
     _moverService->printInit();
     Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
     SpiSlave spiSlave(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN);
-
+    spiSlave.addSlavePrinting(_timer, 100);
     // debug pin always high
     //pinMode(DEBUG_PIN, OUTPUT);
     //digitalWrite(DEBUG_PIN, HIGH);
