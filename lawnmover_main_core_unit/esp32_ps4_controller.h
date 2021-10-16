@@ -86,6 +86,10 @@ class ESP32_PS4_Controller {
             return m_touchpadButtonPressed;
         };
 
+        bool isConnected() {
+            return _connected;
+        };
+
     private:
         bool readState();
         bool checkCommandStates();

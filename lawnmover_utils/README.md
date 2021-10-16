@@ -19,8 +19,14 @@ Methods are based on standard printf usage. Log-Commands are:
 * void error(const char * format, ...)
 
 # spi_commands
-* Lookup table for 8-Byte commands to 
-  * Ack Byte to be returned for each of the bytes
+* Lookup table and utility service for 9-Byte commands to 
+  * Ack each byte send by master
+  * Apply protocol to mark end of communication (Byte 9)
+    * Where master send 0xFF
+    * And slave must send 0x00 in return
+  * Make ack id sequence where (byte 7-8)
+    * master sends 0xFF 0xFF to request id send with Byte 1 and Byte 2
+    * Slave responds with id received from Byte 1 to Byte 2 (e. g. 0x00 0x01)
   * Interpretation of the bytes (e. g. bool, int, long, float)
-* Each 8 Byte command conists of 2 byte command id, 4 byte command value and tailing 2 byte command id for acknowledging the command
+* Each 9 Byte command conists of 2 byte command id, 4 byte command value and tailing 2 byte command id for acknowledging the command, and the end of the communication as Byte 9
 

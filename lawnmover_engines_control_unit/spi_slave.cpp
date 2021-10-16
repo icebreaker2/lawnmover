@@ -26,7 +26,6 @@ void SpiSlave::AddArduinoSpiSlave(const int sck_pin, const int miso_pin, const i
         CPHA - Samples data on the trailing edge of the data clock when 1, leading edge when 0
         SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz)
     */
-
     // enable SPI subsystem and set correct SPI mode
     // SPCR = (1<<SPE)|(0<<DORD)|(0<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
 
@@ -42,13 +41,16 @@ void SpiSlave::AddArduinoSpiSlave(const int sck_pin, const int miso_pin, const i
 volatile int pos = 0;
 uint8_t id_bytes [2];
 uint8_t value_bytes [4];
-uint8_t rx_buffer [9];
-uint8_t tx_buffer [9];
+
+int counter = 0;
+uint8_t rx_buffer[27];
+uint8_t tx_buffer[27];
 ISR (SPI_STC_vect) {
     // TODO Printing consumes too much time. Slave does not respond in time.
     const uint8_t c = SPDR;
     //SerialLogger::debug("Received: %d", c);
-    rx_buffer[pos] = c;
+    rx_buffer[counter] = c;
+    tx_buffer[counter] = c;
     if (pos == 0 || pos == 1) {
         id_bytes[pos] = c;
         //Serial.println(pos);
@@ -70,6 +72,7 @@ ISR (SPI_STC_vect) {
         }
         SPDR = id_bytes[pos % 2];
         tx_buffer[pos] = id_bytes[pos % 2];
+        tx_buffer[counter] = id_bytes[pos % 2];
         //Serial.println(pos);
         //Serial.print("Response: ");
         //Serial.println(id_bytes[pos % 2], HEX);
@@ -77,8 +80,11 @@ ISR (SPI_STC_vect) {
         //Serial.println(pos);
         // For the master to receive the nth byte we need to send a n+1 byte
         SPDR = 0;
+        tx_buffer[counter] = 0;
         //Serial.println("Initiating new communication");
     }
+
+    counter = (counter + 1) % 27;
 
     if (pos == 8) {
         pos = 0;
@@ -114,26 +120,14 @@ ISR (SPI_STC_vect) {
 void SpiSlave::addSlavePrinting(Timer<> &timer, const int interval) {
     timer.every(interval, [](void*) -> bool {
         Serial.print("Received: ");
-        Serial.print(rx_buffer[0], HEX);
-        Serial.print(rx_buffer[1], HEX);
-        Serial.print(rx_buffer[2], HEX);
-        Serial.print(rx_buffer[3], HEX);
-        Serial.print(rx_buffer[4], HEX);
-        Serial.print(rx_buffer[5], HEX);
-        Serial.print(rx_buffer[6], HEX);
-        Serial.print(rx_buffer[7], HEX);
-        Serial.print(rx_buffer[8], HEX);
+        for (int i = 0; i < 27; i++) {
+            Serial.print(rx_buffer[i], HEX);
+        }
         Serial.println("");
         Serial.print("Send: ");
-        Serial.print(tx_buffer[0], HEX);
-        Serial.print(tx_buffer[1], HEX);
-        Serial.print(tx_buffer[2], HEX);
-        Serial.print(tx_buffer[3], HEX);
-        Serial.print(tx_buffer[4], HEX);
-        Serial.print(tx_buffer[5], HEX);
-        Serial.print(tx_buffer[6], HEX);
-        Serial.print(tx_buffer[7], HEX);
-        Serial.print(tx_buffer[8], HEX);
+        for (int i = 0; i < 27; i++) {
+            Serial.print(tx_buffer[i], HEX);
+        }
         Serial.println("");
         return true; // to repeat the action - false to stop
     });
