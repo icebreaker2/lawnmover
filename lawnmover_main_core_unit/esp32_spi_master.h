@@ -4,6 +4,8 @@
 #include <SPI.h>
 #include "ESP32DMASPIMaster.h"
 
+#define MAX_SLAVES 5
+
 class Esp32SpiMaster {
     public:
         Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, void (*error_callback)(),
@@ -12,7 +14,8 @@ class Esp32SpiMaster {
         ~Esp32SpiMaster();
 
         void addSlave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay, const int interval,
-                      const long clock_divider, Timer<> &timer, uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long));
+                      const int inter_transaction_delay_microseconds, const long clock_divider, Timer<> &timer,
+                      uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long));
 
     private:
         const int k_clock_pin;
@@ -26,14 +29,23 @@ class Esp32SpiMaster {
         void (*error_callback_)();
         volatile bool shutdown_ = false;
         int max_intervall_ = 0;
-        ESP32DMASPI::Master *masters_[3];
-        int mastersCounter_ = 0;
 
         const int k_chunk_size;
         const int k_tx_rx_buffer_size;
         uint8_t* spi_master_rx_buf_;
 
+        static ESP32DMASPI::Master *masters_[];
+        static int free_ids[];
+        static int get_free_id();
+        static bool add_free_id(const int id);
 
-        ESP32DMASPI::Master *setup_slave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay, const int interval);
-        static void tear_down_slave(const int slave_pin, const int slave_power_pin);
+        ESP32DMASPI::Master *setup_slave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
+                                         const int interval, const int slave_id);
+        static void restart_slave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay, const int slave_id);
+        static void tear_down_slave(const int slave_pin, const int slave_power_pin, const int slave_id);
+        static void add_timer(const int slave_id, const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
+                              const int interval, const int inter_transaction_delay_microseconds, const long clock_divider,
+                              Timer<> &timer, uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), const int chunk_size,
+                              uint8_t* rx_buffer, int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool &shutdown,
+                              ESP32DMASPI::Master *master);
 };

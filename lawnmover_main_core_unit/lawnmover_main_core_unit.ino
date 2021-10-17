@@ -10,6 +10,7 @@ const int SCK_PIN =  18;
 const int ENGINE_CONTROL_SS_PIN = 5;
 const int ENGINE_POWER_SUPPLY_PIN = 13;
 const int ENGINE_POWER_BOOT_DELAY = 500;
+const int ENGINE_INTER_TRANSACTION_DELAY_MICROSECONDS = 10;
 
 const long frequency = 2000000;
 const long clock_divide = SPI_CLOCK_DIV8;
@@ -49,23 +50,19 @@ bool engine_control_unit_consumer(uint8_t *slave_response_buffer, long buffer_si
 }
 
 void re_setup_spi_communication() {
-    // TODO delete the master will tear down all slaves (inklusive their power supply)
+    // delete the master will tear down all slaves (inklusive their power supply)
+    SerialLogger::info("Shutting down all previous slaves");
     delete esp32_spi_master;
+    SerialLogger::info("(Re)Setting up all slaves");
     esp32_spi_master = new Esp32SpiMaster(SCK_PIN, MISO_PIN, MOSI_PIN, &re_setup_spi_communication, frequency);
     esp32_spi_master->addSlave(ENGINE_CONTROL_SS_PIN, ENGINE_POWER_SUPPLY_PIN, ENGINE_POWER_BOOT_DELAY,
-                               engine_control_unit_interval, clock_divide, _timer,
-                               &engine_control_unit_supplier, &engine_control_unit_consumer);
+                               ENGINE_INTER_TRANSACTION_DELAY_MICROSECONDS, engine_control_unit_interval,
+                               clock_divide, _timer, &engine_control_unit_supplier, &engine_control_unit_consumer);
 }
 
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
     esp32Ps4Ctrl = new ESP32_PS4_Controller(masterMac, _timer);
-    //while (!esp32Ps4Ctrl->isConnected()) {
-    //    Serial.println("Waiting for PS4 Controller to connect");
-    //    // tick timers
-    //    auto ticks = _timer.tick();
-    //    delay(10);
-    //}
 
     re_setup_spi_communication();
 }
