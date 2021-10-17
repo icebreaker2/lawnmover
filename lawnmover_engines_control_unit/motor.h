@@ -22,7 +22,7 @@ class MotorService {
 
         void spinMotor();
 
-        void set_rotation_speed(const int16_t rotation_speed);
+        bool set_rotation_speed(const int16_t rotation_speed);
 
     private:
         const int kMotorPin;

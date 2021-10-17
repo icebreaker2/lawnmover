@@ -2,11 +2,9 @@
 #include <serial_logger.h>
 
 MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
-                           const int rightFwdPin, const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm,
-                           const int rightFwdPwm, const int rightBwdPwm) :
+                           const int rightFwdPin, const int rightBwdPin) :
     kLeftFwdPin(leftFwdPin), kLeftBwdPin(leftBwdPin), kLeftPwmPin(leftPwmPin), kRightPwmPin(rightPwmPin),
-    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin), kLeftFwdPwm(leftFwdPwm), kLeftBwdPwm(leftBwdPwm),
-    kRightFwdPwm(rightFwdPwm), kRightBwdPwm(rightBwdPwm) {
+    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin) {
 
     pinMode(kLeftFwdPin, OUTPUT);
     pinMode(kLeftBwdPin, OUTPUT);
@@ -15,28 +13,26 @@ MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int
     pinMode(kRightFwdPin, OUTPUT);
     pinMode(kRightBwdPin, OUTPUT);
 
-    changeLeftPwmRate(kLeftFwdPwm);
-    changeRightPwmRate(kRightFwdPwm);
-
     // break initially
     stopMovement();
 }
 
 void MoverService::printInit() {
     SerialLogger::info("Set up MoverService with leftFwdPin(%d), leftBwdPin(%d), rightFwdPin(%d), rightBwdPin(%d), "
-                       "leftPwmPin(%d), rightPwmPin(%d) while at %d pwm for left and %d pwm for right.",
-                       kLeftFwdPin, kLeftBwdPin, kRightFwdPin, kRightBwdPin, kLeftPwmPin, kRightPwmPin, currentLeftPwm,
-                       currentRightPwm);
+                       "leftPwmPin(%d), rightPwmPin(%d) with leftPwmPin(%d) and rightPwnPin(%d)",
+                       kLeftFwdPin, kLeftBwdPin, kRightFwdPin, kRightBwdPin, kLeftPwmPin, kRightPwmPin,
+                       kRightFwdPin, kRightBwdPin);
     printState();
 }
 
 void MoverService::printState() {
-    const bool leftFwPinState = digitalRead(kLeftFwdPin);
-    const bool rightFwPinState = digitalRead(kRightFwdPin);
-    const bool leftBwPinState = digitalRead(kLeftBwdPin);
-    const bool rightBwPinState = digitalRead(kRightBwdPin);
-    SerialLogger::debug("Pin %d: %d, Pin %d: %d, Pin %d: %d, Pin %d: %d", kLeftFwdPin, leftFwPinState, kLeftBwdPin,
-                        leftBwPinState, kRightFwdPin, rightFwPinState, kRightBwdPin, rightBwPinState);
+    const bool leftFwdPinState = digitalRead(kLeftFwdPin);
+    const bool rightFwdPinState = digitalRead(kRightFwdPin);
+    const bool leftBwdPinState = digitalRead(kLeftBwdPin);
+    const bool rightBwdPinState = digitalRead(kRightBwdPin);
+    SerialLogger::debug("Pin %d: %d, Pin %d: %d, Pin %d: %d, Pin %d: %d",
+                        kLeftFwdPin, leftFwdPinState, kLeftBwdPin, leftBwdPinState, kRightFwdPin, rightFwdPinState,
+                        kRightBwdPin, rightBwdPinState);
 }
 
 MoverService::~MoverService() {
@@ -45,92 +41,71 @@ MoverService::~MoverService() {
 
 
 void MoverService::stopMovement() {
-    SerialLogger::debug("stopMovement");
+    SerialLogger::trace("stopping movement");
     digitalWrite(kLeftFwdPin, LOW);
     digitalWrite(kLeftBwdPin, LOW);
     digitalWrite(kRightFwdPin, LOW);
     digitalWrite(kRightBwdPin, LOW);
-    delay(100);
 
-    printState();
-}
+    analogWrite(kLeftPwmPin, 0);
+    analogWrite(kRightPwmPin, 0);
 
-void MoverService::turnLeft() {
-    stopMovement();
-    SerialLogger::debug("left / previous");
-
-    changeLeftPwmRate(kLeftBwdPwm);
-    changeRightPwmRate(kRightFwdPwm);
-
-    digitalWrite(kLeftBwdPin, HIGH);
-    digitalWrite(kRightFwdPin, HIGH);
-
-    //    delay(MOVEMENT_DURATION);
-    //    stopMovement();
-
-    printState();
-}
-
-void MoverService::turnRight() {
-    stopMovement();
-    SerialLogger::debug("right / next");
-
-    changeLeftPwmRate(kLeftFwdPwm);
-    changeRightPwmRate(kRightBwdPwm);
-
-    digitalWrite(kLeftFwdPin, HIGH);
-    digitalWrite(kRightBwdPin, HIGH);
-
-    //    delay(MOVEMENT_DURATION);
-    //    stopMovement();
-
-    printState();
-}
-
-void MoverService::moveForward() {
-    stopMovement();
-    SerialLogger::debug("forward / up");
-
-    changeLeftPwmRate(kLeftFwdPwm);
-    changeRightPwmRate(kRightFwdPwm);
-
-    digitalWrite(kLeftFwdPin, HIGH);
-    digitalWrite(kRightFwdPin, HIGH);
-
-    //delay(MOVEMENT_DURATION);
-    //stopMovement();
-
-    printState();
-}
-
-void MoverService::moveBackward() {
-    stopMovement();
-    SerialLogger::debug("backwards / down");
-
-    changeLeftPwmRate(kLeftBwdPwm);
-    changeRightPwmRate(kRightBwdPwm);
-
-    digitalWrite(kLeftBwdPin, HIGH);
-    digitalWrite(kRightBwdPin, HIGH);
-
-    //delay(MOVEMENT_DURATION);
-    //stopMovement();
-
+    delay(20);
     printState();
 }
 
 void MoverService::changeLeftPwmRate(const int rate) {
-    SerialLogger::debug("Changing Pin %i to %d", kLeftPwmPin, rate);
-    analogWrite(kLeftPwmPin, rate);
-    currentLeftPwm = rate;
-
-    printState();
+    // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
+    if (rate > 15) {
+        // reduce sensitivity around anchor point zero
+        SerialLogger::debug("Changing Pwm Pin %i (left) to %d", kLeftPwmPin, rate);
+        analogWrite(kLeftPwmPin, rate);
+    } else {
+        SerialLogger::debug("Not setting left rate. Pwm rate was below threshold (%d/15). Stopping left pwm.", rate);
+        analogWrite(kLeftPwmPin, 0);
+    }
 }
 
 void MoverService::changeRightPwmRate(const int rate) {
-    SerialLogger::debug("Changing Pin %i to %d", kRightPwmPin, rate);
-    analogWrite(kRightPwmPin, rate);
-    currentRightPwm = rate;
+    // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
+    if (rate > 15) {
+        // reduce sensitivity around anchor point zero
+        SerialLogger::debug("Changing Pwm Pin %i (right) to %d", kRightPwmPin, rate);
+        analogWrite(kRightPwmPin, rate);
+    } else {
+        SerialLogger::debug("Not setting right rate. Pwm rate was below threshold (%d/15). Stopping right pwm.", rate);
+        analogWrite(kRightPwmPin, 0);
+    }
+}
 
+void MoverService::interpret_state() {
+    const bool left_forward = left_wheels_power >= 0;
+    const bool right_forward = right_wheels_power >= 0;
+    const int left_rate = left_wheels_power < 0 ? left_wheels_power  * -1 : left_wheels_power ;
+    const int right_rate = right_wheels_power < 0 ? right_wheels_power  * -1 : right_wheels_power ;
+    if (left_forward) {
+        SerialLogger::debug("Left forwards");
+        digitalWrite(kLeftBwdPin, LOW);
+        digitalWrite(kLeftFwdPin, HIGH);
+    } else {
+        SerialLogger::debug("Left backwards");
+        digitalWrite(kLeftFwdPin, LOW);
+        digitalWrite(kLeftBwdPin, HIGH);
+    }
+
+    if (right_forward) {
+        SerialLogger::debug("Right forwards");
+        digitalWrite(kRightBwdPin, LOW);
+        digitalWrite(kRightFwdPin, HIGH);
+    } else {
+        SerialLogger::debug("Right backwards");
+        digitalWrite(kRightFwdPin, LOW);
+        digitalWrite(kRightBwdPin, HIGH);
+    }
+
+    changeLeftPwmRate(left_rate);
+    changeRightPwmRate(right_rate);
+
+    // TODO delete expensive printing....
     printState();
 }

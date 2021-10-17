@@ -9,27 +9,24 @@
 class MoverService {
     public:
         MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin, const int rightFwdPin,
-                     const int rightBwdPin, const int leftFwdPwm, const int leftBwdPwm, const int rightFwdPwm, const int rightBwdPwm);
+                     const int rightBwdPin);
         ~MoverService();
 
         void printInit();
 
         void printState();
 
-        void stopMovement();
+        bool set_left_wheels_power(const int16_t wheels_power) {
+            left_wheels_power = wheels_power;
+            return true;
+        };
 
-        void turnLeft();
+        bool set_right_wheels_power(const int16_t wheels_power) {
+            right_wheels_power = wheels_power;
+            return true;
+        };
 
-        void turnRight();
-
-        void moveForward();
-
-        void moveBackward();
-
-        void changeLeftPwmRate(const int rate);
-
-        void changeRightPwmRate(const int rate);
-
+        void interpret_state();
     private:
         const int kLeftFwdPin;
         const int kLeftBwdPin;
@@ -38,13 +35,14 @@ class MoverService {
         const int kRightFwdPin;
         const int kRightBwdPin;
 
-        const int kLeftFwdPwm;
-        const int kLeftBwdPwm;
-        const int kRightFwdPwm;
-        const int kRightBwdPwm;
+        volatile int left_wheels_power;
+        volatile int right_wheels_power;
 
-        int currentLeftPwm = 0;
-        int currentRightPwm = 0;
+        void stopMovement();
+
+        void changeLeftPwmRate(const int rate);
+
+        void changeRightPwmRate(const int rate);
 };
 
 #endif // MOVER_H

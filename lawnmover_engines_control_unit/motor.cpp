@@ -16,8 +16,9 @@ void MotorService::printInit() {
     SerialLogger::info("Setup MotorService with Pin: %d", kMotorPin);
 }
 
-void MotorService::set_rotation_speed(const int16_t rotation_speed) {
+bool MotorService::set_rotation_speed(const int16_t rotation_speed) {
     rotation_speed_ = rotation_speed;
+    return true;
 }
 
 void MotorService::startMotor() {

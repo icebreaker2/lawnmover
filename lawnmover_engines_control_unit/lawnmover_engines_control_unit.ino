@@ -25,11 +25,6 @@ const int LED_BUNDLE_1 = A0;
 const int LED_BUNDLE_2 = A1;
 const int LED_BUNDLE_3 = A2;
 
-const int LEFT_FWD_PWM = 255; // maximum
-const int LEFT_BWD_PWM = 255; // maximum
-const int RIGHT_FWD_PWM = 255; // maximum
-const int RIGHT_BWD_PWM = 255; // maximum
-
 const int SCK_PIN   = 13; // D13 = pin19 = PortB.5
 const int MISO_PIN  = 12; // D12 = pin18 = PortB.4
 const int MOSI_PIN  = 11; // D11 = pin17 = PortB.3
@@ -42,49 +37,34 @@ auto _timer = timer_create_default();
 
 const int motor_spin_set_interval = 100;
 MotorService *_motorService;
-
+const int steering_set_interval = 100;
 MoverService *_moverService;
-
-volatile int16_t leftWheelsPower_ = 0;
-bool leftWheelSteeringCommand(int16_t wheelsPower) {
-    leftWheelsPower_ = wheelsPower;
-    return true;
-}
-
-volatile int16_t rightWheelsPower_ = 0;
-bool rightWheelSteeringCommand(int16_t wheelsPower) {
-    rightWheelsPower_ = wheelsPower;
-    return true;
-}
-
-bool motorSpeedCommand(int16_t rotationSpeed) {
-    _motorService->set_rotation_speed(rotationSpeed);
-    return true;
-}
 
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
     _motorService = new MotorService(MOTOR_PIN);
     _motorService->printInit();
     _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
-                                     RIGHT_BWD_PIN, LEFT_FWD_PWM, LEFT_BWD_PWM, RIGHT_FWD_PWM, RIGHT_BWD_PWM);
+                                     RIGHT_BWD_PIN);
     _moverService->printInit();
     Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
-    SpiSlave spiSlave(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN, &leftWheelSteeringCommand, &rightWheelSteeringCommand,
-                      &motorSpeedCommand);
+    SpiSlave spiSlave(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN,
+                      [](int16_t wheelsPower) -> bool {return _moverService->set_left_wheels_power(wheelsPower);},
+                      [](int16_t wheelsPower) -> bool {return _moverService->set_right_wheels_power(wheelsPower);},
+                      [](int16_t rotation_speed) -> bool {return _motorService->set_rotation_speed(rotation_speed);});
     spiSlave.addSlavePrinting(_timer, 1000);
+
     // debug pin always high
     //pinMode(DEBUG_PIN, OUTPUT);
     //digitalWrite(DEBUG_PIN, HIGH);
 
-    _timer.every(500, [](void*) -> bool {
-        SerialLogger::debug("LeftWheelsPower %d", leftWheelsPower_);
-        SerialLogger::debug("RightWheelsPower %d", rightWheelsPower_);
-        return true;
-    });
-
     _timer.every(motor_spin_set_interval, [](void*) -> bool {
         _motorService->spinMotor();
+        return true; // to repeat the action - false to stop
+    });
+
+    _timer.every(steering_set_interval, [](void*) -> bool {
+        _moverService->interpret_state();
         return true; // to repeat the action - false to stop
     });
 
