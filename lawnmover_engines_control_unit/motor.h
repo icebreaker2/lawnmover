@@ -2,7 +2,6 @@
 #define MOTOR_H
 
 #include <Arduino.h>
-#include <arduino_timer_uno.h>
 
 #define MOTOR_SPIN_CHECK_TIME_DELAY 700
 #define MOTOR_SPIN_CHECK_THRESHOLD 5
@@ -11,7 +10,7 @@ class MotorService {
     public:
         MotorService();
 
-        MotorService(const int motorPin, Timer<> &timer, const bool deadMansSwitch);
+        MotorService(const int motorPin);
 
         ~MotorService();
 
@@ -23,11 +22,11 @@ class MotorService {
 
         void spinMotor();
 
-        void checkAndResetMotorCmd();
+        void set_rotation_speed(const int16_t rotation_speed);
 
     private:
         const int kMotorPin;
-        volatile int _motorSpinCmdReceived = 0;
+        volatile int16_t rotation_speed_ = 0;
 };
 
 #endif // MOTOR_H

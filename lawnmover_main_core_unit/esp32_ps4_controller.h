@@ -12,16 +12,24 @@ class ESP32_PS4_Controller {
         ~ESP32_PS4_Controller();
 
         int16_t getLStickX () {
-            return m_lStickX;
+            // Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
+            const int &tmp_stick = m_lStickX * 2.01;
+            return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
         };
         int16_t getLStickY () {
-            return m_lStickY;
+            // Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
+            const int &tmp_stick = m_lStickY * 2.01;
+            return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
         };
         int16_t getRStickX () {
-            return m_rStickX;
+            // Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
+            const int &tmp_stick = m_rStickX * 2.01;
+            return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
         };
         int16_t getRStickY () {
-            return m_rStickY;
+            // Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
+            const int &tmp_stick = m_rStickY * 2.01;
+            return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
         };
 
         bool getDownButtonPressed() {
@@ -59,13 +67,17 @@ class ESP32_PS4_Controller {
             return m_ltButtonPressed;
         };
         int16_t getLtValue() {
-            return m_ltValue;
+            // Ps4 has value range [0, 233] which we need to scale to [0, 255]. I tested pressing PS4 Rt until it broke; 233 was max value to achieve.
+            const int &tmp_lt_value = m_ltValue * 1.2;
+            return tmp_lt_value > 255 ? 255 : tmp_lt_value;
         };
         bool getRtButtonPressed() {
             return m_rtButtonPressed;
         };
         int16_t getRtValue() {
-            return m_rtValue;
+            // Ps4 has value range [0, 233] which we need to scale to [0, 255]. I tested pressing PS4 Rt until it broke; 233 was max value to achieve.
+            const int &tmp_rt_value = m_rtValue * 1.2;
+            return tmp_rt_value > 255 ? 255 : tmp_rt_value;
         };
         bool getL3ButtonPressed() {
             return m_l3ButtonPressed;

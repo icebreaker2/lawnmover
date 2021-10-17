@@ -1,25 +1,11 @@
 #include "motor.h"
 #include <serial_logger.h>
 
-// TODO This is bad. The timer accept C-like function pointer only. I replaced it with a version using std::function for esp32 but this will not compile due to missing function headers in classic arduino compiler.
-MotorService *uniqueMotorService;
-bool _deadMansSwitch;
-
-MotorService::MotorService(const int motorPin, Timer<> &timer, const bool deadMansSwitch) :
+MotorService::MotorService(const int motorPin) :
     kMotorPin(motorPin) {
 
     pinMode(kMotorPin, OUTPUT);
     stopMotor();
-
-    uniqueMotorService = this;
-    _deadMansSwitch = deadMansSwitch;
-    timer.every(MOTOR_SPIN_CHECK_TIME_DELAY, [](void*) -> bool {
-        //        checkAndResetMotorCmd();
-        if (_deadMansSwitch) {
-            uniqueMotorService->checkAndResetMotorCmd();
-        }
-        return true; // to repeat the action - false to stop
-    });
 }
 
 MotorService::~MotorService() {
@@ -30,27 +16,26 @@ void MotorService::printInit() {
     SerialLogger::info("Setup MotorService with Pin: %d", kMotorPin);
 }
 
+void MotorService::set_rotation_speed(const int16_t rotation_speed) {
+    rotation_speed_ = rotation_speed;
+}
+
 void MotorService::startMotor() {
-    _motorSpinCmdReceived++;
-    SerialLogger::info("start motor (ST/REPT)");
-    digitalWrite(kMotorPin, HIGH);
+    SerialLogger::trace("Starting motor");
+    analogWrite(kMotorPin, 128);
 }
 
 void MotorService::stopMotor() {
-    SerialLogger::info("motor Func / stop");
-    digitalWrite(kMotorPin, LOW);
+    SerialLogger::trace("Stopping motor");
+    analogWrite(kMotorPin, 0);
 }
 
 void MotorService::spinMotor() {
-    _motorSpinCmdReceived++;
-    SerialLogger::debug("motor spin / ST/REPT");
-    digitalWrite(kMotorPin, HIGH);
-}
-
-void MotorService::checkAndResetMotorCmd() {
-    SerialLogger::debug("MotorCtr after %d %s %d/%d", MOTOR_SPIN_CHECK_TIME_DELAY, "ms was:", _motorSpinCmdReceived, MOTOR_SPIN_CHECK_THRESHOLD);
-    if (_motorSpinCmdReceived < MOTOR_SPIN_CHECK_THRESHOLD) {
+    if (rotation_speed_ > 10) {
+        SerialLogger::debug("Spinning motor with %d/%d", rotation_speed_, 255);
+        analogWrite(kMotorPin, rotation_speed_);
+    } else {
+        SerialLogger::debug("Not spinning motor. Rotation speed was below threshold (%d/10)", rotation_speed_);
         stopMotor();
     }
-    _motorSpinCmdReceived = 0; // reset
 }
