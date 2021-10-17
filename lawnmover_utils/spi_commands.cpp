@@ -27,25 +27,6 @@ bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const
     uint8_t rx_value_bytes[COMMAND_FRAME_VALUE_SIZE];
     uint8_t tx_value_bytes[COMMAND_FRAME_VALUE_SIZE];
 
-    Serial.print("RxBufferInput:");
-    for (long i = 0; i < buffer_size; i += 1) {
-        if (i % COMMAND_FRAME_SIZE == 0) {
-            Serial.print(" ");
-        }
-        Serial.print(rx_buffer[i], HEX);
-    }
-    Serial.println();
-
-
-    Serial.print("TxBufferInput:");
-    for (long i = 0; i < buffer_size; i += 1) {
-        if (i % COMMAND_FRAME_SIZE == 0) {
-            Serial.print(" ");
-        }
-        Serial.print(tx_buffer[i], HEX);
-    }
-    Serial.println();
-
     for (long i = 0; i + COMMAND_FRAME_SIZE <= buffer_size; i += COMMAND_FRAME_SIZE) {
         for (int id_counter = 0; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
             //Serial.printf("%d, %d, %d -> %d: %x\n", COMMAND_SPI_RX_OFFSET , i, id_counter, COMMAND_SPI_RX_OFFSET + i + id_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + id_counter]);
@@ -134,16 +115,17 @@ int16_t SpiCommands::slave_interpret_command_id(const uint8_t *rx_buffer) {
     Note: Function-Pointer may differ if request only received. If so, slave must write values to tx_buffer
 */
 bool SpiCommands::slave_interpret_command(const int16_t id, uint8_t *rx_buffer, uint8_t *tx_buffer,
-        bool (*leftWheelSteeringCommand)(float), bool (*rightWheelSteeringCommand)(float), bool (*motorSpeedCommand)(int16_t)) {
+        bool (*leftWheelSteeringCommand)(int16_t), bool (*rightWheelSteeringCommand)(int16_t),
+        bool (*motorSpeedCommand)(int16_t)) {
     bool valid = false;
     switch (id) {
         case LEFT_WHEEL_STEERING_COMMAND: {
-                const float value = FloatSpiCommand::interpretBytes(rx_buffer);
+                const int16_t value = IntegerSpiCommand::interpretBytes(rx_buffer);
                 valid = leftWheelSteeringCommand(value);
                 break;
             }
         case RIGHT_WHEEL_STEERING_COMMAND: {
-                const float value = FloatSpiCommand::interpretBytes(rx_buffer);
+                const int16_t value = IntegerSpiCommand::interpretBytes(rx_buffer);
                 valid = rightWheelSteeringCommand(value);
                 break;
             }

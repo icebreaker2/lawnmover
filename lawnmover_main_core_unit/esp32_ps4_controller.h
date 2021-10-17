@@ -11,17 +11,17 @@ class ESP32_PS4_Controller {
 
         ~ESP32_PS4_Controller();
 
-        float getLStickX () {
-            return static_cast<float>(m_lStickX) / k_stick_scaler;
+        int16_t getLStickX () {
+            return m_lStickX;
         };
-        float getLStickY () {
-            return static_cast<float>(m_lStickY) / k_stick_scaler;
+        int16_t getLStickY () {
+            return m_lStickY;
         };
-        float getRStickX () {
-            return static_cast<float>(m_rStickX) / k_stick_scaler;
+        int16_t getRStickX () {
+            return m_rStickX;
         };
-        float getRStickY () {
-            return static_cast<float>(m_rStickY) / k_stick_scaler;
+        int16_t getRStickY () {
+            return m_rStickY;
         };
 
         bool getDownButtonPressed() {

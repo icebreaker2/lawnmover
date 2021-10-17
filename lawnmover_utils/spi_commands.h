@@ -11,6 +11,7 @@
 #define LEFT_WHEEL_STEERING_COMMAND (int16_t) 1
 #define RIGHT_WHEEL_STEERING_COMMAND (int16_t) 2
 #define MOTOR_SPEED_COMMAND (int16_t) 3
+#define ENGINE_COMMANDS 3
 #define MAX_ID (int16_t) 3
 
 // Could not get templates to work...
@@ -83,7 +84,8 @@ class SpiCommands {
         static int16_t slave_interpret_command_id(const uint8_t *rx_buffer);
 
         static bool slave_interpret_command(const int16_t id, uint8_t *rx_buffer, uint8_t *tx_buffer,
-                                            bool (*leftWheelSteeringCommand)(float), bool (*rightWheelSteeringCommand)(float),
+                                            bool (*leftWheelSteeringCommand)(int16_t),
+                                            bool (*rightWheelSteeringCommand)(int16_t),
                                             bool (*motorSpeedCommand)(int16_t));
     private:
         static SpiCommand getCommandFrom(const int id);
