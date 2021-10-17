@@ -2,8 +2,7 @@
 #include "esp32_ps4_controller.h"
 #include "esp32_spi_master.h"
 
-// TODO make system lib
-#include "spi_commands.h"
+#include <spi_commands.h>
 
 const int MOSI_PIN  = 23;
 const int MISO_PIN =  19;

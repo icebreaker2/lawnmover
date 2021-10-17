@@ -63,7 +63,7 @@ void SerialLogger::error(const char * format, ...) {
         va_list argptr;
         va_start(argptr, format);
 
-        Serial.print("ERROR:  ");
+        Serial.print("ERROR: ");
         log(format, argptr);
         //va_end(argptr);
     }

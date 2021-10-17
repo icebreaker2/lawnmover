@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <Arduino.h>
 #include <serial_logger.h>
+#include <spi_commands.h>
 
 SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin) {
     AddArduinoSpiSlave(sck_pin, miso_pin, mosi_pin, ss_pin);
@@ -78,39 +79,17 @@ ISR (SPI_STC_vect) {
         //Serial.println(id_bytes[pos % 2], HEX);
     } else {
         //Serial.println(pos);
+        //Serial.print("Response: ");
+        //Serial.println(0, HEX);
         // For the master to receive the nth byte we need to send a n+1 byte
         SPDR = 0;
         tx_buffer[counter] = 0;
-        //Serial.println("Initiating new communication");
     }
 
     counter = (counter + 1) % 27;
 
     if (pos == 8) {
         pos = 0;
-        /*  Serial.print("Received: ");
-            Serial.print(rx_buffer[0], HEX);
-            Serial.print(rx_buffer[1], HEX);
-            Serial.print(rx_buffer[2], HEX);
-            Serial.print(rx_buffer[3], HEX);
-            Serial.print(rx_buffer[4], HEX);
-            Serial.print(rx_buffer[5], HEX);
-            Serial.print(rx_buffer[6], HEX);
-            Serial.print(rx_buffer[7], HEX);
-            Serial.print(rx_buffer[8], HEX);
-            Serial.println("");
-            Serial.print("Send: ");
-            Serial.print(tx_buffer[0], HEX);
-            Serial.print(tx_buffer[1], HEX);
-            Serial.print(tx_buffer[2], HEX);
-            Serial.print(tx_buffer[3], HEX);
-            Serial.print(tx_buffer[4], HEX);
-            Serial.print(tx_buffer[5], HEX);
-            Serial.print(tx_buffer[6], HEX);
-            Serial.print(tx_buffer[7], HEX);
-            Serial.print(tx_buffer[8], HEX);
-            Serial.println("");
-            SerialLogger::debug("Resetting");*/
     } else {
         pos++;
     }
