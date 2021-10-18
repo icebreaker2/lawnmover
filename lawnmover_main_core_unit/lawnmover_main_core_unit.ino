@@ -43,24 +43,26 @@ bool engine_control_unit_consumer(uint8_t *slave_response_buffer, long buffer_si
         SerialLogger::error("Cannot consume slave output. Buffer size does not match written bytes to slave");
         valid = false;
     } else {
-        Serial.print("RxBufferInput:");
-        for (long i = 0; i < buffer_size; i += 1) {
+        /*
+            Serial.print("RxBufferInput:");
+            for (long i = 0; i < buffer_size; i += 1) {
             if (i % COMMAND_FRAME_SIZE == 0) {
                 Serial.print(" ");
             }
             Serial.print(slave_response_buffer[i], HEX);
-        }
-        Serial.println();
+            }
+            Serial.println();
 
 
-        Serial.print("TxBufferInput:");
-        for (long i = 0; i < buffer_size; i += 1) {
+            Serial.print("TxBufferInput:");
+            for (long i = 0; i < buffer_size; i += 1) {
             if (i % COMMAND_FRAME_SIZE == 0) {
                 Serial.print(" ");
             }
             Serial.print(engine_control_tx_buffer[i], HEX);
-        }
-        Serial.println();
+            }
+            Serial.println();
+        */
         valid = SpiCommands::master_interpret_communication(engine_control_tx_buffer, slave_response_buffer, buffer_size);
     }
 

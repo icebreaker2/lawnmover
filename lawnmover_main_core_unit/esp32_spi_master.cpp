@@ -87,11 +87,9 @@ void Esp32SpiMaster::add_timer(const int slave_id, const int slave_pin, const in
                                Timer<> &timer, uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), const int chunk_size,
                                uint8_t* rx_buffer, int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool &shutdown,
                                ESP32DMASPI::Master *master) {
-    Serial.printf("Adding timer\n");
     timer.every(interval, [&shutdown, slave_id, slave_pin, slave_power_pin, slave_boot_delay, interval, inter_transaction_delay_microseconds,
     clock_divider, timer, chunk_size, max_tx_rx_buffer_size, rx_buffer, supplier, consumer, error_callback, master](void*) mutable -> bool {
         bool repeat = true;
-
         if (shutdown) {
             repeat = false;
         } else {

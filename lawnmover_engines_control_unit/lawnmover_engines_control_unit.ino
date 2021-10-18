@@ -1,5 +1,6 @@
 #include <arduino_timer_uno.h>
 #include <serial_logger.h>
+#include <spi_commands.h>
 
 #include "mover.h"
 #include "motor.h"
@@ -30,6 +31,10 @@ const int MISO_PIN  = 12; // D12 = pin18 = PortB.4
 const int MOSI_PIN  = 11; // D11 = pin17 = PortB.3
 const int SS_PIN    = 10; // D10 = pin16 = PortB.2
 
+const int EXPECTED_SPI_COMMANDS_PER_SECONDS = 5;
+const int EXPECTED_SPI_COMMANDSERROR_MARGIN = 2 * ENGINE_COMMANDS;
+volatile int watchdog_counter_ = 0;
+
 // Debug
 const int DEBUG_PIN = 2; // is no PWM
 
@@ -49,14 +54,18 @@ void setup() {
     _moverService->printInit();
     Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
     SpiSlave spiSlave(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN,
-                      [](int16_t wheelsPower) -> bool {return _moverService->set_left_wheels_power(wheelsPower);},
-                      [](int16_t wheelsPower) -> bool {return _moverService->set_right_wheels_power(wheelsPower);},
-                      [](int16_t rotation_speed) -> bool {return _motorService->set_rotation_speed(rotation_speed);});
-    spiSlave.addSlavePrinting(_timer, 1000);
-
-    // debug pin always high
-    //pinMode(DEBUG_PIN, OUTPUT);
-    //digitalWrite(DEBUG_PIN, HIGH);
+    [](int16_t wheelsPower) -> bool {
+        watchdog_counter_++;
+        return _moverService->set_left_wheels_power(wheelsPower);
+    },
+    [](int16_t wheelsPower) -> bool {
+        watchdog_counter_++;
+        return _moverService->set_right_wheels_power(wheelsPower);
+    },
+    [](int16_t rotation_speed) -> bool {
+        watchdog_counter_++;
+        return _motorService->set_rotation_speed(rotation_speed);
+    });
 
     _timer.every(motor_spin_set_interval, [](void*) -> bool {
         _motorService->spinMotor();
@@ -67,6 +76,27 @@ void setup() {
         _moverService->interpret_state();
         return true; // to repeat the action - false to stop
     });
+
+
+    _timer.every(1000, [](void*) -> bool {
+        if (watchdog_counter_ < ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN) {
+            SerialLogger::error("This is the watchdog. Did not receive enough commands (%d/%d) for some time. Stopping all engines",
+            watchdog_counter_, ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN);
+            _moverService->set_left_wheels_power(0);
+            _moverService->set_right_wheels_power(0);
+            _motorService->set_rotation_speed(0);
+        } else {
+            SerialLogger::debug("This is the watchdog. Everything normal.");
+        }
+        watchdog_counter_ = 0;
+        return true; // to repeat the action - false to stop
+    });
+
+    //spiSlave.addSlavePrinting(_timer, 1000);
+
+    // debug pin always high
+    pinMode(DEBUG_PIN, OUTPUT);
+    digitalWrite(DEBUG_PIN, HIGH);
 
     // DEBUG START
     // _moverService->moveForward();

@@ -104,8 +104,10 @@ class ESP32_PS4_Controller {
 
     private:
         bool readState();
+        void reset_state();
         bool checkCommandStates();
         bool checkAuxiliaryStates();
+
 
         const char *k_masterMac;
         const unsigned long k_timerDelay;
@@ -114,7 +116,6 @@ class ESP32_PS4_Controller {
         const int k_connectedPin;
         const int k_commandReceivedPin;
 
-        const float k_stick_scaler = 128.0;
         bool _connected = false;
 
         bool m_charging = false;

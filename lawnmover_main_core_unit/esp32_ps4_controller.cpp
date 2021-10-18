@@ -38,6 +38,7 @@ ESP32_PS4_Controller::ESP32_PS4_Controller(const char *masterMac, Timer<> &timer
                 digitalWrite(k_connectedPin, LOW);
                 digitalWrite(k_commandReceivedPin, LOW);
                 SerialLogger::info("Disconnected from: %s", k_masterMac);
+                reset_state();
             }
             _connected = false;
         }
@@ -69,7 +70,41 @@ bool ESP32_PS4_Controller::readState() {
     }
 }
 
-bool  ESP32_PS4_Controller::checkCommandStates() {
+void ESP32_PS4_Controller::reset_state() {
+    m_charging = false;
+    m_audioConnected = false;
+    m_micConnected = false;
+    m_batteryLevel = -1;
+
+    m_lStickX = 0;
+    m_lStickY = 0;
+    m_rStickX = 0;
+    m_rStickY = 0;
+
+    m_downButtonPressed = false;
+    m_upButtonPressed = false;
+    m_leftButtonPressed = false;
+    m_rightButtonPressed = false;
+
+    m_squareButtonPressed = false;
+    m_crossButtonPressed = false;
+    m_circleButtonPressed = false;
+    m_triangleButtonPressed = false;
+    m_lbButtonPressed = false;
+    m_rbButtonPressed = false;
+    m_ltButtonPressed = false;
+    m_ltValue = 0;
+    m_rtButtonPressed = false;
+    m_rtValue = 0;
+    m_l3ButtonPressed = false;
+    m_r3ButtonPressed = false;
+    m_shareButtonPressed = false;
+    m_optionsButtonPressed = false;
+    m_psButtonPressed = false;
+    m_touchpadButtonPressed = false;
+}
+
+bool ESP32_PS4_Controller::checkCommandStates() {
     bool stateChanged = false;
 
     const bool rightButtonPressed = PS4.Right();

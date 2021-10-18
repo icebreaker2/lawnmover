@@ -36,7 +36,7 @@ void MotorService::spinMotor() {
         SerialLogger::debug("Spinning motor with %d/%d", rotation_speed_, 255);
         analogWrite(kMotorPin, rotation_speed_);
     } else {
-        SerialLogger::debug("Not spinning motor. Rotation speed was below threshold (%d/10)", rotation_speed_);
+        SerialLogger::debug("Rotation speed was below threshold (%d/10). Stop motor spinning.", rotation_speed_);
         stopMotor();
     }
 }
