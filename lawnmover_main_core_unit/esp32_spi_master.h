@@ -15,7 +15,7 @@ class Esp32SpiMaster {
 
         void addSlave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay, const int interval,
                       const int inter_transaction_delay_microseconds, const long clock_divider, Timer<> &timer,
-                      uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long));
+                      uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), bool &synchronized);
 
     private:
         const int k_clock_pin;
@@ -47,5 +47,5 @@ class Esp32SpiMaster {
                               const int interval, const int inter_transaction_delay_microseconds, const long clock_divider,
                               Timer<> &timer, uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), const int chunk_size,
                               uint8_t* rx_buffer, int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool &shutdown,
-                              ESP32DMASPI::Master *master);
+                              ESP32DMASPI::Master *master, bool &synchronized);
 };

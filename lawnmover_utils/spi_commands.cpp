@@ -18,6 +18,8 @@ int verifyIds(const byte rxIdBytes [], const byte txIdBytes []) {
     }
 }
 
+uint8_t SpiCommands::COMMUNICATION_START_SEQUENCE[COMMUNICATION_START_SEQUENCE_LENGTH]= {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xFF};
+
 bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size) {
     SerialLogger::trace("Validating master-slave communication");
     uint8_t rxId1[COMMAND_FRAME_ID_SIZE];

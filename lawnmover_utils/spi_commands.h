@@ -8,6 +8,9 @@
 // For the master to receive the nth byte we need to send a n+1 byte
 #define COMMAND_SPI_RX_OFFSET 1
 #define COMMAND_FRAME_SIZE 9
+
+#define COMMUNICATION_START_SEQUENCE_LENGTH 9
+
 #define LEFT_WHEEL_STEERING_COMMAND (int16_t) 1
 #define RIGHT_WHEEL_STEERING_COMMAND (int16_t) 2
 #define MOTOR_SPEED_COMMAND (int16_t) 3
@@ -87,6 +90,9 @@ class SpiCommands {
                                             bool (*leftWheelSteeringCommand)(int16_t),
                                             bool (*rightWheelSteeringCommand)(int16_t),
                                             bool (*motorSpeedCommand)(int16_t));
+
+        static uint8_t COMMUNICATION_START_SEQUENCE[];
+
     private:
         static SpiCommand getCommandFrom(const int id);
 };
@@ -104,6 +110,7 @@ void SpiCommands::putCommandToBuffer(const int16_t commandId, const T commandVal
     SpiCommands::valueToBytes(commandId, bytes);
     SpiCommands::valueToBytes(commandValue, bytes + COMMAND_FRAME_ID_SIZE);
     SpiCommands::valueToBytes((int16_t) - 1, bytes + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE);
+    bytes[COMMAND_FRAME_SIZE - 1] = 0xFF;
 
     memcpy(buffer, bytes, COMMAND_FRAME_SIZE);
 }

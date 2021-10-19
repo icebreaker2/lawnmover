@@ -8,8 +8,8 @@
 
 class MoverService {
     public:
-        MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin, const int rightFwdPin,
-                     const int rightBwdPin);
+        MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
+                     const int rightFwdPin, const int rightBwdPin);
         ~MoverService();
 
         void printInit();
@@ -35,8 +35,8 @@ class MoverService {
         const int kRightFwdPin;
         const int kRightBwdPin;
 
-        volatile int left_wheels_power;
-        volatile int right_wheels_power;
+        volatile int left_wheels_power = 0;
+        volatile int right_wheels_power = 0;
 
         void stopMovement();
 

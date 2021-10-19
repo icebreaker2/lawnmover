@@ -13,12 +13,12 @@ const int MISO_SPI_INTERNAL_PIN = 12;
 const int MOSI_SPI_INTERNAL_PIN = 11;
 const int DEFAULT_SS_PIN_SPI_INTERNAL_PIN = 10;
 
-const int LEFT_FWD_PIN = 9; // is PWM
-const int LEFT_BWD_PIN = 8; // is no PWM
+const int LEFT_FWD_PIN = 8; // is PWM
+const int LEFT_BWD_PIN = 9; // is no PWM
 const int LEFT_PWM_PIN = 6; // is PWM
 const int RIGHT_PWM_PIN = 5; // is PWM
-const int RIGHT_FWD_PIN = 7; // is no PWM
-const int RIGHT_BWD_PIN = 4; // is no PWM
+const int RIGHT_FWD_PIN = 4; // is no PWM
+const int RIGHT_BWD_PIN = 7; // is no PWM
 
 const int MOTOR_PIN = 3; // is PWM / control with 5v only
 
@@ -92,7 +92,7 @@ void setup() {
         return true; // to repeat the action - false to stop
     });
 
-    //spiSlave.addSlavePrinting(_timer, 1000);
+    spiSlave.addSlavePrinting(_timer, 1000);
 
     // debug pin always high
     pinMode(DEBUG_PIN, OUTPUT);
