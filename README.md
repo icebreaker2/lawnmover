@@ -31,5 +31,11 @@ Any received command must be acknowledged by slave within defined time or master
   * Manual controll must override object detection and supsend object detection for some defined time, always!
 
 
+# TODOs
+* Align naming conventions (I am sorry if you have trouble reading the code, I mixed conventions here. Plan is to align with Googles Cpp Guide)
+* Add schematics of lawnmovers hardware and circuits
+* Add links
+* Add docs or choose more descriptive names and types
+
 ## License
 [License](LICENSE)

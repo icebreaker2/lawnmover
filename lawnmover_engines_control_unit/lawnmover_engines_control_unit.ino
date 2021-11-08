@@ -77,10 +77,9 @@ void setup() {
         return true; // to repeat the action - false to stop
     });
 
-
     _timer.every(1000, [](void*) -> bool {
         if (watchdog_counter_ < ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN) {
-            SerialLogger::error("This is the watchdog. Did not receive enough commands (%d/%d) for some time. Stopping all engines",
+            SerialLogger::error("This is Watchdog. Did not receive enough commands (%d/%d) for some time. Stopping all engines",
             watchdog_counter_, ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN);
             _moverService->set_left_wheels_power(0);
             _moverService->set_right_wheels_power(0);

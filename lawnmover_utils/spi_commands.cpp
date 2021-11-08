@@ -18,7 +18,7 @@ int verifyIds(const byte rxIdBytes [], const byte txIdBytes []) {
     }
 }
 
-uint8_t SpiCommands::COMMUNICATION_START_SEQUENCE[COMMUNICATION_START_SEQUENCE_LENGTH]= {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0xFF};
+uint8_t SpiCommands::COMMUNICATION_START_SEQUENCE[COMMUNICATION_START_SEQUENCE_LENGTH] = {0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0xFF};
 
 bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size) {
     SerialLogger::trace("Validating master-slave communication");
@@ -89,6 +89,59 @@ bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const
     }
     SerialLogger::trace("Validating master-slave communication done");
     return true;
+}
+
+int pos = 0;
+uint8_t id_bytes [COMMAND_FRAME_ID_SIZE];
+uint8_t value_bytes [COMMAND_FRAME_VALUE_SIZE];
+
+bool SpiCommands::slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte) {
+    if (synchronized) {
+        if (pos < COMMAND_FRAME_ID_SIZE) {
+            id_bytes[pos] = rx_byte;
+            pos++;
+            tx_byte = rx_byte;
+        } else if (pos < COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE) {
+            value_bytes[pos - COMMAND_FRAME_ID_SIZE] = rx_byte;
+            tx_byte = rx_byte;
+            pos++;
+        } else if (pos < COMMAND_FRAME_SIZE - COMMAND_SPI_RX_OFFSET) {
+            const int &id_index = pos % COMMAND_FRAME_ID_SIZE;
+            if (rx_byte == 0xFF) {
+                tx_byte = id_bytes[id_index];
+                pos++;
+            } else {
+                //SerialLogger::warn("Received bad ack id request with byte %c on id index %d with position %d. Synchronization lost.", rx_byte, id_index, pos);
+                tx_byte = 0;
+                synchronized = false;
+                pos = 0;
+            }
+        } else {
+            tx_byte = 0;
+            pos = 0;
+            return true;
+        }
+    } else {
+        if (rx_byte == SpiCommands::COMMUNICATION_START_SEQUENCE[pos]) {
+            if (pos == COMMUNICATION_START_SEQUENCE_LENGTH - 1) {
+                pos = 0;
+                tx_byte = 0;
+                if (rx_byte == 0xFF) {
+                    synchronized = true;
+                    return true;
+                } else {
+                    SerialLogger::warn("Bad end-of-sequence-byte received (%x) which should have been %x", rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[pos]);
+                }
+            } else {
+                tx_byte = SpiCommands::COMMUNICATION_START_SEQUENCE[pos];
+                pos++;
+            }
+        } else {
+            pos = 0;
+            //SerialLogger::warn("Lost synchronization. Received byte %c but expected %c at index %d. Restarting synchronization sequence.", rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[pos], pos);
+        }
+    }
+    return false;
 }
 
 /**

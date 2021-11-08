@@ -91,6 +91,9 @@ class SpiCommands {
                                             bool (*rightWheelSteeringCommand)(int16_t),
                                             bool (*motorSpeedCommand)(int16_t));
 
+        static bool slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte);
+
+
         static uint8_t COMMUNICATION_START_SEQUENCE[];
 
     private:

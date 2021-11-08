@@ -4,12 +4,9 @@
 #include <serial_logger.h>
 #include <spi_commands.h>
 
-int pos = 0;
-uint8_t id_bytes [COMMAND_FRAME_ID_SIZE];
-uint8_t value_bytes [COMMAND_FRAME_VALUE_SIZE];
 
 const int engine_commands_size = ENGINE_COMMANDS * COMMAND_FRAME_SIZE;
-int counter = 0;
+int buffer_counter = 0;
 int engine_commands_iterator = 0;
 uint8_t rx_buffer[engine_commands_size];
 uint8_t tx_buffer[engine_commands_size];
@@ -57,76 +54,38 @@ SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, co
     Note: Printing consumes too much time. Slave does not respond in time.
 */
 ISR (SPI_STC_vect) {
-    const uint8_t c = SPDR;
-    rx_buffer[counter] = c;
-    tx_buffer[counter] = c;
+    const uint8_t rx_byte = SPDR;
+    uint8_t tx_byte = 0;
+    const bool previously_synchronized = synchronized;
 
-    if (synchronized) {
-        if (pos < COMMAND_FRAME_ID_SIZE) {
-            id_bytes[pos] = c;
-            SPDR = c;
-            pos++;
-        } else if (pos < COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE) {
-            value_bytes[pos - COMMAND_FRAME_ID_SIZE] = c;
-            SPDR = c;
-            pos++;
-        } else if (pos < COMMAND_FRAME_SIZE - COMMAND_SPI_RX_OFFSET) {
-            const int &id_index = pos % COMMAND_FRAME_ID_SIZE;
-            if (c == 0xFF) {
-                SPDR = id_bytes[id_index];
-                tx_buffer[counter] = id_bytes[id_index];
-                pos++;
-            } else {
-                //SerialLogger::warn("Received bad ack id request with byte %c on id index %d with position %d. Synchronization lost.", c, id_index, pos);
-                SPDR = 0;
-                tx_buffer[counter] = 0;
+    const bool full_command_or_synchronized = SpiCommands::slave_process_partial_command(synchronized, rx_byte, tx_byte);
+    SPDR = tx_byte;
+    rx_buffer[buffer_counter] = rx_byte;
+    tx_buffer[buffer_counter] = tx_byte;
 
-                synchronized = false;
-                pos = 0;
-                counter = 0;
-            }
-        } else {
-            SPDR = 0;
-            tx_buffer[counter] = 0;
-            pos = 0;
-
-            const int16_t id = SpiCommands::slave_interpret_command_id(id_bytes);
-            const int tx_rx_offset = engine_commands_iterator * COMMAND_FRAME_SIZE;
-            const bool valid_command = SpiCommands::slave_interpret_command(id, rx_buffer +  tx_rx_offset + COMMAND_FRAME_ID_SIZE,
-                                       tx_buffer + tx_rx_offset + COMMAND_FRAME_ID_SIZE, left_wheel_steering_command_,
-                                       right_wheel_steering_command_, motor_speed_command_);
-            if (!valid_command) {
-                SerialLogger::warn("Did not receive valid command. Cannot interpret value");
-            }
-            engine_commands_iterator = (engine_commands_iterator + 1) % ENGINE_COMMANDS;
+    if (full_command_or_synchronized && previously_synchronized) {
+        const int tx_rx_offset = engine_commands_iterator * COMMAND_FRAME_SIZE;
+        const int16_t id = SpiCommands::slave_interpret_command_id(rx_buffer + tx_rx_offset);
+        const bool valid_command = SpiCommands::slave_interpret_command(id, rx_buffer +  tx_rx_offset + COMMAND_FRAME_ID_SIZE,
+                                   tx_buffer + tx_rx_offset + COMMAND_FRAME_ID_SIZE, left_wheel_steering_command_,
+                                   right_wheel_steering_command_, motor_speed_command_);
+        engine_commands_iterator = (engine_commands_iterator + 1) % ENGINE_COMMANDS;
+        buffer_counter = engine_commands_iterator * COMMAND_FRAME_SIZE;
+        if (!valid_command) {
+            SerialLogger::warn("Did not receive valid command. Cannot interpret value");
         }
-        counter = (counter + 1) % engine_commands_size;
     } else {
-        if (rx_buffer[pos] == SpiCommands::COMMUNICATION_START_SEQUENCE[pos]) {
-            if (pos == COMMUNICATION_START_SEQUENCE_LENGTH - 1) {
-                if (c == 0xFF) {
-                    synchronized = true;
-                } else {
-                    SerialLogger::warn("Bad end-of-sequence-byte received (%x) which should have been %x", c, SpiCommands::COMMUNICATION_START_SEQUENCE[pos]);
-                }
-
-                pos = 0;
-                counter = 0;
-                SPDR = 0;
-            } else {
-                SPDR = SpiCommands::COMMUNICATION_START_SEQUENCE[pos];
-                pos++;
-                counter = (counter + 1) % engine_commands_size;
-            }
+        if (previously_synchronized) {
+            buffer_counter = (buffer_counter + 1) % COMMAND_FRAME_SIZE;
         } else {
-            // else restarting synchronization sequence
-            synchronized = false;
-            pos = 0;
-            counter = 0;
-            //SerialLogger::warn("Lost synchronization. Received byte %c but expected %c at index %d", c, SpiCommands::COMMUNICATION_START_SEQUENCE[pos], pos);
+            if (synchronized) {
+                engine_commands_iterator = 0;
+                buffer_counter = 0;
+            } else {
+                buffer_counter = (buffer_counter + 1) % COMMAND_FRAME_SIZE;
+            }
         }
     }
-
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
 void SpiSlave::addSlavePrinting(Timer<> &timer, const int interval) {
