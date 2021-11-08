@@ -60,8 +60,7 @@ volatile boolean silly_semaphore_single_threaded = false;
 */
 void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
                               const int interval, const int inter_transaction_delay_microseconds,
-                              const long clock_divider, Timer<> &timer, uint8_t *(*supplier)(long&),
-                              bool(*consumer)(uint8_t *, long), bool &synchronized) {
+                              const long clock_divider, Timer<> &timer, SpiSlaveController *spiSlaveController) {
     const int slave_id = get_free_id();
     if (slave_id >= 0) {
         ESP32DMASPI::Master *master = setup_slave(slave_pin, slave_power_pin, slave_boot_delay, interval, slave_id);
@@ -74,8 +73,8 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, co
         volatile bool &shutdown = shutdown_;
 
         add_timer(slave_id, slave_pin, slave_power_pin, slave_boot_delay, interval, inter_transaction_delay_microseconds,
-                  clock_divider, timer, supplier, consumer, chunk_size, rx_buffer, max_tx_rx_buffer_size, error_callback,
-                  shutdown, master, synchronized);
+                  clock_divider, timer, spiSlaveController, chunk_size, rx_buffer, max_tx_rx_buffer_size, error_callback,
+                  shutdown, master);
     } else {
         SerialLogger::error("Cannot add a new master to internal array. Reached max of %d masters", MAX_SLAVES);
     }
@@ -84,18 +83,17 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, co
 
 void Esp32SpiMaster::add_timer(const int slave_id, const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
                                const int interval, const int inter_transaction_delay_microseconds, const long clock_divider,
-                               Timer<> &timer, uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), const int chunk_size,
-                               uint8_t* rx_buffer, int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool & shutdown,
-                               ESP32DMASPI::Master * master, bool & synchronized) {
+                               Timer<> &timer, SpiSlaveController *spiSlaveController, const int chunk_size, uint8_t* rx_buffer,
+                               int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool & shutdown, ESP32DMASPI::Master *master) {
     timer.every(interval, [&shutdown, slave_id, slave_pin, slave_power_pin, slave_boot_delay, interval,
-                           inter_transaction_delay_microseconds, clock_divider, timer, chunk_size, max_tx_rx_buffer_size, rx_buffer,
-    supplier, consumer, error_callback, master, &synchronized](void*) mutable -> bool {
+                           inter_transaction_delay_microseconds, clock_divider, timer, chunk_size, max_tx_rx_buffer_size, 
+                           spiSlaveController, rx_buffer, error_callback, master](void*) mutable -> bool {
         bool repeat = true;
         if (shutdown) {
             repeat = false;
         } else {
             long tx_rx_buffer_size = -1;
-            uint8_t *tx_buffer = (*supplier)(tx_rx_buffer_size);
+            uint8_t *tx_buffer = spiSlaveController->supply(tx_rx_buffer_size);
             if (tx_rx_buffer_size  < 0) {
                 SerialLogger::error("Cannot create spi slave communication. Supplier returned bad buffer_size %d", tx_rx_buffer_size);
                 repeat = false;
@@ -122,7 +120,7 @@ void Esp32SpiMaster::add_timer(const int slave_id, const int slave_pin, const in
                         }
                     }
                     if (repeat) {
-                        if ((*consumer)(rx_buffer, tx_rx_buffer_size)) {
+                        if (spiSlaveController->consume(rx_buffer, tx_rx_buffer_size)) {
                             SerialLogger::debug("Slave on slave select pin %d did return correct results!", slave_pin);
                         } else {
                             SerialLogger::error("Slave did not return correct results on slave-select pin %d!", slave_pin);

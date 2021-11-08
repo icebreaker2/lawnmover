@@ -1,8 +1,12 @@
+#ifndef ESP32_SPI_MASTER_H
+#define ESP32_SPI_MASTER_H
+
 #include <arduino_timer_esp32.h>
 #include <esp32-hal-spi.h>
 // See https://github.com/espressif/arduino-esp32/blob/master/libraries/SPI/src/SPI.h
 #include <SPI.h>
 #include "ESP32DMASPIMaster.h"
+#include "spi_slave_controller.h"
 
 #define MAX_SLAVES 5
 
@@ -15,7 +19,7 @@ class Esp32SpiMaster {
 
         void addSlave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay, const int interval,
                       const int inter_transaction_delay_microseconds, const long clock_divider, Timer<> &timer,
-                      uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), bool &synchronized);
+                      SpiSlaveController *spiSlaveController);
 
     private:
         const int k_clock_pin;
@@ -44,8 +48,9 @@ class Esp32SpiMaster {
         static void restart_slave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay, const int slave_id);
         static void tear_down_slave(const int slave_pin, const int slave_power_pin, const int slave_id);
         static void add_timer(const int slave_id, const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
-                              const int interval, const int inter_transaction_delay_microseconds, const long clock_divider,
-                              Timer<> &timer, uint8_t *(*supplier)(long&), bool(*consumer)(uint8_t *, long), const int chunk_size,
-                              uint8_t* rx_buffer, int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool &shutdown,
-                              ESP32DMASPI::Master *master, bool &synchronized);
+                               const int interval, const int inter_transaction_delay_microseconds, const long clock_divider,
+                               Timer<> &timer, SpiSlaveController *spiSlaveController, const int chunk_size, uint8_t* rx_buffer,
+                               int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool & shutdown, ESP32DMASPI::Master *master);
 };
+
+#endif // ESP32_SPI_MASTER_H

@@ -1,3 +1,6 @@
+#ifndef SPI_SLAVE_H
+#define SPI_SLAVE_H
+
 #include <arduino_timer_uno.h>
 
 class SpiSlave {
@@ -13,3 +16,4 @@ class SpiSlave {
 
     private:
 };
+#endif // SPI_SLAVE_H

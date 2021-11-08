@@ -1,4 +1,5 @@
 #include "spi_slave.h"
+
 #include <SPI.h>
 #include <Arduino.h>
 #include <serial_logger.h>
@@ -76,13 +77,13 @@ ISR (SPI_STC_vect) {
         }
     } else {
         if (previously_synchronized) {
-            buffer_counter = (buffer_counter + 1) % COMMAND_FRAME_SIZE;
+            buffer_counter = (buffer_counter + 1) % engine_commands_size;
         } else {
             if (synchronized) {
                 engine_commands_iterator = 0;
                 buffer_counter = 0;
             } else {
-                buffer_counter = (buffer_counter + 1) % COMMAND_FRAME_SIZE;
+                buffer_counter = (buffer_counter + 1) % engine_commands_size;
             }
         }
     }
