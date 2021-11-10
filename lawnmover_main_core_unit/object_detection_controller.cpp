@@ -7,6 +7,7 @@ ObjectDetectionController::ObjectDetectionController(const char *name) : SpiSlav
 void ObjectDetectionController::fill_commands_bytes(long &buffer_size, uint8_t *tx_buffer) {
     // TODO add object detection command
     // SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, _esp32Ps4Ctrl->getLStickY(), tx_buffer);
+    SerialLogger::info("Filling %l bytes into buffer", buffer_size);
 }
 
 bool ObjectDetectionController::consume_commands(uint8_t *slave_response_buffer, long slave_response_buffer_size, uint8_t *tx_buffer, long tx_buffer_size) {
