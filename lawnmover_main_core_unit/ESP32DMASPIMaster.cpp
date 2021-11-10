@@ -25,71 +25,83 @@
 
 #include "ESP32DMASPIMaster.h"
 #include <sstream>
+#include "serial_logger.h"
 
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 
-bool Master::begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss) {
-    if ((sck == -1) && (miso == -1) && (mosi == -1) && (ss == -1)) {
-        bus_cfg.sclk_io_num = (spi_bus == VSPI) ? SCK : 14;
-        bus_cfg.miso_io_num = (spi_bus == VSPI) ? MISO : 12;
-        bus_cfg.mosi_io_num = (spi_bus == VSPI) ? MOSI : 13;
-        if_cfg.spics_io_num = (spi_bus == VSPI) ? SS : 15;
+spi_bus_config_t Master::_bus_cfg;
+bool Master::_initialized_once = false;
+spi_host_device_t Master::_host  = HSPI_HOST;
+uint8_t Master::_mode = SPI_MODE3;
+uint32_t Master::_frequency = SPI_MASTER_FREQ_8M;
+int Master::_queue_size = 1;
+int Master::_dma_chan = 0;     // must be 1 or 2 or 0 if deactivated (limits transaction size to 64 bytes)
+int Master::_max_size = 4094;  // default size
+std::deque<spi_transaction_t> Master::_transactions; // Default init with constructor
+
+bool Master::init_bus(const int8_t sck, const int8_t miso, const int8_t mosi, const uint8_t spi_bus) {
+    if (_initialized_once) {
+        SerialLogger::info("Not initializing SPI bus again. Already initialized.");
     } else {
-        bus_cfg.sclk_io_num = sck;
-        bus_cfg.miso_io_num = miso;
-        bus_cfg.mosi_io_num = mosi;
-        if_cfg.spics_io_num = ss;
-    }
+        _bus_cfg.sclk_io_num = sck;
+        _bus_cfg.miso_io_num = miso;
+        _bus_cfg.mosi_io_num = mosi;
+        _bus_cfg.max_transfer_sz = _max_size;
 
-    if_cfg.mode = mode;
-    if_cfg.clock_speed_hz = frequency;
-    if_cfg.queue_size = queue_size;
-    if_cfg.flags = SPI_DEVICE_NO_DUMMY;
+        // make sure to use DMA buffer
+        if (_dma_chan == 0) {
+            printf("Using no DMA");
+        } else if ((_dma_chan != 1) && (_dma_chan != 2)) {
+            printf("[WARNING] invalid DMA channel %d, force to set channel 1. make sure to select 1 or 2\n", _dma_chan);
+            _dma_chan = 1;
+        }
+
+        _host = (spi_bus == HSPI) ? HSPI_HOST : VSPI_HOST;
+        esp_err_t e = spi_bus_initialize(_host, &_bus_cfg, _dma_chan);
+        if (e == ESP_OK) {
+            _initialized_once = true;
+            SerialLogger::info("SPI bus initialize succeeded.");
+        } else {
+            printf("[ERROR] SPI bus initialize failed : %d\n", e);
+        }
+    }
+    return _initialized_once;
+}
+
+bool Master::begin(const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss, const uint8_t spi_bus) {
+    bool valid = init_bus(sck, miso, mosi, spi_bus);
+
+    _if_cfg.mode = _mode;
+    _if_cfg.clock_speed_hz = _frequency;
+    _if_cfg.queue_size = _queue_size;
+    _if_cfg.flags = SPI_DEVICE_NO_DUMMY;
     // TODO: callback??
-    if_cfg.pre_cb = NULL;
-    if_cfg.post_cb = NULL;
+    _if_cfg.pre_cb = NULL;
+    _if_cfg.post_cb = NULL;
 
-    bus_cfg.max_transfer_sz = max_size;
+    _if_cfg.spics_io_num = ss;
 
-    // make sure to use DMA buffer
-    if (dma_chan == 0) {
-        printf("Using no DMA");
-    } else if ((dma_chan != 1) && (dma_chan != 2)) {
-        printf("[WARNING] invalid DMA channel %d, force to set channel 1. make sure to select 1 or 2\n", dma_chan);
-        dma_chan = 1;
-    }
-
-    host = (spi_bus == HSPI) ? HSPI_HOST : VSPI_HOST;
-
-    esp_err_t e = spi_bus_initialize(host, &bus_cfg, dma_chan);
-    if (e != ESP_OK) {
-        printf("[ERROR] SPI bus initialize failed : %d\n", e);
-        return false;
-    }
-
-    e = spi_bus_add_device(host, &if_cfg, &handle);
-    if (e != ESP_OK) {
+    esp_err_t e = spi_bus_add_device(_host, &_if_cfg, &_handle);
+    valid &= e == ESP_OK;
+    if (!valid) {
         printf("[ERROR] SPI bus add device failed : %d\n", e);
-        return false;
     }
 
-    return true;
+    //_spi_device = new SpiDevice(ss, _mode, _frequency, _queue_size);
+    //return _spi_device->add_to_host(_host);
+    return valid;
 }
 
 bool Master::end() {
-    esp_err_t e = spi_bus_remove_device(handle);
-    if (e != ESP_OK) {
-        printf("[ERROR] SPI bus remove device failed : %d\n", e);
-        return false;
-    }
+    delete _spi_device;
 
-    e = spi_bus_free(host);
-    if (e != ESP_OK) {
+    esp_err_t e = spi_bus_free(_host);
+    if (e == ESP_OK) {
+        return true;
+    } else {
         printf("[ERROR] SPI bus free failed : %d\n", e);
         return false;
     }
-
-    return true;
 }
 
 uint8_t* Master::allocDMABuffer(const size_t s) {
@@ -101,25 +113,25 @@ size_t Master::transfer(const uint8_t* tx_buf, const size_t size) {
 }
 
 size_t Master::transfer(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size) {
-    if (!transactions.empty()) {
+    if (!_transactions.empty()) {
         std::stringstream ss;
-        ss << "Cannot execute transfer if queued transaction exits. Queueed size = " << transactions.size();
+        ss << "Cannot execute transfer if queued transaction exits. Queueed size = " << _transactions.size();
         throw std::runtime_error(ss.str());
     }
 
     addTransaction(tx_buf, rx_buf, size);
 
     // send a spi transaction, wait for it to complete, and return the result
-    esp_err_t e = spi_device_transmit(handle, &transactions.back());
-    if (e != ESP_OK) {
+    esp_err_t e = spi_device_transmit(_handle, &_transactions.back());
+    if (e == ESP_OK) {
+        size_t len = _transactions.back().rxlength / 8;
+        _transactions.pop_back();
+        return len;
+    } else {
         printf("[ERROR] SPI device transmit failed : %d\n", e);
-        transactions.pop_back();
+        _transactions.pop_back();
         return 0;
     }
-
-    size_t len = transactions.back().rxlength / 8;
-    transactions.pop_back();
-    return len;
 }
 
 bool Master::queue(const uint8_t* tx_buf, const size_t size) {
@@ -127,57 +139,58 @@ bool Master::queue(const uint8_t* tx_buf, const size_t size) {
 }
 
 bool Master::queue(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size) {
-    if (transactions.size() >= queue_size) {
+    if (_transactions.size() >= _queue_size) {
         printf("[WARNING] queue is full with transactions. discard new transaction request\n");
         return false;
+    } else {
+        addTransaction(tx_buf, rx_buf, size);
+        esp_err_t e = spi_device_queue_trans(_handle, &_transactions.back(), portMAX_DELAY);
+
+        return (e == ESP_OK);
     }
-
-    addTransaction(tx_buf, rx_buf, size);
-    esp_err_t e = spi_device_queue_trans(handle, &transactions.back(), portMAX_DELAY);
-
-    return (e == ESP_OK);
 }
 
 void Master::yield() {
-    size_t n = transactions.size();
+    size_t n = _transactions.size();
     for (uint8_t i = 0; i < n; ++i) {
         spi_transaction_t* r_trans;
-        esp_err_t e = spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
-        if (e != ESP_OK)
+        esp_err_t e = spi_device_get_trans_result(_handle, &r_trans, portMAX_DELAY);
+        if (e != ESP_OK) {
             printf("[ERROR] SPI device get trans result failed %d / %d : %d\n", i, n, e);
-        transactions.pop_front();
+        }
+        _transactions.pop_front();
     }
 }
 
-void Master::setFrequency(const uint32_t f) {
-    frequency = f;
+void Master::setDataMode(const uint8_t mode) {
+    _mode = mode;
+};
+
+void Master::setFrequency(const uint32_t frequency) {
+    _frequency = frequency;
 }
 
-void Master::setDataMode(const uint8_t m) {
-    mode = m;
+void Master::setMaxTransferSize(const int max_size) {
+    _max_size = max_size;
 }
 
-void Master::setMaxTransferSize(const int s) {
-    max_size = s;
+void Master::setDMAChannel(const int channel) {
+    _dma_chan = channel;  // 1 or 2 only
 }
 
-void Master::setDMAChannel(const int c) {
-    dma_chan = c;  // 1 or 2 only
-}
-
-void Master::setQueueSize(const int s) {
-    queue_size = s;
+void Master::setQueueSize(const int queue_size) {
+    _queue_size = queue_size;
 }
 
 void Master::addTransaction(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size) {
-    transactions.emplace_back(spi_transaction_t());
-    transactions.back().flags = 0;
-    // transactions.back().cmd = ;
-    // transactions.back().addr = ;
-    transactions.back().length = 8 * size;  // in bit size
-    // transactions.back().user = ;
-    transactions.back().tx_buffer = tx_buf;
-    transactions.back().rx_buffer = rx_buf;
+    _transactions.emplace_back(spi_transaction_t());
+    _transactions.back().flags = 0;
+    // _transactions.back().cmd = ;
+    // _transactions.back().addr = ;
+    _transactions.back().length = 8 * size;  // in bit size
+    // _transactions.back().user = ;
+    _transactions.back().tx_buffer = tx_buf;
+    _transactions.back().rx_buffer = rx_buf;
 }
 
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_END

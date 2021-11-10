@@ -11,22 +11,5 @@ void EngineController::fill_commands_bytes(long &buffer_size, uint8_t *tx_buffer
 }
 
 bool EngineController::consume_commands(uint8_t *slave_response_buffer, long slave_response_buffer_size, uint8_t *tx_buffer, long tx_buffer_size) {
-    Serial.print("RxBufferInput:");
-    for (long i = 0; i < slave_response_buffer_size; i += 1) {
-        if (i % COMMAND_FRAME_SIZE == 0) {
-            Serial.print(" ");
-        }
-        Serial.print(slave_response_buffer[i], HEX);
-    }
-    Serial.println();
-    Serial.print("TxBufferInput:");
-    for (long i = 0; i < tx_buffer_size; i += 1) {
-        if (i % COMMAND_FRAME_SIZE == 0) {
-            Serial.print(" ");
-        }
-        Serial.print(tx_buffer[i], HEX);
-    }
-    Serial.println();
-
     return SpiCommands::master_interpret_communication(tx_buffer, slave_response_buffer, slave_response_buffer_size);
 }

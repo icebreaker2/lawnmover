@@ -39,6 +39,7 @@ Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const in
 }
 
 Esp32SpiMaster::~Esp32SpiMaster() {
+    SerialLogger::info("Shutting down all slaves");
     shutdown_ = true;
     delay(max_intervall_);
     for (int i = 0; i < MAX_SLAVES; i++) {
@@ -135,6 +136,23 @@ void Esp32SpiMaster::add_timer(const int slave_id, const int slave_pin, const in
                     SerialLogger::warn("Bus busy. Skipping slave on slave-select pin %d", slave_pin);
                 }
             }
+
+            Serial.printf("RxBufferInput (Slave %d): ", slave_id + 1);
+            for (long i = 0; i < tx_rx_buffer_size; i += 1) {
+                if (i % COMMAND_FRAME_SIZE == 0) {
+                    Serial.print(" ");
+                }
+                Serial.print(rx_buffer[i], HEX);
+            }
+            Serial.println();
+            Serial.printf("TxBufferInput (Slave %d):", slave_id + 1);
+            for (long i = 0; i < tx_rx_buffer_size; i += 1) {
+                if (i % COMMAND_FRAME_SIZE == 0) {
+                    Serial.print(" ");
+                }
+                Serial.print(tx_buffer[i], HEX);
+            }
+            Serial.println();
         }
 
         return repeat; // to repeat the action - false to stop
@@ -184,7 +202,7 @@ ESP32DMASPI::Master *Esp32SpiMaster::setup_slave(const int slave_pin, const int 
     master->setDMAChannel(k_dma_channel);  // 1 or 2 only
     master->setQueueSize(k_queue_size);   // transaction queue size
     // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    master->begin(VSPI, k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin);
+    master->begin(k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin, VSPI);
     return master;
 }
 
@@ -207,5 +225,5 @@ void Esp32SpiMaster::restart_slave(const int slave_pin, const int slave_power_pi
     // wait some time for the slave to boot
     SerialLogger::info("Powering up slave on slave_select pin %d with power supply on pin %d", slave_pin, slave_power_pin);
     delay(slave_boot_delay);
-    SerialLogger::info("Engine Slave needs to synchronize with this master");
+    SerialLogger::info("Slave %d needs to synchronize with this master", slave_id + 1);
 }

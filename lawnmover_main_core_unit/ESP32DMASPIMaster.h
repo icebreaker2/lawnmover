@@ -31,6 +31,7 @@
 #include <SPI.h>
 #include <driver/spi_master.h>
 #include <deque>
+#include "spi_device.h"
 
 namespace arduino {
 namespace esp32 {
@@ -38,21 +39,24 @@ namespace spi {
 namespace dma {
 
 class Master {
-        spi_device_interface_config_t if_cfg;
-        spi_bus_config_t bus_cfg;
-        spi_device_handle_t handle;
+        static spi_bus_config_t _bus_cfg;
+        static bool _initialized_once;
+        static spi_host_device_t _host ;
+        static uint8_t _mode;
+        static uint32_t _frequency;
+        static int _queue_size;
 
-        spi_host_device_t host {HSPI_HOST};
-        uint8_t mode {SPI_MODE3};
-        int dma_chan {0};     // must be 1 or 2 or 0 if deactivated (limits transaction size to 64 bytes)
-        int max_size {4094};  // default size
-        uint32_t frequency {SPI_MASTER_FREQ_8M};
+        static int _dma_chan;
+        static int _max_size;
+        static std::deque<spi_transaction_t> _transactions;
 
-        std::deque<spi_transaction_t> transactions;
-        int queue_size {1};
+        spi_device_interface_config_t _if_cfg;
+        spi_device_handle_t _handle;
 
     public:
-        bool begin(const uint8_t spi_bus = HSPI, const int8_t sck = -1, const int8_t miso = -1, const int8_t mosi = -1, const int8_t ss = -1);
+
+        bool init_bus(const int8_t sck, const int8_t miso, const int8_t mosi, const uint8_t spi_bus);
+        bool begin(const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss, const uint8_t spi_bus = HSPI);
         bool end();
 
         uint8_t* allocDMABuffer(const size_t s);
@@ -69,14 +73,16 @@ class Master {
         void yield();
 
         // set these optional parameters before begin() if you want
-        void setDataMode(const uint8_t m);
-        void setFrequency(const uint32_t f);
-        void setMaxTransferSize(const int s);
-        void setDMAChannel(const int c);
-        void setQueueSize(const int s);
+        void setDataMode(const uint8_t mode);
+        void setFrequency(const uint32_t frequency);
+        void setMaxTransferSize(const int max_size);
+        void setDMAChannel(const int channel);
+        void setQueueSize(const int queue_size);
 
     private:
         void addTransaction(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size);
+
+        SpiDevice *_spi_device;
 };
 
 }  // namespace dma
