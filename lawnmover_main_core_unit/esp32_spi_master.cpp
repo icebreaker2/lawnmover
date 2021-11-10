@@ -19,14 +19,13 @@
 */
 
 int Esp32SpiMaster::free_ids[MAX_SLAVES];
-ESP32DMASPI::Master *Esp32SpiMaster::masters_[MAX_SLAVES];
+SpiSlaveHandler *Esp32SpiMaster::_slave_handlers[MAX_SLAVES];
 
 Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, void (*error_callback)(),
-                               const long frequency, const int dma_channel , const int queue_size,
-                               const uint8_t spi_mode, const int tx_rx_buffer_size, const int chunk_size) :
+                               const long frequency, const int dma_channel, const uint8_t spi_mode,
+                               const int tx_rx_buffer_size, const int chunk_size) :
     k_clock_pin(clock_pin), k_miso_pin(miso_pin), k_mosi_pin(mosi_pin), k_frequency(frequency),
-    k_dma_channel(dma_channel), k_queue_size(queue_size), k_spi_mode(spi_mode),
-    k_tx_rx_buffer_size(tx_rx_buffer_size), k_chunk_size(chunk_size) {
+    k_dma_channel(dma_channel), k_spi_mode(spi_mode), k_tx_rx_buffer_size(tx_rx_buffer_size), k_chunk_size(chunk_size) {
     error_callback_ = error_callback;
     // to use DMA buffer, use these methods to allocate buffer
     spi_master_rx_buf_ = (uint8_t*) malloc(k_tx_rx_buffer_size * sizeof spi_master_rx_buf_);
@@ -43,7 +42,7 @@ Esp32SpiMaster::~Esp32SpiMaster() {
     shutdown_ = true;
     delay(max_intervall_);
     for (int i = 0; i < MAX_SLAVES; i++) {
-        delete masters_[i];
+        delete _slave_handlers[i];
     }
 }
 
@@ -64,7 +63,7 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, co
                               const long clock_divider, Timer<> &timer, SpiSlaveController *spiSlaveController) {
     const int slave_id = get_free_id();
     if (slave_id >= 0) {
-        ESP32DMASPI::Master *master = setup_slave(slave_pin, slave_power_pin, slave_boot_delay, interval, slave_id);
+        SpiSlaveHandler *slave_handler = setup_slave(slave_pin, slave_power_pin, slave_boot_delay, interval, slave_id);
 
         // For some f***ing reason, we cannot pass this without producing core dumps...
         const int chunk_size = k_chunk_size;
@@ -75,7 +74,7 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, co
 
         add_timer(slave_id, slave_pin, slave_power_pin, slave_boot_delay, interval, inter_transaction_delay_microseconds,
                   clock_divider, timer, spiSlaveController, chunk_size, rx_buffer, max_tx_rx_buffer_size, error_callback,
-                  shutdown, master);
+                  shutdown, slave_handler);
     } else {
         SerialLogger::error("Cannot add a new master to internal array. Reached max of %d masters", MAX_SLAVES);
     }
@@ -85,10 +84,11 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, co
 void Esp32SpiMaster::add_timer(const int slave_id, const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
                                const int interval, const int inter_transaction_delay_microseconds, const long clock_divider,
                                Timer<> &timer, SpiSlaveController *spiSlaveController, const int chunk_size, uint8_t* rx_buffer,
-                               int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool & shutdown, ESP32DMASPI::Master *master) {
+                               int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool &shutdown,
+                               SpiSlaveHandler *slave_handler) {
     timer.every(interval, [&shutdown, slave_id, slave_pin, slave_power_pin, slave_boot_delay, interval,
-                           inter_transaction_delay_microseconds, clock_divider, timer, chunk_size, max_tx_rx_buffer_size, 
-                           spiSlaveController, rx_buffer, error_callback, master](void*) mutable -> bool {
+                           inter_transaction_delay_microseconds, clock_divider, timer, chunk_size, max_tx_rx_buffer_size,
+    spiSlaveController, rx_buffer, error_callback, slave_handler](void*) mutable -> bool {
         bool repeat = true;
         if (shutdown) {
             repeat = false;
@@ -108,7 +108,7 @@ void Esp32SpiMaster::add_timer(const int slave_id, const int slave_pin, const in
                     memset(rx_buffer, 0, tx_rx_buffer_size);
                     for (long counter = 0; counter < tx_rx_buffer_size; counter += chunk_size) {
                         try {
-                            size_t sendBytes = master->transfer(tx_buffer + counter,  rx_buffer + counter, chunk_size);
+                            size_t sendBytes = slave_handler->transfer(tx_buffer + counter,  rx_buffer + counter, chunk_size);
 
                             // TODO can we omit small delays?
                             delayMicroseconds(inter_transaction_delay_microseconds);
@@ -185,32 +185,31 @@ bool Esp32SpiMaster::add_free_id(const int id) {
     return added;
 }
 
-ESP32DMASPI::Master *Esp32SpiMaster::setup_slave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
-        const int interval, const int slave_id) {
+SpiSlaveHandler *Esp32SpiMaster::setup_slave(const int slave_pin, const int slave_power_pin,
+        const int slave_boot_delay, const int interval, const int slave_id) {
     restart_slave(slave_pin, slave_power_pin, slave_boot_delay, slave_id);
 
-    ESP32DMASPI::Master *master = new ESP32DMASPI::Master();
-    masters_[slave_id] = master;
+    SpiSlaveHandler *slave_handler = new SpiSlaveHandler();
+    _slave_handlers[slave_id] = slave_handler;
     SerialLogger::info("Adding slave %d/%d", slave_id + 1, MAX_SLAVES);
     max_intervall_ = max_intervall_ < interval ? interval : max_intervall_;
 
 
-    master->setDataMode(k_spi_mode);
-    master->setFrequency(k_frequency);
-    master->setMaxTransferSize(k_tx_rx_buffer_size);
+    slave_handler->setDataMode(k_spi_mode);
+    slave_handler->setFrequency(k_frequency);
+    slave_handler->setMaxTransferSize(k_tx_rx_buffer_size);
     // Disabling DMA limits to 64 bytes per transaction only
-    master->setDMAChannel(k_dma_channel);  // 1 or 2 only
-    master->setQueueSize(k_queue_size);   // transaction queue size
+    slave_handler->setDMAChannel(k_dma_channel);  // 1 or 2 only
     // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    master->begin(k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin, VSPI);
-    return master;
+    slave_handler->begin(k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin, VSPI);
+    return slave_handler;
 }
 
 void Esp32SpiMaster::tear_down_slave(const int slave_pin, const int slave_power_pin, const int slave_id) {
     SerialLogger::info("Shutting down spi communication to slave %d connected to slave-select pin %d with power supply on pin %d",
                        slave_id, slave_pin, slave_power_pin);
     digitalWrite(slave_power_pin, LOW);
-    delete masters_[slave_id];
+    delete _slave_handlers[slave_id];
     add_free_id(slave_id);
 }
 
