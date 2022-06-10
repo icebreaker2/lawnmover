@@ -25,6 +25,11 @@
 Once everything is ready and the masters mac address stored in the controller is known, please enter the address in [ps4_controller.ino](ps4_controller.ino). 
 If you now flash your board with the implementation and then push the home button of the controller you should see a "connected" message on Serial monitor.
 
+> *Connection troubleshooting*: Sometimes it may happen that even after a restart (with power loss) and a reflash of the board the controller will not connect even though the MAC-adresses align. 
+> There is some "awkward" information stored somewhere on the board (dont ask me why....^^=). 
+> To erase this information please execute the following script on the port of your device (COM3 in this case): py -m esptool --chip esp32 --port COM3 erase_flash
+
+
 ## Power-Consumption:
 * ESP32 Board (BT + SPI)
   * At 8V

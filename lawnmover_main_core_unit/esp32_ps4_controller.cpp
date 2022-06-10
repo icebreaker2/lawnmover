@@ -66,6 +66,7 @@ bool ESP32_PS4_Controller::readState() {
         }
         return true;
     } else {
+        SerialLogger::debug("PS4 still not connected to: %s", k_masterMac);
         return false;
     }
 }

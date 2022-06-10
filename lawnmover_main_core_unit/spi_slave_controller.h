@@ -61,7 +61,7 @@ class SpiSlaveController {
                 if (_slave_synchronized) {
                     SerialLogger::info("%s slave no longer synchronized with this master", k_name);
                 } else {
-                    SerialLogger::info("%s slave not synchronized with this master", k_name);
+                    SerialLogger::warn("%s slave not synchronized with this master", k_name);
                 }
                 _slave_synchronized = false;
             }
