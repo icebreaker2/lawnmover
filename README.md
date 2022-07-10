@@ -25,6 +25,10 @@ Is the [Main Core Unit](lawnmover_main_core_unit/README.md) of the lawnmover set
 [Lawnmover engine controller](lawnmover_engines_control_unit/README.md) is a SPI-slave to Main Core Unit receiving movement and motor (rotor blades) commands. 
 Any received command must be acknowledged by slave within defined time or master will cut power supply.
 
+## lawnmover_distance_control_unit
+[Lawnmover distance controller](lawnmover_distance_control_unit/README.md) is a SPI-slave to Main Core Unit sending distances in four directions upon request of MCU. 
+Any received command must be answered by slave within defined time or master will cut power supply of the engines and the distance control.
+
 ## object_detection
 // TODO implement with ultra sonic sensor and camera. 
   * Maybe a raspberry pi is needed for more computational power but mcu should receive states of environment (e. g. object ahead in 2m) from those sensors.

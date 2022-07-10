@@ -4,7 +4,7 @@
 
 #include "mover.h"
 #include "motor.h"
-#include "led.h"
+
 #include "spi_slave.h"
 
 // To not mix with internally used pins
@@ -21,10 +21,6 @@ const int RIGHT_FWD_PIN = 4; // is no PWM
 const int RIGHT_BWD_PIN = 7; // is no PWM
 
 const int MOTOR_PIN = 3; // is PWM / control with 5v only
-
-const int LED_BUNDLE_1 = A0;
-const int LED_BUNDLE_2 = A1;
-const int LED_BUNDLE_3 = A2;
 
 const int SCK_PIN   = 13; // D13 = pin19 = PortB.5
 const int MISO_PIN  = 12; // D12 = pin18 = PortB.4
@@ -52,7 +48,6 @@ void setup() {
     _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
                                      RIGHT_BWD_PIN);
     _moverService->printInit();
-    Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
     SpiSlave spiSlave(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN,
     [](int16_t wheelsPower) -> bool {
         watchdog_counter_++;
