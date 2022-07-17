@@ -5,7 +5,7 @@ https://www.arduino.cc/en/reference/SPI
 
 ## Power-Consumption:
 * Arduino (Board + 4 Ultrasconic sensors)
-  * At 8V 
+  * At 9V 
   *
 
-Note: Based on https://github.com/gamegine/HCSR04-ultrasonic-sensor-lib
+* 3 LEDs per StepUp on external power supply

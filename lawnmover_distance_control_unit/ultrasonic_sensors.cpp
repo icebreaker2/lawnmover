@@ -1,9 +1,4 @@
 #include "ultrasonic_sensors.h"
-#include <serial_logger.h>
-
-int _txPin = 0;
-int *_rxPins;
-int _rxPinsLength = 0;
 
 void UltrasonicSensor::triggerTx(const int txPin) {
   digitalWrite(txPin, LOW);
@@ -26,7 +21,8 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
   k_txPin(txPin), k_amountSensors(amountSensors) {
 
   _ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof * _ultrasonicSensors);
-
+  _nextSensorIndex = 0;
+  
   char echoPinsString[MAX_ARDUINO_PINS * 4 + 5];
   strcat(echoPinsString, "pins ");
   for (int i = 0; i < k_amountSensors; i++) {
@@ -52,13 +48,26 @@ UltrasonicSensors::~UltrasonicSensors() {
   delete _ultrasonicSensors;
 }
 
+void UltrasonicSensors::updateNextDistanceFromSensors() {
+  /* Note: updateDistanceFromSensors performs a round-robin. This has the drawback of imposing a delay of up to
+    n x pulseMaxTimeoutMicroSeconds at worst where n is the amount of sensors to update distance from. Given the
+    fact that we might operate in a timer callback function, we cannot delay this execution or other callbacks
+    might get broken by it. Hence, we still perform a round robin but release the timer after one sensors was caputured
+    to allow other callbacks to get executed without (or smaller) delay.
+  */
+  UltrasonicSensor *sensor = _ultrasonicSensors[_nextSensorIndex];
+  sensor->updateLatestDistanceWithTx();
+  _nextSensorIndex = (_nextSensorIndex + 1) % k_amountSensors;
+}
 
 void UltrasonicSensors::updateDistanceFromSensors() {
-  UltrasonicSensor::triggerTx(k_txPin);
+  /* Note: We need to make a round-robin or the distance of one sensor will be incorrect if one update call takes too long
+    (e. g. if pulseMaxTimeoutMicroSeconds was reached). This has the drawback of imposing a delay of up to
+    n x pulseMaxTimeoutMicroSeconds at worst where n is the amount of sensors to update distance from.
+  */
   for (int i = 0; i < k_amountSensors; i++) {
-    // TODO: make round-robin slows it down but doing it this way may case wrong distances if one update call takes to long (e. g. if maxTimeout is too large)
     UltrasonicSensor *sensor = _ultrasonicSensors[i];
-    sensor->updateLatestDistanceWithoutTx();
+    sensor->updateLatestDistanceWithTx();
   }
 }
 
