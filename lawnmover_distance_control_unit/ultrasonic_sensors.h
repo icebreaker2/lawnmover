@@ -8,17 +8,19 @@
 #define SENSORING_FREQUENCY_DELAY 30
 #define MAX_ARDUINO_PINS 13
 #define ULTRASONIC_CM_PER_MICROSECOND_AIR 29
-#define NO_ECHO_DISTANCE 3.0f
+#define NO_ECHO_DISTANCE 10.0f
 
 class UltrasonicSensor {
   public:
     UltrasonicSensor(const int txPin, const int rxPin, const int pulseMaxTimeoutMicroSeconds) :
       k_txPin(txPin), k_rxPin(rxPin), k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
-      k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2) {
+      k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f) {
+      SerialLogger::debug("Initiating ultrasonic sensor on rxPin %d, with txPin %d and max possible distance at %f",
+                          k_rxPin, k_txPin, k_maxDistance);
       pinMode(k_txPin, OUTPUT);
       digitalWrite(k_txPin, LOW);
       pinMode(k_rxPin, INPUT);
-      _latestDistance = 0.0;
+      _latestDistance = k_maxDistance;
     }
 
     // having const values is more valuable than this copy-assignment; if you need to move use (smart) pointers
@@ -50,14 +52,15 @@ class UltrasonicSensor {
         duration_microseconds = k_pulseMaxTimeoutMicroSeconds;
       }
       // The signal went back and forth but we do only need one distance
-      long distance_cm = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2 ;
-      const float new_latestDistance = (_latestDistance + distance_cm) / 2;
-      if (_latestDistance < NO_ECHO_DISTANCE && new_latestDistance >= k_maxDistance) {
+      const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f ;
+      // SerialLogger::debug("new %f vs. old %f (q1: %d, q2: %d)", new_distance, _latestDistance,
+      //                    _latestDistance < NO_ECHO_DISTANCE, _latestDistance >= k_maxDistance);
+      if (_latestDistance < NO_ECHO_DISTANCE && new_distance >= k_maxDistance) {
         // The object got closer to the robot and is now probably "at" the robot leading to no echo due to the object. Setting to zero!
         _latestDistance = 0.0f;
         SerialLogger::debug("Setting distance of sensor at pin %d to zero", k_rxPin);
       } else {
-        _latestDistance = new_latestDistance;
+        _latestDistance = (_latestDistance + new_distance) / 2.0f;
       }
     };
 
@@ -65,7 +68,7 @@ class UltrasonicSensor {
     const int k_txPin;
     const int k_rxPin;
     const int k_pulseMaxTimeoutMicroSeconds;
-    const int k_maxDistance;
+    const float k_maxDistance;
     // Note: Assuming there is one writer and multiple readers, i. e. volatile is enough
     volatile float _latestDistance;
 };

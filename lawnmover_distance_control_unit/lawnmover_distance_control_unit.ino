@@ -12,9 +12,9 @@ const int SS_PIN    = 12; // D10 = pin16 = PortB.2
 const int AMOUNT_ULTRA_SENSORS = 5;
 const int ULTRA_RX_FRONT = 2;
 const int ULTRA_RX_FRONT_RIGHT = 6;
-const int ULTRA_RX_FRONT_LEFT = 3;
+const int ULTRA_RX_FRONT_LEFT = 4;
 const int ULTRA_RX_REAR_RIGHT = 5;
-const int ULTRA_RX_REAR_LEFT = 4;
+const int ULTRA_RX_REAR_LEFT = 3;
 const int ULTRA_TX_PIN = 7;
 const int PULSE_MAX_TIMEOUT_MICROSECONDS = 6000; // 1m distance
 
