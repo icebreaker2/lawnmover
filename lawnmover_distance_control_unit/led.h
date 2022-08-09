@@ -7,17 +7,17 @@
 #define LED_INTRA_ROTATION_TIME_DELAY 100
 
 class Led3Service {
-    public:
-        Led3Service(const int led1Pin, const int led2Pin, const int led3Pin, Timer<> &timer);
+  public:
+    Led3Service(const int led1Pin, const int led2Pin, const int led3Pin, Timer<> &timer);
 
-        ~Led3Service();
+    ~Led3Service();
 
-    private:
-        const int kLed1Pin;
-        const int kLed2Pin;
-        const int kLed3Pin;
+  private:
+    const int kLed1Pin;
+    const int kLed2Pin;
+    const int kLed3Pin;
 
-        volatile int _nextState = 0;
+    volatile int _nextState = 0;
 };
 
 #endif // LED_H

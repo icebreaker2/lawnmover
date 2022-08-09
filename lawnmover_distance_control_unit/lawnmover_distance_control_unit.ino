@@ -17,6 +17,7 @@ const int ULTRA_RX_REAR_RIGHT = 5;
 const int ULTRA_RX_REAR_LEFT = 3;
 const int ULTRA_TX_PIN = 7;
 const int PULSE_MAX_TIMEOUT_MICROSECONDS = 6000; // 1m distance
+const int DEBUG_PRINT_DISTANCE_DELAY = 500;
 
 const int LED_BUNDLE_1 = A0;
 const int LED_BUNDLE_2 = A1;
@@ -24,31 +25,30 @@ const int LED_BUNDLE_3 = A2;
 
 auto _timer = timer_create_default();
 
-UltrasonicSensors *ultrasonicSensors;
-
+UltrasonicSensors *_ultrasonicSensors;
+Led3Service *_ledService;
 
 void setup() {
   SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
+
   // Note: Order matters. We alternate rear and front to reduce risiking receiving the echo of a previous tx if sensoring_frequency_delay was choosen too thin.
   int sensorsList [] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_FRONT, ULTRA_RX_REAR_LEFT, ULTRA_RX_FRONT_RIGHT};
-  ultrasonicSensors = UltrasonicSensors::getFromScheduled(ULTRA_TX_PIN, sensorsList, AMOUNT_ULTRA_SENSORS, PULSE_MAX_TIMEOUT_MICROSECONDS, _timer);
-  Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
+  _ultrasonicSensors = UltrasonicSensors::getFromScheduled(ULTRA_TX_PIN, sensorsList, AMOUNT_ULTRA_SENSORS, PULSE_MAX_TIMEOUT_MICROSECONDS, _timer);
+  _ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
+
+    // Some 
+  _timer.every(DEBUG_PRINT_DISTANCE_DELAY, [](void*) -> bool {
+    SerialLogger::info("F: %f, FR: %f, FL: %f, RR: %f, RL: %f",
+    _ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_FRONT),
+    _ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_FRONT_RIGHT),
+    _ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_FRONT_LEFT),
+    _ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_REAR_RIGHT),
+    _ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_REAR_LEFT));
+    return true; // to repeat the action - false to stop
+  });
 }
 
 void loop() {
   // tick timers
   auto ticks = _timer.tick();
-  Serial.print("F: ");
-  Serial.print(ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_FRONT));
-  Serial.print(", FR: ");
-  Serial.print(ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_FRONT_RIGHT));
-  Serial.print(", FL: ");
-  Serial.print(ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_FRONT_LEFT));
-  Serial.print(", BR: ");
-  Serial.print(ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_REAR_RIGHT));
-  Serial.print(", BL: ");
-  Serial.println(ultrasonicSensors->getLatestDistanceFromSensor(ULTRA_RX_REAR_LEFT));
-  //SerialLogger::info("FrontRight: %f, FrontLeft: %f, RearRightt: %f, RearLeft: %f", hc->dist(0), hc->dist(1), hc->dist(2), hc->dist(3));
-  // we suggest to use over <<<<<<<60ms>>>>>> measurement cycle, in order to prevent trigger signal to the echo signal.
-  //  delay(60);
 }

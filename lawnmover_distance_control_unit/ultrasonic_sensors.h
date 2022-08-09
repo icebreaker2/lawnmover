@@ -5,10 +5,10 @@
 #include <arduino_timer_uno.h>
 #include <serial_logger.h>
 
-#define SENSORING_FREQUENCY_DELAY 30
+#define SENSORING_FREQUENCY_DELAY 45
 #define MAX_ARDUINO_PINS 13
 #define ULTRASONIC_CM_PER_MICROSECOND_AIR 29
-#define NO_ECHO_DISTANCE 10.0f
+#define NO_ECHO_DISTANCE 7.5f
 
 class UltrasonicSensor {
   public:
@@ -98,7 +98,9 @@ class UltrasonicSensors {
     const int k_amountSensors;
 
     UltrasonicSensor **_ultrasonicSensors;
-    volatile int _nextSensorIndex;
+    volatile int _nextSensorIndex = 0;
+
+    int _registeredSensors = 0;
 };
 
 #endif // ULTRASONIC_SENSORS_H
