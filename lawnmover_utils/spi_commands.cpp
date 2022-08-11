@@ -1,7 +1,5 @@
 #include "spi_commands.h"
 
-#include <serial_logger.h>
-
 int verifyIds(const byte rxIdBytes [], const byte txIdBytes []) {
     int16_t rxId = -1;
     int16_t txId = -1;
@@ -30,18 +28,21 @@ bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const
     uint8_t tx_value_bytes[COMMAND_FRAME_VALUE_SIZE];
 
     for (long i = 0; i + COMMAND_FRAME_SIZE <= buffer_size; i += COMMAND_FRAME_SIZE) {
+        // Get the ReqId
         for (int id_counter = 0; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
             //Serial.printf("%d, %d, %d -> %d: %x\n", COMMAND_SPI_RX_OFFSET , i, id_counter, COMMAND_SPI_RX_OFFSET + i + id_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + id_counter]);
             rxId1[id_counter] = rx_buffer[COMMAND_SPI_RX_OFFSET + i + id_counter];
             txId1_bytes[id_counter] = tx_buffer[i + id_counter];
         }
 
+        // Get the command value
         for (int value_counter = 0; value_counter < COMMAND_FRAME_VALUE_SIZE; value_counter++) {
             //Serial.printf("%d: %x\n", COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + value_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + value_counter]);
             rx_value_bytes[value_counter] = rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + value_counter];
             tx_value_bytes[value_counter] = tx_buffer[i + COMMAND_FRAME_ID_SIZE + value_counter];
         }
 
+        // Get the AckId == ReqId
         for (int id_counter = 0; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
             //Serial.printf("%d: %x\n", COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter]);
             rxId2[id_counter] = rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter];
@@ -117,6 +118,7 @@ bool SpiCommands::slave_process_partial_command(bool &synchronized, const uint8_
                 pos = 0;
             }
         } else {
+            // For the master to receive the nth byte we need to send a n+1 byte
             tx_byte = 0;
             pos = 0;
             return true;
@@ -142,55 +144,4 @@ bool SpiCommands::slave_process_partial_command(bool &synchronized, const uint8_
         }
     }
     return false;
-}
-
-/**
-    Call to interpret Id send by master
-*/
-int16_t SpiCommands::slave_interpret_command_id(const uint8_t *rx_buffer) {
-    int16_t id = -1;
-    byte rxId[COMMAND_FRAME_ID_SIZE];
-
-    for (int id_counter; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
-        rxId[id_counter] = rx_buffer[id_counter];
-    }
-
-    memcpy(&id, rxId, sizeof(int16_t));
-    if (id < 0) {
-        SerialLogger::error("Bad Id Received. %d is unknown", id);
-    } else if (id > MAX_ID) {
-        SerialLogger::warn("Received bad id %d > %d (max)", id, MAX_ID);
-    }
-    return id;
-}
-
-/*
-    Call if value received by master
-
-    Note: Function-Pointer may differ if request only received. If so, slave must write values to tx_buffer
-*/
-bool SpiCommands::slave_interpret_command(const int16_t id, uint8_t *rx_buffer, uint8_t *tx_buffer,
-        bool (*leftWheelSteeringCommand)(int16_t), bool (*rightWheelSteeringCommand)(int16_t),
-        bool (*motorSpeedCommand)(int16_t)) {
-    bool valid = false;
-    switch (id) {
-        case LEFT_WHEEL_STEERING_COMMAND: {
-                const int16_t value = IntegerSpiCommand::interpretBytes(rx_buffer);
-                valid = leftWheelSteeringCommand(value);
-                break;
-            }
-        case RIGHT_WHEEL_STEERING_COMMAND: {
-                const int16_t value = IntegerSpiCommand::interpretBytes(rx_buffer);
-                valid = rightWheelSteeringCommand(value);
-                break;
-            }
-        case MOTOR_SPEED_COMMAND: {
-                const int16_t value = IntegerSpiCommand::interpretBytes(rx_buffer);
-                valid = motorSpeedCommand(value);
-                break;
-            }
-        default:
-            SerialLogger::warn("Unknown command received with identifier: %d", id);
-    }
-    return valid;
 }

@@ -10,7 +10,7 @@ class MotorService {
     public:
         MotorService();
 
-        MotorService(const int motorPin);
+        MotorService(const int motorPin, const int motorSpeedCommandId);
 
         ~MotorService();
 
@@ -22,11 +22,12 @@ class MotorService {
 
         void spinMotor();
 
-        bool set_rotation_speed(const int16_t rotation_speed);
+        bool set_rotation_speed(const int16_t id, const int16_t rotation_speed);
 
     private:
         const int kMotorPin;
-        volatile int16_t rotation_speed_ = 0;
+        const int k_motorSpeedCommandId;
+        volatile int16_t _rotation_speed = 0;
 };
 
 #endif // MOTOR_H

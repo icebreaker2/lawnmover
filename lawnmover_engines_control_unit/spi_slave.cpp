@@ -6,21 +6,22 @@
 #include <spi_commands.h>
 
 
-const int engine_commands_size = ENGINE_COMMANDS * COMMAND_FRAME_SIZE;
-int buffer_counter = 0;
-int engine_commands_iterator = 0;
-uint8_t rx_buffer[engine_commands_size];
-uint8_t tx_buffer[engine_commands_size];
+const int _engine_commands_size = ENGINE_COMMANDS * COMMAND_FRAME_SIZE;
+int _buffer_counter = 0;
+int _engine_commands_indicator = 0;
+uint8_t _rx_buffer[_engine_commands_size];
+uint8_t _tx_buffer[_engine_commands_size];
 
 bool synchronized = false;
 
-bool (*left_wheel_steering_command_)(int16_t) = nullptr;
-bool (*right_wheel_steering_command_)(int16_t) = nullptr;
-bool (*motor_speed_command_)(int16_t) = nullptr;
+const int amount_commands = 3;
+bool (*_commands[amount_commands])(int16_t, int16_t);
 
 SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
-                   bool (*left_wheel_steering_command)(int16_t), bool (*right_wheel_steering_command)(int16_t),
-                   bool (*motor_speed_command)(int16_t)) {
+                   bool (*left_wheel_steering_command)(int16_t, int16_t), 
+                   bool (*right_wheel_steering_command)(int16_t, int16_t),
+                   bool (*motor_speed_command)(int16_t, int16_t)) {
+                    // TODO: make this arguments the commands list. This object does not need to know its commands
     pinMode(sck_pin, INPUT);
     pinMode(mosi_pin, INPUT);
     pinMode(miso_pin, OUTPUT);  // (only if bidirectional mode needed)
@@ -45,9 +46,9 @@ SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, co
     // turn on interrupts
     SPCR |= bit(SPIE);
 
-    left_wheel_steering_command_ = left_wheel_steering_command;
-    right_wheel_steering_command_ = right_wheel_steering_command;
-    motor_speed_command_ = motor_speed_command;
+    _commands[0] = left_wheel_steering_command;
+    _commands[1] = right_wheel_steering_command;
+    _commands[2] = motor_speed_command;
 }
 
 /**
@@ -59,31 +60,28 @@ ISR (SPI_STC_vect) {
     uint8_t tx_byte = 0;
     const bool previously_synchronized = synchronized;
 
-    const bool full_command_or_synchronized = SpiCommands::slave_process_partial_command(synchronized, rx_byte, tx_byte);
+    const bool full_commandor_synchronized = SpiCommands::slave_process_partial_command(synchronized, rx_byte, tx_byte);
     SPDR = tx_byte;
-    rx_buffer[buffer_counter] = rx_byte;
-    tx_buffer[buffer_counter] = tx_byte;
+    _rx_buffer[_buffer_counter] = rx_byte;
+    _tx_buffer[_buffer_counter] = tx_byte;
 
-    if (full_command_or_synchronized && previously_synchronized) {
-        const int tx_rx_offset = engine_commands_iterator * COMMAND_FRAME_SIZE;
-        const int16_t id = SpiCommands::slave_interpret_command_id(rx_buffer + tx_rx_offset);
-        const bool valid_command = SpiCommands::slave_interpret_command(id, rx_buffer +  tx_rx_offset + COMMAND_FRAME_ID_SIZE,
-                                   tx_buffer + tx_rx_offset + COMMAND_FRAME_ID_SIZE, left_wheel_steering_command_,
-                                   right_wheel_steering_command_, motor_speed_command_);
-        engine_commands_iterator = (engine_commands_iterator + 1) % ENGINE_COMMANDS;
-        buffer_counter = engine_commands_iterator * COMMAND_FRAME_SIZE;
-        if (!valid_command) {
+    if (full_commandor_synchronized && previously_synchronized) {
+        const int tx_rx_offset = _engine_commands_indicator * COMMAND_FRAME_SIZE;
+        const bool command_interpreted = SpiCommands::slave_interpret_command(_rx_buffer +  tx_rx_offset, _commands, amount_commands);
+        _engine_commands_indicator = (_engine_commands_indicator + 1) % ENGINE_COMMANDS;
+        _buffer_counter = _engine_commands_indicator * COMMAND_FRAME_SIZE;
+        if (!command_interpreted) {
             SerialLogger::warn("Did not receive valid command. Cannot interpret value");
         }
     } else {
         if (previously_synchronized) {
-            buffer_counter = (buffer_counter + 1) % engine_commands_size;
+            _buffer_counter = (_buffer_counter + 1) % _engine_commands_size;
         } else {
             if (synchronized) {
-                engine_commands_iterator = 0;
-                buffer_counter = 0;
+                _engine_commands_indicator = 0;
+                _buffer_counter = 0;
             } else {
-                buffer_counter = (buffer_counter + 1) % engine_commands_size;
+                _buffer_counter = (_buffer_counter + 1) % _engine_commands_size;
             }
         }
     }
@@ -92,21 +90,21 @@ ISR (SPI_STC_vect) {
 void SpiSlave::addSlavePrinting(Timer<> &timer, const int interval) {
     timer.every(interval, [](void*) -> bool {
         Serial.print("RxBufferInput:");
-        for (long i = 0; i < engine_commands_size; i += 1) {
+        for (long i = 0; i < _engine_commands_size; i += 1) {
             if (i % COMMAND_FRAME_SIZE == 0) {
                 Serial.print(" ");
             }
-            Serial.print(rx_buffer[i], HEX);
+            Serial.print(_rx_buffer[i], HEX);
         }
         Serial.println();
 
 
         Serial.print("TxBufferInput:");
-        for (long i = 0; i < engine_commands_size; i += 1) {
+        for (long i = 0; i < _engine_commands_size; i += 1) {
             if (i % COMMAND_FRAME_SIZE == 0) {
                 Serial.print(" ");
             }
-            Serial.print(tx_buffer[i], HEX);
+            Serial.print(_tx_buffer[i], HEX);
         }
         Serial.println();
         if (synchronized) {

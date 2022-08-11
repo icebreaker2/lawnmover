@@ -61,10 +61,13 @@ volatile boolean silly_semaphore_single_threaded = false;
 void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, const int slave_boot_delay,
                               const int interval, const int inter_transaction_delay_microseconds,
                               const long clock_divider, Timer<> &timer, SpiSlaveController *spiSlaveController) {
+  if (spiSlaveController == nullptr) {
+    SerialLogger::error("Cannot add new slave to internal array. The spi controller is a nullptr");
+  } else {
     const int slave_id = get_free_id();
     if (slave_id >= 0) {
       SpiSlaveHandler *slave_handler = setup_slave(slave_pin, slave_power_pin, slave_boot_delay, interval, slave_id);
-  
+
       // For some f***ing reason, we cannot pass this without producing core dumps...
       const int chunk_size = k_chunk_size;
       uint8_t* rx_buffer = spi_master_rx_buf_;
@@ -73,11 +76,12 @@ void Esp32SpiMaster::addSlave(const int slave_pin, const int slave_power_pin, co
       volatile bool &shutdown = shutdown_;
 
       add_timer(slave_id, slave_pin, slave_power_pin, slave_boot_delay, interval, inter_transaction_delay_microseconds,
-              clock_divider, timer, spiSlaveController, chunk_size, rx_buffer, max_tx_rx_buffer_size, error_callback,
-              shutdown, slave_handler);
+                clock_divider, timer, spiSlaveController, chunk_size, rx_buffer, max_tx_rx_buffer_size, error_callback,
+                shutdown, slave_handler);
     } else {
-      SerialLogger::error("Cannot add a new master to internal array. Reached max of %d masters", MAX_SLAVES);
+      SerialLogger::error("Cannot add a new slave to internal array. Reached max of %d slaves", MAX_SLAVES);
     }
+  }
 }
 
 

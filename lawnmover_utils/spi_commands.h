@@ -2,6 +2,7 @@
 #define SPI_COMMANDS_H
 
 #include <Arduino.h>
+#include <serial_logger.h>
 
 #define COMMAND_FRAME_ID_SIZE 2
 #define COMMAND_FRAME_VALUE_SIZE 4
@@ -84,12 +85,8 @@ class SpiCommands {
 
         static bool master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size);
 
-        static int16_t slave_interpret_command_id(const uint8_t *rx_buffer);
-
-        static bool slave_interpret_command(const int16_t id, uint8_t *rx_buffer, uint8_t *tx_buffer,
-                                            bool (*leftWheelSteeringCommand)(int16_t),
-                                            bool (*rightWheelSteeringCommand)(int16_t),
-                                            bool (*motorSpeedCommand)(int16_t));
+        template<typename V>
+        static bool slave_interpret_command(uint8_t *rx_buffer, bool (*command_callback[])(int16_t, V), const int amount_command_callbacks);
 
         static bool slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte);
 
@@ -118,6 +115,35 @@ void SpiCommands::putCommandToBuffer(const int16_t commandId, const T commandVal
     memcpy(buffer, bytes, COMMAND_FRAME_SIZE);
 }
 
+/*
+    Call if value received by master
 
+    Note: Function-Pointer may differ if request only received. If so, slave must write values to tx_buffer
+*/
+template<typename V>
+bool SpiCommands::slave_interpret_command(uint8_t *rx_buffer, bool (*command_callback[])(int16_t, V), const int amount_command_callbacks) {
+    bool valid = false;
+    int16_t id = -1;
+    byte rxId[COMMAND_FRAME_ID_SIZE];
+
+    for (int id_counter; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
+        rxId[id_counter] = rx_buffer[id_counter];
+    }
+
+    memcpy(&id, rxId, sizeof(int16_t));
+    if (id < 0) {
+        SerialLogger::error("Bad Id Received. %d is unknown", id);
+    } else if (id > MAX_ID) {
+        SerialLogger::warn("Received bad id %d > %d (max)", id, MAX_ID);
+    } else {
+        V value;
+        memcpy(&value, rx_buffer + COMMAND_FRAME_ID_SIZE, sizeof(value));
+        for(int i = 0; i < amount_command_callbacks && !valid; i++) {
+            valid = (*command_callback[i])(id, value);
+        }
+    }
+
+    return valid;
+}
 
 #endif // SPI_COMMANDS_H
