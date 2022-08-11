@@ -1,11 +1,12 @@
 #include <arduino_timer_uno.h>
 #include <serial_logger.h>
 #include <spi_commands.h>
+#include <spi_slave.h>
 
 #include "mover.h"
 #include "motor.h"
 
-#include "spi_slave.h"
+
 
 const int LEFT_FWD_PIN = 8; // is PWM
 const int LEFT_BWD_PIN = 9; // is no PWM

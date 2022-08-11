@@ -30,3 +30,7 @@ Methods are based on standard printf usage. Log-Commands are:
   * Interpretation of the bytes (e. g. bool, int, long, float)
 * Each 9 Byte command conists of 2 byte command id, 4 byte command value and tailing 2 byte command id for acknowledging the command, and the end of the communication as Byte 9
 
+# spi slave
+* An Arduino interrupt routine implementation for SPI with minimal interface
+* Is not thread-safe
+* Is a Singleton (but not enforced, not reentrant). There can be only one SPI Interrupt routine per application.
