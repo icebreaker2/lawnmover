@@ -19,7 +19,7 @@ class MoverService {
         void printState();
 
         bool set_left_wheels_power(const int16_t id, const int16_t wheels_power) {
-            // Logging must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
+            // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
             // SerialLogger::debug("Inspecting left wheels power with id %d and value %d", id, wheels_power);
             if (id == k_leftWheelSteeringCommandId) {
                 left_wheels_power = wheels_power;
@@ -30,7 +30,7 @@ class MoverService {
         };
 
         bool set_right_wheels_power(const int16_t id, const int16_t wheels_power) {
-            // Logging must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
+            // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
             // SerialLogger::debug("Inspecting right wheels power with id %d and value %d", id, wheels_power);
             if (id == k_rightWheelSteeringCommandId) {
                 right_wheels_power = wheels_power;

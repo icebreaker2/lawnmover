@@ -35,6 +35,24 @@ MotorService *_motorService;
 const int steering_set_interval = 100;
 MoverService *_moverService;
 
+int k_amount_spi_commands = 3;
+bool (*spi_commands[])(int16_t, int16_t) = {
+    [](int16_t id, int16_t wheelsPower) -> bool {
+        // TODO implement watchdog
+        watchdog_counter_++;
+        return _moverService->set_left_wheels_power(id, wheelsPower);
+    },
+    [](int16_t id, int16_t wheelsPower) -> bool {
+        // TODO implement watchdog
+        watchdog_counter_++;
+        return _moverService->set_right_wheels_power(id, wheelsPower);
+    },
+    [](int16_t id, int16_t rotation_speed) -> bool {
+        // TODO implement watchdog
+        watchdog_counter_++;
+        return _motorService->set_rotation_speed(id, rotation_speed);
+    }};
+
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
     // TODO make static object to ease dynamic memory usage
@@ -44,19 +62,7 @@ void setup() {
     _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
                                      RIGHT_BWD_PIN, LEFT_WHEEL_STEERING_COMMAND, RIGHT_WHEEL_STEERING_COMMAND);
     _moverService->printInit();
-    SpiSlave spiSlave(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE,
-    [](int16_t id, int16_t wheelsPower) -> bool {
-        watchdog_counter_++;
-        return _moverService->set_left_wheels_power(id, wheelsPower);
-    },
-    [](int16_t id, int16_t wheelsPower) -> bool {
-        watchdog_counter_++;
-        return _moverService->set_right_wheels_power(id, wheelsPower);
-    },
-    [](int16_t id, int16_t rotation_speed) -> bool {
-        watchdog_counter_++;
-        return _motorService->set_rotation_speed(id, rotation_speed);
-    });
+    SpiSlave spiSlave(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, spi_commands, k_amount_spi_commands, ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
 
     _timer.every(motor_spin_set_interval, [](void*) -> bool {
         _motorService->spinMotor();

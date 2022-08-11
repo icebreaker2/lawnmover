@@ -17,7 +17,7 @@ void MotorService::printInit() {
 }
 
 bool MotorService::set_rotation_speed(const int16_t id, const int16_t rotation_speed) {
-    // Logging must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
+    // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
     // SerialLogger::debug("Inspecting motor speed with id %d and value %d", id, rotation_speed);
     if (id == k_motorSpeedCommandId) {
         _rotation_speed = rotation_speed;
