@@ -71,7 +71,8 @@ ISR (SPI_STC_vect) {
         _engine_commands_indicator = (_engine_commands_indicator + 1) % ENGINE_COMMANDS;
         _buffer_counter = _engine_commands_indicator * COMMAND_FRAME_SIZE;
         if (!command_interpreted) {
-            SerialLogger::warn("Did not receive valid command. Cannot interpret value");
+            // Logging must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
+            SerialLogger::warn("Did not receive valid command. Cannot interpret value.");
         }
     } else {
         if (previously_synchronized) {
