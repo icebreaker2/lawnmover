@@ -2,11 +2,10 @@
 #include <serial_logger.h>
 #include <spi_commands.h>
 #include <spi_slave.h>
+#include <watchdog.h>
 
 #include "mover.h"
 #include "motor.h"
-
-
 
 const int LEFT_FWD_PIN = 8; // is PWM
 const int LEFT_BWD_PIN = 9; // is no PWM
@@ -24,7 +23,7 @@ const int SS_PIN_BLUE    = 10; // D10 = pin16 = PortB.2
 
 const int EXPECTED_SPI_COMMANDS_PER_SECONDS = 5;
 const int EXPECTED_SPI_COMMANDSERROR_MARGIN = 2 * ENGINE_COMMANDS;
-volatile int watchdog_counter_ = 0;
+
 
 // Debug
 const int DEBUG_PIN = 2; // is no PWM
@@ -36,21 +35,26 @@ MotorService *_motorService;
 const int steering_set_interval = 100;
 MoverService *_moverService;
 
+const int k_watchdog_validation_interval = 1000;
+const int k_watchdog_valid_threshold = ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN;
+Watchdog *_watchdog = Watchdog::getFromScheduled(k_watchdog_validation_interval, k_watchdog_valid_threshold, [](void) -> bool {
+       _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 0);
+       _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, 0);
+       _motorService->set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
+    }, _timer);
+
 int k_amount_spi_commands = 3;
 bool (*spi_commands[])(int16_t, int16_t) = {
     [](int16_t id, int16_t wheelsPower) -> bool {
-        // TODO implement watchdog
-        watchdog_counter_++;
+        _watchdog->incrementCounter();
         return _moverService->set_left_wheels_power(id, wheelsPower);
     },
     [](int16_t id, int16_t wheelsPower) -> bool {
-        // TODO implement watchdog
-        watchdog_counter_++;
+        _watchdog->incrementCounter();
         return _moverService->set_right_wheels_power(id, wheelsPower);
     },
     [](int16_t id, int16_t rotation_speed) -> bool {
-        // TODO implement watchdog
-        watchdog_counter_++;
+        _watchdog->incrementCounter();
         return _motorService->set_rotation_speed(id, rotation_speed);
     }};
 
@@ -72,20 +76,6 @@ void setup() {
 
     _timer.every(steering_set_interval, [](void*) -> bool {
         _moverService->interpret_state();
-        return true; // to repeat the action - false to stop
-    });
-
-    _timer.every(1000, [](void*) -> bool {
-        if (watchdog_counter_ < ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN) {
-            SerialLogger::error("This is Watchdog. Did not receive enough commands (%d/%d) for some time. Stopping all engines",
-            watchdog_counter_, ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN);
-            _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 0);
-            _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, 0);
-            _motorService->set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
-        } else {
-            SerialLogger::debug("This is the watchdog. Everything normal.");
-        }
-        watchdog_counter_ = 0;
         return true; // to repeat the action - false to stop
     });
 
