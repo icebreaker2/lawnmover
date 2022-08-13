@@ -7,8 +7,8 @@
 class Watchdog {
 public:
 
-	static Watchdog *Watchdog::getFromScheduled(const int validation_interval, const int valid_threshold,
-												void (*safety_backup_routine)(), Timer<> &timer);
+	static Watchdog *getFromScheduled(const int validation_interval, const int valid_threshold,
+									  void (*safety_backup_routine)(), Timer<> &timer);
 
 	Watchdog(const int validation_interval, const int valid_threshold, void (*safety_backup_routine)()) :
 			k_validation_interval(validation_interval), k_valid_threshold(valid_threshold), _watchdog_counter(0) {
@@ -56,4 +56,3 @@ private:
 };
 
 #endif // WATCHDOG_H
-
