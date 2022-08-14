@@ -20,7 +20,7 @@ UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const in
 UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int amountSensors, const int pulseMaxTimeoutMicroSeconds)  :
   k_txPin(txPin), k_amountSensors(amountSensors) {
 
-  _ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof * _ultrasonicSensors);
+  _ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
   char echoPinsString[MAX_ARDUINO_PINS * 16 + 5];
   strcat(echoPinsString, "pins ");
 
