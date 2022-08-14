@@ -18,7 +18,9 @@ int verifyIds(const byte rxIdBytes [], const byte txIdBytes []) {
 
 uint8_t SpiCommands::COMMUNICATION_START_SEQUENCE[COMMUNICATION_START_SEQUENCE_LENGTH] = {0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0xFF};
 
-bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size) {
+bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer,
+												 const long buffer_size, data_request_callback *data_request_callbacks,
+												 const int amount_data_request_callbacks) {
     SerialLogger::trace("Validating master-slave communication");
     uint8_t rxId1[COMMAND_FRAME_ID_SIZE];
     uint8_t rxId2[COMMAND_FRAME_ID_SIZE];
@@ -60,7 +62,7 @@ bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const
         const int16_t id1 = verifyIds(rxId1, txId1_bytes);
         // txId2 is the request to ack the very first id of a command, thus we use txId1 again to compare against rxId2
         const int16_t id2 = verifyIds(rxId2, txId1_bytes);
-        SerialLogger::debug("Comparing %d (txId1) with %d (rxId1) with %d (rxId2/ackId) and value %x%x%x%x", txId1, id1, id2,
+        SerialLogger::trace("Comparing %d (txId1) with %d (rxId1) with %d (rxId2/ackId) and value %x%x%x%x", txId1, id1, id2,
                             rx_value_bytes[0], rx_value_bytes[1], rx_value_bytes[2], rx_value_bytes[3]);
         if (id1 < 0 || id2 < 0) {
             return false;
@@ -73,13 +75,15 @@ bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const
         } else {
             long rx_data = 0;
             memcpy(&rx_data, rx_value_bytes, COMMAND_FRAME_VALUE_SIZE);
-            if (rx_data == -1) {
-                SerialLogger::trace("Data response from slave is %ld", rx_data);
-                // TODO handle data received from slave in callback
-                SerialLogger::warn("Cannot interpret response value from data request to slave. Not yet implemented");
-                return false;
+			bool processed = false;
+			for(int i = 0; i < amount_data_request_callbacks && !processed; i++) {
+				processed = (*data_request_callbacks[i])(id1, rx_data);
+			}
+
+			if (processed) {
+				SerialLogger::trace("Data response from slave is %ld for id %d", rx_data, id1);
             } else {
-                SerialLogger::trace("Data push to slave with ack response value %ld", rx_data);
+                SerialLogger::trace("Data push to slave with ack response value %ld for id %d", rx_data, id1);
                 for (int value_counter; value_counter < COMMAND_FRAME_VALUE_SIZE; value_counter++) {
                     if (rx_value_bytes[value_counter] != tx_value_bytes[value_counter]) {
                         SerialLogger::warn("Slave did not return correct value bytes");

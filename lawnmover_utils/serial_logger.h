@@ -30,6 +30,8 @@ class SerialLogger {
 
         static void error(const char * format, ...);
 
+		static bool is(const LOG_LEVEL logLevel);
+
     private:
         static LOG_LEVEL logLevel;
 

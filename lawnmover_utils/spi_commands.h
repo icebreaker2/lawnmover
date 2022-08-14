@@ -75,6 +75,9 @@ class BoolSpiCommand: public SpiCommand {
         };
 };
 
+typedef bool (*data_request_callback)(int16_t, long);
+typedef bool (*spi_command_data_creator)(uint8_t *tx_buffer, const int offset);
+
 class SpiCommands {
     public:
         template<typename T>
@@ -83,7 +86,10 @@ class SpiCommands {
         template<typename T>
         static void putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer);
 
-        static bool master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size);
+        static bool master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer,
+												   const long buffer_size,
+												   data_request_callback *data_request_callbacks,
+												   const int amount_data_request_callbacks);
 
         template<typename V>
         static bool slave_interpret_command(uint8_t *rx_buffer, bool (*command_callback[])(int16_t, V), const int amount_command_callbacks);

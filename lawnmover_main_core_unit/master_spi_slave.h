@@ -87,7 +87,7 @@ public:
 			_slave_synchronized = true;
 		} else {
 			if (_slave_synchronized) {
-				SerialLogger::info("%s slave no longer synchronized with this master", k_name);
+				SerialLogger::warn("%s slave no longer synchronized with this master", k_name);
 			} else {
 				SerialLogger::warn("%s slave not synchronized with this master", k_name);
 			}
@@ -111,7 +111,6 @@ public:
 		SerialLogger::info("Powering up slave on slave_select pin %d (%s) with reset on pin %d", k_slave_pin,
 						   k_name, k_slave_restart_pin);
 		delay(k_slave_boot_delay);
-		SerialLogger::info("Slave %d needs to synchronize with this master", k_slave_id + 1);
 	};
 
 	int get_slave_id() const {

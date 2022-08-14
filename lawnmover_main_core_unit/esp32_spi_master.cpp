@@ -157,24 +157,24 @@ void Esp32SpiMaster::schedule_internal(const int interval, Timer<> &timer, const
 							}
 						}
 
-						Serial.printf("RxBufferInput (Slave %d: %s): ", spi_slave->get_slave_id() + 1,
-									  spi_slave->get_name());
-						for (long i = 0; i < tx_rx_buffer_size; i += 1) {
-							if (i % COMMAND_FRAME_SIZE == 0) {
-								Serial.print(" ");
-							}
-							Serial.print(rx_buffer[i], HEX);
-						}
-						Serial.println();
-						Serial.printf("TxBufferInput (Slave %d: %s):", spi_slave->get_slave_id() + 1,
-									  spi_slave->get_name());
-						for (long i = 0; i < tx_rx_buffer_size; i += 1) {
-							if (i % COMMAND_FRAME_SIZE == 0) {
-								Serial.print(" ");
-							}
-							Serial.print(tx_buffer[i], HEX);
-						}
-						Serial.println();
+                        if (SerialLogger::is(SerialLogger::TRACE)) {
+                            Serial.printf("RxBufferInput (Slave %d: %s): ", spi_slave->get_slave_id() + 1, spi_slave->get_name());
+                            for (long i = 0; i < tx_rx_buffer_size; i += 1) {
+                                if (i % COMMAND_FRAME_SIZE == 0) {
+                                    Serial.print(" ");
+                                }
+                                Serial.print(rx_buffer[i], HEX);
+                            }
+                            Serial.println();
+                            Serial.printf("TxBufferInput (Slave %d: %s):", spi_slave->get_slave_id() + 1, spi_slave->get_name());
+                            for (long i = 0; i < tx_rx_buffer_size; i += 1) {
+                                if (i % COMMAND_FRAME_SIZE == 0) {
+                                    Serial.print(" ");
+                                }
+                                Serial.print(tx_buffer[i], HEX);
+                            }
+                            Serial.println();  
+                        }
 					}
 					return repeat; // to repeat the action - false to stop
 				});

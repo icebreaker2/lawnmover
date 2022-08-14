@@ -2,7 +2,7 @@
 #include "ESP32_PS4_Controller.h"
 #include "esp32_spi_master.h"
 #include "engine_slave.h"
-#include "object_detection_Slave.h"
+#include "obstacle_detection_Slave.h"
 
 // General SPI settings
 const int MOSI_PIN_GREEN = 23;
@@ -18,9 +18,9 @@ const int ENGINE_RESTART_PIN_PIN = 13;
 const int ENGINE_POWER_BOOT_DELAY = 1000;
 
 // Object Detection SPI slave settings
-const int OBJECT_DETECTION_CONTROL_SS_PIN_BROWN = 12;
-const int OBJECT_DETECTION_RESTART_PIN_PIN = 14;
-const int OBJECT_DETECTION_POWER_BOOT_DELAY = 1000;
+const int OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN = 12;
+const int OBSTACLE_DETECTION_RESTART_PIN_PIN = 14;
+const int OBSTACLE_DETECTION_POWER_BOOT_DELAY = 1000;
 
 const int spi_schedule_next_slave_commands_intervall = 150;
 
@@ -29,8 +29,6 @@ auto _timer = timer_create_default();
 const char *masterMac = "ac:89:95:b8:7f:be";
 ESP32_PS4_Controller *esp32Ps4Ctrl = nullptr;
 Esp32SpiMaster *esp32_spi_master = nullptr;
-EngineSlave *engine_Slave;
-ObjectDetectionSlave *object_detection_Slave;
 
 void re_setup_spi_communication() {
 	// delete the master will tear down all slaves (inclusive their power supply) put into master
@@ -40,24 +38,27 @@ void re_setup_spi_communication() {
 	esp32_spi_master = new Esp32SpiMaster(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, &re_setup_spi_communication,
 										  frequency, INTER_TRANSACTION_DELAY_MICROSECONDS);
 
-	const int slave_id = Esp32SpiMaster::take_free_id();
-	if (slave_id >= 0) {
+	const int engine_slave_id = Esp32SpiMaster::take_free_id();
+	if (engine_slave_id >= 0) {
         SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(ENGINE_CONTROL_SS_PIN_BLUE);
-		EngineSlave *spi_slave = new EngineSlave(spi_slave_handler, slave_id, ENGINE_CONTROL_SS_PIN_BLUE,
-												 ENGINE_RESTART_PIN_PIN, ENGINE_POWER_BOOT_DELAY, esp32Ps4Ctrl);
+		EngineSlave *spi_slave = new EngineSlave(spi_slave_handler, engine_slave_id, ENGINE_CONTROL_SS_PIN_BLUE, 
+		                                         ENGINE_RESTART_PIN_PIN, ENGINE_POWER_BOOT_DELAY, esp32Ps4Ctrl);
 		esp32_spi_master->put_slave(spi_slave);
 	} else {
-		SerialLogger::error("Cannot add a new slave to. Got no free id from Esp32SpiMaster");
+		SerialLogger::error("Cannot add a new engine slave to. Got no free id from Esp32SpiMaster");
 	}
-
-
-//  const int slave_id = Esp32SpiMaster::take_free_id();
-//  if (slave_id >= 0) {
-//      TODO create object detection slave
-//  } else {
-//    SerialLogger::error("Cannot add a new slave to. Got no free id from Esp32SpiMaster");
-//    return nullptr;
-//  }
+	
+	const int obstacle_slave_id = Esp32SpiMaster::take_free_id();
+	if (obstacle_slave_id >= 0) {
+	    SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN);
+	    ObstacleDetectionSlave *spi_slave = new ObstacleDetectionSlave(spi_slave_handler, obstacle_slave_id,
+	                                                                   OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN,
+	                                                                   OBSTACLE_DETECTION_RESTART_PIN_PIN, 
+	                                                                   OBSTACLE_DETECTION_POWER_BOOT_DELAY);
+        esp32_spi_master->put_slave(spi_slave);
+    } else {
+        SerialLogger::error("Cannot add a new obstacle detection slave to. Got no free id from Esp32SpiMaster");
+    }
     esp32_spi_master->schedule(spi_schedule_next_slave_commands_intervall, _timer);
 }
 
