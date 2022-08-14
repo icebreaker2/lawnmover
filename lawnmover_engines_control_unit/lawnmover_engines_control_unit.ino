@@ -2,8 +2,8 @@
 #include <serial_logger.h>
 #include <spi_commands.h>
 
-#include "spi_slave.h"
-#include "watchdog.h"
+#include <spi_slave.h>
+#include <watchdog.h>
 
 #include "mover.h"
 #include "motor.h"
