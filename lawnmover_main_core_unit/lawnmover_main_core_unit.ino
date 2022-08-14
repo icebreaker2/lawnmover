@@ -15,14 +15,12 @@ const int INTER_TRANSACTION_DELAY_MICROSECONDS = 10;
 // Engine SPI slave settings
 const int ENGINE_CONTROL_SS_PIN_BLUE = 5;
 const int ENGINE_RESTART_PIN_PIN = 13;
-const int ENGINE_POWER_BOOT_DELAY = 1000;
 
 // Object Detection SPI slave settings
 const int OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN = 12;
 const int OBSTACLE_DETECTION_RESTART_PIN_PIN = 14;
-const int OBSTACLE_DETECTION_POWER_BOOT_DELAY = 1000;
 
-const int spi_schedule_next_slave_commands_intervall = 150;
+const int spi_schedule_next_slave_commands_intervall = 200;
 
 // General processing + PS4 (Bluetooth) settings
 auto _timer = timer_create_default();
@@ -42,7 +40,7 @@ void re_setup_spi_communication() {
 	if (engine_slave_id >= 0) {
         SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(ENGINE_CONTROL_SS_PIN_BLUE);
 		EngineSlave *spi_slave = new EngineSlave(spi_slave_handler, engine_slave_id, ENGINE_CONTROL_SS_PIN_BLUE, 
-		                                         ENGINE_RESTART_PIN_PIN, ENGINE_POWER_BOOT_DELAY, esp32Ps4Ctrl);
+		                                         ENGINE_RESTART_PIN_PIN, esp32Ps4Ctrl);
 		esp32_spi_master->put_slave(spi_slave);
 	} else {
 		SerialLogger::error("Cannot add a new engine slave to. Got no free id from Esp32SpiMaster");
@@ -53,8 +51,7 @@ void re_setup_spi_communication() {
 	    SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN);
 	    ObstacleDetectionSlave *spi_slave = new ObstacleDetectionSlave(spi_slave_handler, obstacle_slave_id,
 	                                                                   OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN,
-	                                                                   OBSTACLE_DETECTION_RESTART_PIN_PIN, 
-	                                                                   OBSTACLE_DETECTION_POWER_BOOT_DELAY);
+	                                                                   OBSTACLE_DETECTION_RESTART_PIN_PIN);
         esp32_spi_master->put_slave(spi_slave);
     } else {
         SerialLogger::error("Cannot add a new obstacle detection slave to. Got no free id from Esp32SpiMaster");

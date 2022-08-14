@@ -12,11 +12,9 @@
 class MasterSpiSlave {
 public:
     MasterSpiSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const char *name, const int slave_pin,
-             const int slave_restart_pin, const int slave_boot_delay, const int amount_commands,
-             const int amount_data_request_callbacks) :             
+             const int slave_restart_pin, const int amount_commands, const int amount_data_request_callbacks) :             
       k_slave_id(slave_id), k_name(name), k_slave_pin(slave_pin), k_slave_restart_pin(slave_restart_pin),
-      k_slave_boot_delay(slave_boot_delay), k_amount_commands(amount_commands),
-      k_amount_data_request_callbacks(amount_data_request_callbacks),
+      k_amount_commands(amount_commands), k_amount_data_request_callbacks(amount_data_request_callbacks),
       k_buffer_size(amount_commands * COMMAND_FRAME_SIZE) {
       _spi_slave_handler = spi_slave_handler;
 
@@ -104,13 +102,8 @@ public:
 		// if we put some voltage on the reset pin, the board will restart
 		pinMode(k_slave_restart_pin, OUTPUT);
 		digitalWrite(k_slave_restart_pin, HIGH);
-		delay(100);
+		delay(25);
 		digitalWrite(k_slave_restart_pin, LOW);
-
-		// wait some time for the slave to boot
-		SerialLogger::info("Powering up slave on slave_select pin %d (%s) with reset on pin %d", k_slave_pin,
-						   k_name, k_slave_restart_pin);
-		delay(k_slave_boot_delay);
 	};
 
 	int get_slave_id() const {
@@ -127,10 +120,6 @@ public:
 
 	int get_slave_restart_pin() const {
 		return k_slave_restart_pin;
-	};
-
-	int get_slave_boot_delay() const {
-		return k_slave_boot_delay;
 	};
 
 	int get_amount_commands() const {
@@ -167,7 +156,6 @@ private:
 	const char *k_name;
 	const int k_slave_pin;
 	const int k_slave_restart_pin;
-	const int k_slave_boot_delay;
 	const int k_amount_commands;
 	const long k_buffer_size;
 

@@ -7,8 +7,8 @@
 class EngineSlave : public MasterSpiSlave {
 public:
 	EngineSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const int slave_pin, const int slave_restart_pin,
-				const int slave_boot_delay, ESP32_PS4_Controller *esp32Ps4Ctrl, const char *name = "EngineControl") :
-			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, slave_boot_delay, 3, 0) {
+				ESP32_PS4_Controller *esp32Ps4Ctrl, const char *name = "EngineControl") :
+			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 3, 0) {
 		_esp32Ps4Ctrl = esp32Ps4Ctrl;
 	};
 
