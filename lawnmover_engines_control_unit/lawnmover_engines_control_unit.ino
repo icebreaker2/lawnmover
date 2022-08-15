@@ -43,8 +43,8 @@ Watchdog *_watchdog = Watchdog::getFromScheduled(k_watchdog_validation_interval,
        _motorService->set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
     }, _timer);
 
-int k_amount_spi_commands = 3;
-bool (*spi_commands[])(int16_t, int16_t) = {
+int k_amount_data_push_commands = 3;
+bool (*_data_push_commands[])(int16_t, int16_t) = {
     [](int16_t id, int16_t wheelsPower) -> bool {
         _watchdog->incrementCounter();
         return _moverService->set_left_wheels_power(id, wheelsPower);
@@ -58,6 +58,10 @@ bool (*spi_commands[])(int16_t, int16_t) = {
         return _motorService->set_rotation_speed(id, rotation_speed);
     }};
 
+
+int k_amount_data_request_commands = 0;
+bool (*_data_request_commands[])(int16_t, uint8_t *) = {};
+
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
     // TODO make static object to ease dynamic memory usage
@@ -67,7 +71,8 @@ void setup() {
     _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
                                      RIGHT_BWD_PIN, LEFT_WHEEL_STEERING_COMMAND, RIGHT_WHEEL_STEERING_COMMAND);
     _moverService->printInit();
-    SpiSlave spiSlave(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, spi_commands, k_amount_spi_commands, ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
+    SpiSlave spiSlave(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands, k_amount_data_push_commands, 
+                      _data_request_commands, k_amount_data_request_commands, ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
 
     _timer.every(motor_spin_set_interval, [](void*) -> bool {
         _motorService->spinMotor();
@@ -79,7 +84,9 @@ void setup() {
         return true; // to repeat the action - false to stop
     });
 
-    spiSlave.addSlavePrinting(_timer, 1000);
+    if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG)) {
+        spiSlave.addSlavePrinting(_timer, 1000); 
+    }
 
     // debug pin always high
     pinMode(DEBUG_PIN, OUTPUT);

@@ -12,11 +12,17 @@
 
 #define COMMUNICATION_START_SEQUENCE_LENGTH 9
 
+#define ENGINE_COMMANDS 3
 #define LEFT_WHEEL_STEERING_COMMAND (int16_t) 1
 #define RIGHT_WHEEL_STEERING_COMMAND (int16_t) 2
 #define MOTOR_SPEED_COMMAND (int16_t) 3
-#define ENGINE_COMMANDS 3
-#define MAX_ID (int16_t) 3
+#define OBSTACLE_COMMANDS 4
+#define OBSTACLE_FRONT_COMMAND (int16_t) 4
+#define OBSTACLE_FRONT_LEFT_COMMAND (int16_t) 5
+#define OBSTACLE_FRONT_RIGHT_COMMAND (int16_t) 6
+#define OBSTACLE_BACK_COMMAND (int16_t) 7
+#define MAX_ID (int16_t) 7
+
 
 // Could not get templates to work...
 class SpiCommand {
@@ -92,9 +98,11 @@ class SpiCommands {
 												   const int amount_data_request_callbacks);
 
         template<typename V>
-        static bool slave_interpret_command(uint8_t *rx_buffer, bool (*command_callback[])(int16_t, V), const int amount_command_callbacks);
+        static bool slave_interpret_command(uint8_t *rx_buffer, bool (*data_push_callbacks[])(int16_t, V), const int amount_data_push_callbacks);
 
-        static bool slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte);
+		static bool slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte,
+											  bool (*data_request_callbacks[])(int16_t, uint8_t *),
+											  const int amount_data_request_callbacks);
 
 
         static uint8_t COMMUNICATION_START_SEQUENCE[];
@@ -127,7 +135,7 @@ void SpiCommands::putCommandToBuffer(const int16_t commandId, const T commandVal
     Note: Function-Pointer may differ if request only received. If so, slave must write values to tx_buffer
 */
 template<typename V>
-bool SpiCommands::slave_interpret_command(uint8_t *rx_buffer, bool (*command_callback[])(int16_t, V), const int amount_command_callbacks) {
+bool SpiCommands::slave_interpret_command(uint8_t *rx_buffer, bool (*data_push_callbacks[])(int16_t, V), const int amount_data_push_callbacks) {
     bool valid = false;
     int16_t id = -1;
     byte rxId[COMMAND_FRAME_ID_SIZE];
@@ -144,8 +152,8 @@ bool SpiCommands::slave_interpret_command(uint8_t *rx_buffer, bool (*command_cal
     } else {
         V value;
         memcpy(&value, rx_buffer + COMMAND_FRAME_ID_SIZE, sizeof(value));
-        for(int i = 0; i < amount_command_callbacks && !valid; i++) {
-            valid = (*command_callback[i])(id, value);
+        for(int i = 0; i < amount_data_push_callbacks && !valid; i++) {
+            valid = (*data_push_callbacks[i])(id, value);
         }
     }
 

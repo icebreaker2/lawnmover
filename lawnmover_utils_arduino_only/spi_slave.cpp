@@ -13,11 +13,16 @@ uint8_t *_rx_buffer;
 uint8_t *_tx_buffer;
 
 bool synchronized = false;
-int _amount_commands;
-bool (**_commands)(int16_t, int16_t);
+int _amount_data_push_command_callbacks;
+bool (**_data_push_command_callbacks)(int16_t, int16_t);
+int _amount_data_request_command_callbacks;
+bool (**_data_request_command_callbacks)(int16_t, uint8_t *);
 
 SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
-				   bool (*commands[])(int16_t, int16_t), const int amount_commands, const int buffer_length) {
+				   bool (*data_push_command_callbacks[])(int16_t, int16_t),
+				   const int amount_data_push_command_callbacks,
+				   bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
+				   const int amount_data_request_command_callbacks, const int buffer_length) {
 	pinMode(sck_pin, INPUT);
 	pinMode(mosi_pin, INPUT);
 	pinMode(miso_pin, OUTPUT);
@@ -42,8 +47,10 @@ SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, co
 	// turn on interrupts
 	SPCR |= bit(SPIE);
 
-	_commands = commands;
-	_amount_commands = amount_commands;
+	_data_push_command_callbacks = data_push_command_callbacks;
+	_amount_data_push_command_callbacks = amount_data_push_command_callbacks;
+	_data_request_command_callbacks = data_request_command_callbacks;
+	_amount_data_request_command_callbacks = amount_data_request_command_callbacks;
 
 	_commands_size = buffer_length;
 	_last_commands_size = _commands_size - COMMAND_FRAME_SIZE;
@@ -60,7 +67,8 @@ ISR (SPI_STC_vect) {
 		uint8_t tx_byte = 0;
 		const bool previously_synchronized = synchronized;
 
-		const bool full_command_or_synchronized = SpiCommands::slave_process_partial_command(synchronized, rx_byte, tx_byte);
+		const bool full_command_or_synchronized = SpiCommands::slave_process_partial_command(
+				synchronized, rx_byte, tx_byte, _data_request_command_callbacks, _amount_data_request_command_callbacks);
 		SPDR = tx_byte;
 		_rx_buffer[_buffer_counter] = rx_byte;
 		_tx_buffer[_buffer_counter] = tx_byte;
@@ -68,8 +76,9 @@ ISR (SPI_STC_vect) {
 		_buffer_counter = (_buffer_counter + 1) % _commands_size;
 		if (full_command_or_synchronized && previously_synchronized) {
 			const int tx_rx_offset = _buffer_counter == 0 ? _last_commands_size : _buffer_counter - COMMAND_FRAME_SIZE;
-			const bool command_interpreted = SpiCommands::slave_interpret_command(_rx_buffer + tx_rx_offset, _commands,
-																				  _amount_commands);
+			const bool command_interpreted = SpiCommands::slave_interpret_command(_rx_buffer + tx_rx_offset,
+																				  _data_push_command_callbacks,
+																				  _amount_data_push_command_callbacks);
 			if (!command_interpreted) {
 				// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
 				SerialLogger::warn("Did not receive valid command. Cannot interpret value.");

@@ -101,6 +101,6 @@ void SerialLogger::log(const char *format, va_list argptr) {
     Serial.println("");
 }
 
-bool SerialLogger::is(const LOG_LEVEL logLevel) {
-	return SerialLogger::logLevel == logLevel;
+bool SerialLogger::isBelow(const LOG_LEVEL logLevel) {
+	return SerialLogger::logLevel <= logLevel;
 }
