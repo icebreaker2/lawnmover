@@ -16,6 +16,7 @@ bool synchronized = false;
 int _amount_data_push_command_callbacks;
 bool (**_data_push_command_callbacks)(int16_t, int16_t);
 int _amount_data_request_command_callbacks;
+
 bool (**_data_request_command_callbacks)(int16_t, uint8_t *);
 
 SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
@@ -68,7 +69,7 @@ ISR (SPI_STC_vect) {
 		const bool previously_synchronized = synchronized;
 
 		const bool full_command_or_synchronized = SpiCommands::slave_process_partial_command(
-				synchronized, rx_byte, tx_byte, _data_request_command_callbacks, _amount_data_request_command_callbacks);
+		synchronized, rx_byte, tx_byte, _data_request_command_callbacks, _amount_data_request_command_callbacks);
 		SPDR = tx_byte;
 		_rx_buffer[_buffer_counter] = rx_byte;
 		_tx_buffer[_buffer_counter] = tx_byte;
