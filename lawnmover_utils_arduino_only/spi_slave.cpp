@@ -59,6 +59,14 @@ SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, co
 	_tx_buffer = (uint8_t *) calloc(_commands_size, sizeof *_tx_buffer);
 }
 
+bool post_process_spi_interrupt_routine(const uint8_t rx_byte, const uint8_t tx_byte) {
+	SPDR = tx_byte;
+	_rx_buffer[_buffer_counter] = rx_byte;
+	_tx_buffer[_buffer_counter] = tx_byte;
+	_buffer_counter = (_buffer_counter + 1) % _commands_size;
+	return true;
+}
+
 /**
     SPI interrupt routine
     Note: Printing consumes too much time. Slave does not respond in time.
@@ -66,27 +74,30 @@ SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, co
 ISR (SPI_STC_vect) {
 		const uint8_t rx_byte = SPDR;
 		uint8_t tx_byte = 0;
-		const bool previously_synchronized = synchronized;
 
-		const bool full_command_or_synchronized = SpiCommands::slave_process_partial_command(
-		synchronized, rx_byte, tx_byte, _data_request_command_callbacks, _amount_data_request_command_callbacks);
-		SPDR = tx_byte;
-		_rx_buffer[_buffer_counter] = rx_byte;
-		_tx_buffer[_buffer_counter] = tx_byte;
-
-		_buffer_counter = (_buffer_counter + 1) % _commands_size;
-		if (full_command_or_synchronized && previously_synchronized) {
-			const int tx_rx_offset = _buffer_counter == 0 ? _last_commands_size : _buffer_counter - COMMAND_FRAME_SIZE;
-			const bool command_interpreted = SpiCommands::slave_interpret_command(_rx_buffer + tx_rx_offset,
-																				  _data_push_command_callbacks,
-																				  _amount_data_push_command_callbacks);
-			if (!command_interpreted) {
-				// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
-				SerialLogger::warn("Did not receive valid command. Cannot interpret value.");
+		if (synchronized) {
+			if (SpiCommands::slave_process_partial_command(synchronized, rx_byte, tx_byte,
+														   _data_request_command_callbacks,
+														   _amount_data_request_command_callbacks) &
+				post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
+				const int tx_rx_offset =
+						_buffer_counter == 0 ? _last_commands_size : _buffer_counter - COMMAND_FRAME_SIZE;
+				const bool command_interpreted = SpiCommands::slave_interpret_command(_rx_buffer + tx_rx_offset,
+																					  _data_push_command_callbacks,
+																					  _amount_data_push_command_callbacks);
+				if (!command_interpreted) {
+					// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
+					SerialLogger::warn("Did not receive valid command. Cannot interpret value.");
+					synchronized = false;
+				}
 			}
-		} else if (!previously_synchronized && synchronized) {
-			// We are now synchronized and need to start from index 0 for everything_
-			_buffer_counter = 0;
+		} else {
+			synchronized = SpiCommands::slave_synchronize(rx_byte, tx_byte);
+			post_process_spi_interrupt_routine(rx_byte, tx_byte);
+			if (synchronized) {
+				// We are now synchronized and need to start from index 0 for everything_
+				_buffer_counter = 0;
+			}
 		}
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 

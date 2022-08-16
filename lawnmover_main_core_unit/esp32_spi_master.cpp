@@ -157,7 +157,7 @@ void Esp32SpiMaster::schedule_internal(const int interval, Timer<> &timer, const
 							}
 						}
 
-                        if (SerialLogger::is(SerialLogger::TRACE)) {
+                        if (SerialLogger::isBelow(SerialLogger::TRACE)) {
                             Serial.printf("RxBufferInput (Slave %d: %s): ", spi_slave->get_slave_id() + 1, spi_slave->get_name());
                             for (long i = 0; i < tx_rx_buffer_size; i += 1) {
                                 if (i % COMMAND_FRAME_SIZE == 0) {
