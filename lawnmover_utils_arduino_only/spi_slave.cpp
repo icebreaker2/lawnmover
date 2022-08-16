@@ -3,6 +3,8 @@
 #include <SPI.h>
 #include <Arduino.h>
 
+#include <serial_logger.h>
+#include <spi_commands.h>
 
 int _commands_size;
 int _buffer_counter = 0;
@@ -15,11 +17,11 @@ bool (**_data_push_command_callbacks)(int16_t, int16_t);
 int _amount_data_request_command_callbacks;
 bool (**_data_request_command_callbacks)(int16_t, uint8_t *);
 
-SpiSlave::SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
-				   bool (*data_push_command_callbacks[])(int16_t, int16_t),
-				   const int amount_data_push_command_callbacks,
-				   bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
-				   const int amount_data_request_command_callbacks, const int buffer_length) {
+void SpiSlave::ISRfromArgs(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
+						   bool (*data_push_command_callbacks[])(int16_t, int16_t),
+						   const int amount_data_push_command_callbacks,
+						   bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
+						   const int amount_data_request_command_callbacks, const int buffer_length) {
 	pinMode(sck_pin, INPUT);
 	pinMode(mosi_pin, INPUT);
 	pinMode(miso_pin, OUTPUT);
@@ -83,6 +85,19 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 	_synchronized = false;
 }
 
+bool check_and_set_id() {
+	memcpy(&_current_command_id, _current_command_id_bytes, sizeof(int16_t));
+	if (_current_command_id <= 0) {
+		SerialLogger::error("Bad Id Received. %d is unknown", _current_command_id);
+		return false;
+	} else if (_current_command_id > MAX_ID) {
+		SerialLogger::warn("Received bad id %d > %d (max)", _current_command_id, MAX_ID);
+		return false;
+	} else {
+		return true;
+	}
+}
+
 bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 	if (_current_command_cursor < COMMAND_FRAME_ID_SIZE) {
 		if (_current_command_cursor == 0) {
@@ -96,7 +111,15 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 	} else if (_current_command_cursor < COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE) {
 		uint8_t write_byte = rx_byte;
 		if (_current_command_cursor == COMMAND_FRAME_ID_SIZE) {
-			memcpy(&_current_command_id, _current_command_id_bytes, sizeof(int16_t));
+			// check&set the id and reset it it fails
+			if (!check_and_set_id()) {
+				// Bad Req Id received; failure.
+				tx_byte = 0;
+				_synchronized = false;
+				_current_command_cursor = 0;
+				return false;
+			}
+			// inspect for data request commands
 			for (int i = 0; i < _amount_data_request_command_callbacks && !_current_command_data_request; i++) {
 				_current_command_data_request = (*_data_request_command_callbacks[i])(_current_command_id,
 						_current_command_value_bytes);
@@ -117,7 +140,7 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 			tx_byte = _current_command_id_bytes[id_index];
 			_current_command_cursor++;
 		} else {
-			//SerialLogger::warn("Received bad ack id request with byte %c on id index %d with position %d. Synchronization lost.", rx_byte, id_index, _current_command_cursor);
+			// Bad Ack Id byte received; failure.
 			tx_byte = 0;
 			_synchronized = false;
 			_current_command_cursor = 0;
@@ -141,30 +164,22 @@ bool post_process_spi_interrupt_routine(const uint8_t rx_byte, const uint8_t tx_
 
 /*
     Call if value received by master
-
-    Note: Function-Pointer may differ if request only received. If so, slave must write values to tx_buffer
 */
 template<typename V>
-bool interpret_command(const int id, uint8_t *value_bytes, bool is_data_request,
-					   bool (*data_push_callbacks[])(int16_t, V), const int amount_data_push_callbacks) {
+void interpret_data_push_command(const int id, uint8_t *value_bytes, bool (*data_push_callbacks[])(int16_t, V),
+								 const int amount_data_push_callbacks) {
 	bool valid = false;
-	if (id < 0) {
-		SerialLogger::error("Bad Id Received. %d is unknown", id);
-	} else if (id > MAX_ID) {
-		SerialLogger::warn("Received bad id %d > %d (max)", id, MAX_ID);
-	} else {
-		if (is_data_request) {
-			valid = true;
-		} else {
-			V value;
-			memcpy(&value, value_bytes, sizeof(value));
-			for (int i = 0; i < amount_data_push_callbacks && !valid; i++) {
-				valid = (*data_push_callbacks[i])(id, value);
-			}
-		}
+	V value;
+	memcpy(&value, value_bytes, sizeof(value));
+	for (int i = 0; i < amount_data_push_callbacks && !valid; i++) {
+		valid = (*data_push_callbacks[i])(id, value);
 	}
 
-	return valid;
+	if (!valid) {
+		// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
+		SerialLogger::warn("Did not receive valid data push command. Cannot interpret value.");
+		_synchronized = false;
+	}
 }
 
 /**
@@ -178,14 +193,9 @@ ISR (SPI_STC_vect) {
 		if (_synchronized) {
 			if (process_partial_command(rx_byte, tx_byte) &
 				post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
-				const bool command_interpreted = interpret_command(_current_command_id, _current_command_value_bytes,
-																   _current_command_data_request,
-																   _data_push_command_callbacks,
-																   _amount_data_push_command_callbacks);
-				if (!command_interpreted) {
-					// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
-					SerialLogger::warn("Did not receive valid command. Cannot interpret value.");
-					_synchronized = false;
+				if (!_current_command_data_request) {
+					interpret_data_push_command(_current_command_id, _current_command_value_bytes,
+												_data_push_command_callbacks, _amount_data_push_command_callbacks);
 				}
 			}
 		} else {

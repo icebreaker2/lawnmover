@@ -65,7 +65,7 @@ public:
 				for (long i = 0; i < COMMUNICATION_START_SEQUENCE_LENGTH - 1; i += 1) {
 					const char &rx_byte = slave_response_buffer[i + COMMAND_SPI_RX_OFFSET];
 					if (rx_byte == SpiCommands::COMMUNICATION_START_SEQUENCE[i]) {
-						SerialLogger::debug("Slave from %s rx byte on index %d is %x and does match expected byte %x ",
+						SerialLogger::trace("Slave from %s rx byte on index %d is %x and does match expected byte %x ",
 											k_name, i, rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[i]);
 					} else {
 						SerialLogger::warn(

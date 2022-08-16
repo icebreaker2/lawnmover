@@ -71,21 +71,22 @@ void setup() {
     _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
                                      RIGHT_BWD_PIN, LEFT_WHEEL_STEERING_COMMAND, RIGHT_WHEEL_STEERING_COMMAND);
     _moverService->printInit();
-    SpiSlave spiSlave(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands, k_amount_data_push_commands, 
-                      _data_request_commands, k_amount_data_request_commands, ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
+    SpiSlave::ISRfromArgs(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands, 
+                          k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands, 
+                          ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
 
-    _timer.every(motor_spin_set_interval, [](void*) -> bool {
-        _motorService->spinMotor();
-        return true; // to repeat the action - false to stop
-    });
-
-    _timer.every(steering_set_interval, [](void*) -> bool {
-        _moverService->interpret_state();
-        return true; // to repeat the action - false to stop
-    });
+//    _timer.every(motor_spin_set_interval, [](void*) -> bool {
+//        _motorService->spinMotor();
+//        return true; // to repeat the action - false to stop
+//    });
+//
+//    _timer.every(steering_set_interval, [](void*) -> bool {
+//        _moverService->interpret_state();
+//        return true; // to repeat the action - false to stop
+//    });
 
     if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG)) {
-        spiSlave.addSlavePrinting(_timer, 1000); 
+        SpiSlave::addSlavePrinting(_timer, 1000); 
     }
 
     // debug pin always high
