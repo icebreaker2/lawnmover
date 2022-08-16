@@ -26,10 +26,9 @@ class Esp32SpiMaster {
 
     void schedule(const int interval, Timer<> &timer);
 
-  private:
+    bool stopped() const { return _stopped; };
 
-    static void schedule_internal(const int interval, Timer<> &timer, const int chunk_size, uint8_t* rx_buffer, int max_tx_rx_buffer_size, void (*error_callback)(), volatile bool &shutdown,
-                                  MasterSpiSlave **slaves, const int inter_transaction_delay_microseconds, volatile int &slave_cursor, const int registered_slaves);
+  private:
 
     static MasterSpiSlave *_slaves[];
     static int _registered_slaves;
@@ -44,12 +43,10 @@ class Esp32SpiMaster {
     const uint8_t k_spi_mode;
     const int k_inter_transaction_delay_microseconds;
 
-    void (*error_callback_)();
-    volatile bool shutdown_ = false;
+    void (*_error_callback)();
+    volatile bool _stopped;
 
     const int k_chunk_size;
-    const int k_tx_rx_buffer_size;
-    uint8_t* spi_master_rx_buf_;
 };
 
 #endif // ESP32_SPI_MASTER_H

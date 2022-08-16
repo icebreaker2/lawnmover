@@ -66,13 +66,13 @@ bool SpiCommands::master_interpret_communication(const uint8_t *tx_buffer, const
 		const int16_t id1 = verifyIds(rxId1, txId1_bytes);
 		// txId2 is the request to ack the very first id of a command, thus we use txId1 again to compare against rxId2
 		const int16_t id2 = verifyIds(rxId2, txId1_bytes);
-		SerialLogger::trace("Comparing %d (txId1) with %d (rxId1) with %d (rxId2/ackId) and value %x%x%x%x", txId1, id1,
-							id2,
-							rx_value_bytes[0], rx_value_bytes[1], rx_value_bytes[2], rx_value_bytes[3]);
-		if (id1 < 0 || id2 < 0) {
+		SerialLogger::trace("Comparing %d (txId1) with %d (rxId1) with %d (rxId2/ackId) and value %x%x%x%x",
+							txId1, id1, id2, rx_value_bytes[0], rx_value_bytes[1], rx_value_bytes[2], rx_value_bytes[3]);
+		if (id1 <= 0 || id2 <= 0) {
+			SerialLogger::error("Unknown ids received %d, %d", id1, id2);
 			return false;
 		} else if (id1 != id2) {
-			SerialLogger::error("Leading and Trailing Id do not align %d != %d", id1, id2);
+			SerialLogger::error("Req and Ack Id do not align %d != %d", id1, id2);
 			return false;
 		} else if (id1 > MAX_ID) {
 			SerialLogger::warn("Received bad id %d > %d (max)", id1, MAX_ID);

@@ -12,10 +12,10 @@
 class MasterSpiSlave {
 public:
     MasterSpiSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const char *name, const int slave_pin,
-             const int slave_restart_pin, const int amount_commands, const int amount_data_request_callbacks) :             
+             const int slave_restart_pin, const int amount_data_push_commands, const int amount_data_request_commands) :             
       k_slave_id(slave_id), k_name(name), k_slave_pin(slave_pin), k_slave_restart_pin(slave_restart_pin),
-      k_amount_commands(amount_commands), k_amount_data_request_callbacks(amount_data_request_callbacks),
-      k_buffer_size(amount_commands * COMMAND_FRAME_SIZE) {
+      k_amount_data_push_commands(amount_data_push_commands), k_amount_data_request_callbacks(amount_data_request_commands),
+      k_buffer_size((amount_data_push_commands + amount_data_request_commands) * COMMAND_FRAME_SIZE) {
       _spi_slave_handler = spi_slave_handler;
 
       // to use DMA buffer, use these methods to allocate buffer
@@ -43,6 +43,17 @@ public:
 			return SpiCommands::COMMUNICATION_START_SEQUENCE;
 		}
 	};
+
+    uint8_t *get_rx_buffer(long tx_rx_buffer_size) {
+        if (tx_rx_buffer_size > k_buffer_size) {
+            SerialLogger::warn("Attempt to get rx buffer with %d bytes while buffer has size %d", tx_rx_buffer_size, k_buffer_size);
+            return nullptr;
+        } else {
+            // reset rx buffer first for cleanness
+            memset(_rx_buffer, 0, k_buffer_size);
+            return _rx_buffer;
+        }
+    }
 
 	bool consume(uint8_t *slave_response_buffer, long buffer_size) {
 		bool valid = true;
@@ -122,13 +133,13 @@ public:
 		return k_slave_restart_pin;
 	};
 
-	int get_amount_commands() const {
-		return k_amount_commands;
+	int get_amount_data_push_commands() const {
+		return k_amount_data_push_commands;
 	};
 
-	int get_amount_data_request_callbacks() const {
-		return k_amount_data_request_callbacks;
-	};
+    int get_amount_data_request_commands() const {
+        return k_amount_data_request_callbacks;
+    };
 
 	long get_buffer_size() const {
 		return k_buffer_size;
@@ -156,7 +167,7 @@ private:
 	const char *k_name;
 	const int k_slave_pin;
 	const int k_slave_restart_pin;
-	const int k_amount_commands;
+	const int k_amount_data_push_commands;
 	const long k_buffer_size;
 
 	uint8_t *_tx_buffer;

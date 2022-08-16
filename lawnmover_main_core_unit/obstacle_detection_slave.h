@@ -7,7 +7,7 @@ class ObstacleDetectionSlave : public MasterSpiSlave {
 public:
 	ObstacleDetectionSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const int slave_pin,
 						 const int slave_restart_pin, const char *name = "ObstacleDetectionSlave") :
-			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 0, 0) {
+			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 0, 5) {
 	   // TODO set _data_request_callbacks and change the value passed to MasterSpiSlave
        // TODO set amount commands correctly and set them in fill_commands_bytes
 	};
