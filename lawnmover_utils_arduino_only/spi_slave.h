@@ -3,6 +3,9 @@
 
 #include <arduino_timer_uno.h>
 
+#include <serial_logger.h>
+#include <spi_commands.h>
+
 class SpiSlave {
 public:
 	SpiSlave(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
@@ -16,7 +19,6 @@ public:
 
 	void addSlavePrinting(Timer<> &timer, const int interval);
 
-private:
 };
 
 #endif // SPI_SLAVE_H
