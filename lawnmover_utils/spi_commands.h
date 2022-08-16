@@ -107,13 +107,6 @@ public:
 	static bool slave_interpret_command(uint8_t *rx_buffer, bool (*data_push_callbacks[])(int16_t, V),
 										const int amount_data_push_callbacks);
 
-	static bool slave_synchronize(const uint8_t rx_byte, uint8_t &tx_byte);
-
-	static bool slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte,
-											  bool (*data_request_callbacks[])(int16_t, uint8_t *),
-											  const int amount_data_request_callbacks);
-
-
 	static uint8_t COMMUNICATION_START_SEQUENCE[];
 
 private:
