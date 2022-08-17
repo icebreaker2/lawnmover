@@ -16,13 +16,15 @@
 #define LEFT_WHEEL_STEERING_COMMAND (int16_t) 1
 #define RIGHT_WHEEL_STEERING_COMMAND (int16_t) 2
 #define MOTOR_SPEED_COMMAND (int16_t) 3
-#define OBSTACLE_COMMANDS 4
+#define OBSTACLE_COMMANDS 5
 #define OBSTACLE_FRONT_COMMAND (int16_t) 4
 #define OBSTACLE_FRONT_LEFT_COMMAND (int16_t) 5
 #define OBSTACLE_FRONT_RIGHT_COMMAND (int16_t) 6
-#define OBSTACLE_BACK_COMMAND (int16_t) 7
-#define MAX_ID (int16_t) 7
+#define OBSTACLE_BACK_LEFT_COMMAND (int16_t) 7
+#define OBSTACLE_BACK_RIGHT_COMMAND (int16_t) 8
+#define MAX_ID (int16_t) 8
 
+#define DATA_REQUEST_VALUE_BYTES (long) 0xFFFFFFFF
 
 // Could not get templates to work...
 class SpiCommand {
@@ -86,10 +88,6 @@ public:
 	};
 };
 
-typedef bool (*data_request_callback)(int16_t, long);
-
-typedef bool (*spi_command_data_creator)(uint8_t *tx_buffer, const int offset);
-
 class SpiCommands {
 public:
 	template<typename T>
@@ -98,10 +96,7 @@ public:
 	template<typename T>
 	static void putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer);
 
-	static bool master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer,
-											   const long buffer_size,
-											   data_request_callback *data_request_callbacks,
-											   const int amount_data_request_callbacks);
+	static int verifyIds(const byte rxIdBytes[], const byte txIdBytes[]);
 
 	static uint8_t COMMUNICATION_START_SEQUENCE[];
 
@@ -122,7 +117,7 @@ void SpiCommands::putCommandToBuffer(const int16_t commandId, const T commandVal
 	SpiCommands::valueToBytes(commandId, bytes);
 	SpiCommands::valueToBytes(commandValue, bytes + COMMAND_FRAME_ID_SIZE);
 	SpiCommands::valueToBytes((int16_t) - 1, bytes + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE);
-	bytes[COMMAND_FRAME_SIZE - 1] = 0xFF;
+	bytes[COMMAND_FRAME_SIZE - COMMAND_SPI_RX_OFFSET] = 0xFF;
 
 	memcpy(buffer, bytes, COMMAND_FRAME_SIZE);
 }

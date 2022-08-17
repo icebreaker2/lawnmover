@@ -34,7 +34,7 @@ void re_setup_spi_communication() {
     SerialLogger::info("Shutting down all previous slaves");
     delete esp32_spi_master;
     SerialLogger::info("(Re)Setting up all slaves");
-    esp32_spi_master = new Esp32SpiMaster(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, &re_setup_spi_communication,
+    esp32_spi_master = new Esp32SpiMaster(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN,
                                           frequency, INTER_TRANSACTION_DELAY_MICROSECONDS);
 
     const int engine_slave_id = Esp32SpiMaster::take_free_id();

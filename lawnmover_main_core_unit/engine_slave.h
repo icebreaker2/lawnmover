@@ -22,8 +22,7 @@ public:
 
 	bool
 	consume_commands(uint8_t *slave_response_buffer, long slave_response_buffer_size, uint8_t *tx_buffer) override {
-		return SpiCommands::master_interpret_communication(tx_buffer, slave_response_buffer, slave_response_buffer_size,
-														   _data_request_callbacks, k_amount_data_request_callbacks);
+		return interpret_communication(tx_buffer, slave_response_buffer, slave_response_buffer_size);
 	};
 
 private:

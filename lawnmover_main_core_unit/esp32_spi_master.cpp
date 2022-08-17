@@ -24,15 +24,12 @@ MasterSpiSlave *Esp32SpiMaster::_slaves[MAX_SLAVES];
 int Esp32SpiMaster::_registered_slaves = 0;
 volatile int Esp32SpiMaster::_slave_cursor = 0;
 
-Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, void (*error_callback)(),
-							   const long frequency, const int dma_channel, const uint8_t spi_mode,
-							   const int tx_rx_buffer_size, const int chunk_size,
-							   const int inter_transaction_delay_microseconds) :
+Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, const long frequency, 
+                               const int dma_channel, const uint8_t spi_mode, const int tx_rx_buffer_size, 
+                               const int chunk_size, const int inter_transaction_delay_microseconds) :
 		k_clock_pin(clock_pin), k_miso_pin(miso_pin), k_mosi_pin(mosi_pin), k_frequency(frequency),
 		k_dma_channel(dma_channel), k_spi_mode(spi_mode), k_chunk_size(chunk_size), 
 		k_inter_transaction_delay_microseconds(inter_transaction_delay_microseconds) {
-	_error_callback = error_callback;
-
 	for (int i = 0; i < MAX_SLAVES; i++) {
 		free_ids[i] = i;
 	}
