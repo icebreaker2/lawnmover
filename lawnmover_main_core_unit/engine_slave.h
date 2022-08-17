@@ -1,9 +1,10 @@
 #ifndef ENGINE_SLAVE_H
 #define ENGINE_SLAVE_H
 
+#include <robo_pilot.h>
+
 #include "master_spi_slave.h"
 #include "ESP32_PS4_Controller.h"
-#include "robo_pilot.h"
 
 class EngineSlave : public MasterSpiSlave {
 public:

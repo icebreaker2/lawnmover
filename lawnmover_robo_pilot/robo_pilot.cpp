@@ -8,6 +8,7 @@ RuleBasedRoboPilot::RuleBasedRoboPilot() :
 
 RuleBasedRoboPilot::~RuleBasedRoboPilot() = default;
 
+// TODO better algorithms https://en.wikibooks.org/wiki/Robotics/Navigation/Collision_Avoidance
 MovementDecision RuleBasedRoboPilot::makeMovementDecision() {
 	// TODO make real movement decision implementation
 	return StopMovementDecision();

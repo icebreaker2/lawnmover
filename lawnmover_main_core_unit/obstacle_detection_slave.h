@@ -1,8 +1,9 @@
 #ifndef OBSTACLE_DETECTION_SLAVE_H
 #define OBSTACLE_DETECTION_SLAVE_H
 
+#include <robo_pilot.h>
+
 #include "master_spi_slave.h"
-#include "robo_pilot.h"
 
 class ObstacleDetectionSlave : public MasterSpiSlave {
 public:
