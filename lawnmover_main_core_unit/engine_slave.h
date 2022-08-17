@@ -47,7 +47,7 @@ private:
 	ESP32_PS4_Controller *_esp32Ps4Ctrl;
 	RoboPilot *_roboPilot;
 
-	std::vector<std::function<bool(int16_t, int16_t)>> _data_request_callbacks;
+	std::vector <std::function<bool(int16_t, int16_t)>> _data_request_callbacks;
 };
 
 #endif // ENGINE_SLAVE_H
