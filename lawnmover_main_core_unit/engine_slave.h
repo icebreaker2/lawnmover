@@ -17,24 +17,18 @@ public:
 	};
 
 	void fill_commands_bytes(uint8_t *tx_buffer) override {
-		int16_t leftWheelPower;
-		int16_t rightWheelPower;
-		int16_t bladeMotorPower;
+		const MovementDecision &movementDecision = _esp32Ps4Ctrl->isConnected() ?
+												   MovementDecision(_esp32Ps4Ctrl->getLStickY(),
+																	_esp32Ps4Ctrl->getRStickY(),
+																	_esp32Ps4Ctrl->getRtValue())
+																				: _roboPilot->makeMovementDecision();
 
-		if (_esp32Ps4Ctrl->isConnected()) {
-			leftWheelPower = _esp32Ps4Ctrl->getLStickY();
-			rightWheelPower = _esp32Ps4Ctrl->getRStickY();
-			bladeMotorPower = _esp32Ps4Ctrl->getRtValue();
-		} else {
-			const MovementDecision &movementDecision = _roboPilot->makeMovementDecision();
-			leftWheelPower = movementDecision.get_left_wheel_power();
-			rightWheelPower = movementDecision.get_right_wheel_power();
-			bladeMotorPower = movementDecision.get_blade_motor_power();
-		}
-
-		SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, leftWheelPower, tx_buffer);
-		SpiCommands::putCommandToBuffer(RIGHT_WHEEL_STEERING_COMMAND, rightWheelPower, tx_buffer + COMMAND_FRAME_SIZE);
-		SpiCommands::putCommandToBuffer(MOTOR_SPEED_COMMAND, bladeMotorPower, tx_buffer + 2 * COMMAND_FRAME_SIZE);
+		SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, movementDecision.get_left_wheel_power(),
+										tx_buffer);
+		SpiCommands::putCommandToBuffer(RIGHT_WHEEL_STEERING_COMMAND, movementDecision.get_right_wheel_power(),
+										tx_buffer + COMMAND_FRAME_SIZE);
+		SpiCommands::putCommandToBuffer(MOTOR_SPEED_COMMAND, movementDecision.get_blade_motor_power(),
+										tx_buffer + 2 * COMMAND_FRAME_SIZE);
 	};
 
 	bool

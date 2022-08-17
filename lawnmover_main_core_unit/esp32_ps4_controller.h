@@ -13,26 +13,22 @@ public:
 
 	int16_t getLStickX() {
 		// Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
-		const int &tmp_stick = m_lStickX * 2.01;
-		return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
+		return m_lStickX * 2.01;
 	};
 
 	int16_t getLStickY() {
 		// Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
-		const int &tmp_stick = m_lStickY * 2.01;
-		return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
+		return m_lStickY * 2.01;
 	};
 
 	int16_t getRStickX() {
 		// Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
-		const int &tmp_stick = m_rStickX * 2.01;
-		return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
+		return m_rStickX * 2.01;
 	};
 
 	int16_t getRStickY() {
 		// Ps4 has value range [-128, 127] which we need to scale to [-255, 255]
-		const int &tmp_stick = m_rStickY * 2.01;
-		return tmp_stick > 255 ? 255 : (tmp_stick < -255 ? -255 : tmp_stick);
+		return m_rStickY * 2.01;
 	};
 
 	bool getDownButtonPressed() {
@@ -81,8 +77,7 @@ public:
 
 	int16_t getLtValue() {
 		// Ps4 has value range [0, 233] which we need to scale to [0, 255]. I tested pressing PS4 Rt until it broke; 233 was max value to achieve.
-		const int &tmp_lt_value = m_ltValue * 1.2;
-		return tmp_lt_value > 255 ? 255 : tmp_lt_value;
+		return m_ltValue * 1.2;
 	};
 
 	bool getRtButtonPressed() {
@@ -91,8 +86,7 @@ public:
 
 	int16_t getRtValue() {
 		// Ps4 has value range [0, 233] which we need to scale to [0, 255]. I tested pressing PS4 Rt until it broke; 233 was max value to achieve.
-		const int &tmp_rt_value = m_rtValue * 1.2;
-		return tmp_rt_value > 255 ? 255 : tmp_rt_value;
+		return m_rtValue * 1.2;
 	};
 
 	bool getL3ButtonPressed() {
