@@ -3,21 +3,37 @@
 
 #include "master_spi_slave.h"
 #include "ESP32_PS4_Controller.h"
+#include "robo_pilot.h"
 
 class EngineSlave : public MasterSpiSlave {
 public:
-	EngineSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const int slave_pin, const int slave_restart_pin,
-				ESP32_PS4_Controller *esp32Ps4Ctrl, const char *name = "EngineControl") :
-			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 3, 0) {
+	EngineSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const int slave_pin,
+				const int slave_restart_pin, ESP32_PS4_Controller *esp32Ps4Ctrl, RoboPilot *roboPilot,
+				const char *name = "EngineControl") :
+			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 3, 0),
+			_roboPilot(roboPilot) {
 		_esp32Ps4Ctrl = esp32Ps4Ctrl;
 	};
 
 	void fill_commands_bytes(uint8_t *tx_buffer) override {
-		SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, _esp32Ps4Ctrl->getLStickY(), tx_buffer);
-		SpiCommands::putCommandToBuffer(RIGHT_WHEEL_STEERING_COMMAND, _esp32Ps4Ctrl->getRStickY(),
-										tx_buffer + COMMAND_FRAME_SIZE);
-		SpiCommands::putCommandToBuffer(MOTOR_SPEED_COMMAND, _esp32Ps4Ctrl->getRtValue(),
-										tx_buffer + 2 * COMMAND_FRAME_SIZE);
+		int16_t leftWheelPower;
+		int16_t rightWheelPower;
+		int16_t bladeMotorPower;
+
+		if (_esp32Ps4Ctrl->isConnected()) {
+			leftWheelPower = _esp32Ps4Ctrl->getLStickY();
+			rightWheelPower = _esp32Ps4Ctrl->getRStickY();
+			bladeMotorPower = _esp32Ps4Ctrl->getRtValue();
+		} else {
+			const MovementDecision &movementDecision = _roboPilot->makeMovementDecision();
+			leftWheelPower = movementDecision.get_left_wheel_power();
+			rightWheelPower = movementDecision.get_right_wheel_power();
+			bladeMotorPower = movementDecision.get_blade_motor_power();
+		}
+
+		SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, leftWheelPower, tx_buffer);
+		SpiCommands::putCommandToBuffer(RIGHT_WHEEL_STEERING_COMMAND, rightWheelPower, tx_buffer + COMMAND_FRAME_SIZE);
+		SpiCommands::putCommandToBuffer(MOTOR_SPEED_COMMAND, bladeMotorPower, tx_buffer + 2 * COMMAND_FRAME_SIZE);
 	};
 
 	bool
@@ -27,6 +43,7 @@ public:
 
 private:
 	ESP32_PS4_Controller *_esp32Ps4Ctrl;
+	RoboPilot *_roboPilot;
 };
 
 #endif // ENGINE_SLAVE_H
