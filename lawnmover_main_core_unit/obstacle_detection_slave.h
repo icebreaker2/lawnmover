@@ -12,7 +12,7 @@ public:
 						   const char *name = "ObstacleDetectionSlave") :
 			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 0, OBSTACLE_COMMANDS),
 			_roboPilot(roboPilot) {
-		_data_request_callbacks.push_back([&](int16_t id, long distance) -> bool {
+		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
 			if (id == OBSTACLE_FRONT_COMMAND) {
 				_roboPilot->putSensorDistance(RoboPilot::FRONT, distance);
 				return true;
@@ -20,7 +20,7 @@ public:
 				return false;
 			}
 		});
-		_data_request_callbacks.push_back([&](int16_t id, long distance) -> bool {
+		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
 			if (id == OBSTACLE_FRONT_LEFT_COMMAND) {
 				_roboPilot->putSensorDistance(RoboPilot::FRONT_LEFT, distance);
 				return true;
@@ -28,7 +28,7 @@ public:
 				return false;
 			}
 		});
-		_data_request_callbacks.push_back([&](int16_t id, long distance) -> bool {
+		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
 			if (id == OBSTACLE_FRONT_RIGHT_COMMAND) {
 				_roboPilot->putSensorDistance(RoboPilot::FRONT_RIGHT, distance);
 				return true;
@@ -36,7 +36,7 @@ public:
 				return false;
 			}
 		});
-		_data_request_callbacks.push_back([&](int16_t id, long distance) -> bool {
+		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
 			if (id == OBSTACLE_BACK_LEFT_COMMAND) {
 				_roboPilot->putSensorDistance(RoboPilot::BACK_LEFT, distance);
 				return true;
@@ -44,7 +44,7 @@ public:
 				return false;
 			}
 		});
-		_data_request_callbacks.push_back([&](int16_t id, long distance) -> bool {
+		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
 			if (id == OBSTACLE_BACK_RIGHT_COMMAND) {
 				_roboPilot->putSensorDistance(RoboPilot::BACK_RIGHT, distance);
 				return true;
@@ -64,11 +64,13 @@ public:
 
 	bool
 	consume_commands(uint8_t *slave_response_buffer, long slave_response_buffer_size, uint8_t *tx_buffer) override {
-		return interpret_communication(tx_buffer, slave_response_buffer, slave_response_buffer_size);
+		return interpret_communication(tx_buffer, slave_response_buffer, slave_response_buffer_size,
+									   k_amount_data_request_callbacks, _data_request_callbacks);
 	};
 
 private:
 	RoboPilot *_roboPilot;
+	std::vector<std::function<bool(int16_t, float)>> _data_request_callbacks;
 };
 
 #endif // OBSTACLE_DETECTION_SLAVE_H

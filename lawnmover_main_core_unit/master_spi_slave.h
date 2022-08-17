@@ -31,8 +31,6 @@ public:
       memset(_rx_buffer, 0, k_buffer_size);
 
       delay(1000);
-
-      _data_request_callbacks.reserve(k_amount_data_request_callbacks);
     };
 
 	uint8_t *supply(long &buffer_size) {
@@ -157,7 +155,15 @@ public:
 	};
 
 protected:
-    bool interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size) {
+	/**
+	 * Please note: Passing the data request callbacks with template type allows interpreations of different commands
+	 * with different value type if called with different callbacks and an offset to tx, rx buffer leading to maximum
+	 * flexibility.
+	 */
+	template<typename T>
+    bool interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size,
+								 const int amount_data_request_callbacks,
+								 std::vector<std::function<bool(int16_t, T)>> data_request_callbacks) {
         SerialLogger::trace("Validating master-slave communication for %s", k_name);
         uint8_t rxId1[COMMAND_FRAME_ID_SIZE];
         uint8_t rxId2[COMMAND_FRAME_ID_SIZE];
@@ -213,11 +219,11 @@ protected:
                 SerialLogger::warn("Received bad id %d > %d (max)", id1, MAX_ID);
                 return false;
             } else {
-                long rx_data = 0;
+                T rx_data = 0;
                 memcpy(&rx_data, rx_value_bytes, COMMAND_FRAME_VALUE_SIZE);
                 bool processed = false;
-                for (int i = 0; i < k_amount_data_request_callbacks && !processed; i++) {
-                    processed = _data_request_callbacks[i](id1, rx_data);
+                for (int i = 0; i < amount_data_request_callbacks && !processed; i++) {
+                    processed = data_request_callbacks[i](id1, rx_data);
                 }
     
                 if (processed) {
@@ -243,7 +249,6 @@ protected:
 	consume_commands(uint8_t *slave_response_buffer, long slave_response_buffer_size, uint8_t *tx_buffer) = 0;
 
 	const int k_amount_data_request_callbacks;
-	std::vector<std::function<bool(int16_t, long)>> _data_request_callbacks;
 
 private:
 	const int k_slave_id;
