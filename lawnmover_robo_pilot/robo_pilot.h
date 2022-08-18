@@ -5,7 +5,9 @@
 #include <vector>
 #include <map>
 #include <numeric>
+
 #include "decision.h"
+#include "motion_state.h"
 
 class RoboPilot {
 public:
@@ -41,7 +43,7 @@ public:
 		_weighted_moving_averages.insert(std::make_pair(Direction::BACK_RIGHT, 0));
 	};
 
-	~RoboPilot();
+	~RoboPilot() = default;
 
 	void putSensorDistance(Direction direction, const float distance) {
 		std::vector<float> &directionDistances = _directionsDistances[direction];
@@ -110,6 +112,14 @@ public:
 	MovementDecision makeMovementDecision() override;
 
 private:
+	ErrorMotion *_errorMotion;
+	BackwardMotion *_backwardMotion;
+	LeftTurnMotion *_leftTurnMotion;
+	RightTurnMotion *_rightTurnMotion;
+	IdleMotion *_idleMotion;
+	LowSpeedForwardMotion *_lowSpeedForwardMotion;
+	MidSpeedForwardMotion *_midSpeedForwardMotion;
+	FullSpeedForwardMotion *_fullSpeedForwardMotion;
 };
 
 #endif // ROBO_PILOT_H

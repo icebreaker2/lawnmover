@@ -3,12 +3,14 @@
 
 #include "motion_state.h"
 
+#define ENGINE_MAX_POWER_VALUE (int16_t) 255
+
 class MovementDecision {
 public:
 	static MovementDecision fromState(const MotionState &motionState) {
-		return MovementDecision(static_cast<int16_t>(motionState.get_speed_left() * k_max_power_value),
-								static_cast<int16_t>(motionState.get_speed_right() * k_max_power_value),
-								static_cast<int16_t>(motionState.get_blade_speed() * k_max_power_value));
+		return MovementDecision(static_cast<int16_t>(motionState.get_speed_left() * ENGINE_MAX_POWER_VALUE),
+								static_cast<int16_t>(motionState.get_speed_right() * ENGINE_MAX_POWER_VALUE),
+								static_cast<int16_t>(motionState.get_blade_speed() * ENGINE_MAX_POWER_VALUE));
 	};
 
 	/**
@@ -27,23 +29,21 @@ public:
 	~MovementDecision() = default;
 
 	int16_t get_left_wheel_power() const {
-		return k_left_wheel_power > k_max_power_value ? k_max_power_value :
-			   (k_left_wheel_power < -k_max_power_value ? -k_max_power_value : k_left_wheel_power);
+		return k_left_wheel_power > ENGINE_MAX_POWER_VALUE ? ENGINE_MAX_POWER_VALUE :
+			   (k_left_wheel_power < -ENGINE_MAX_POWER_VALUE ? -ENGINE_MAX_POWER_VALUE : k_left_wheel_power);
 	};
 
 	int16_t get_right_wheel_power() const {
-		return k_right_wheel_power > k_max_power_value ? k_max_power_value :
-			   (k_right_wheel_power < -k_max_power_value ? -k_max_power_value : k_right_wheel_power);
+		return k_right_wheel_power > ENGINE_MAX_POWER_VALUE ? ENGINE_MAX_POWER_VALUE :
+			   (k_right_wheel_power < -ENGINE_MAX_POWER_VALUE ? -ENGINE_MAX_POWER_VALUE : k_right_wheel_power);
 	};
 
 	int16_t get_blade_motor_power() const {
-		return k_blade_motor_power > k_max_power_value ? k_max_power_value :
-			   (k_blade_motor_power < 0 : 0 : k_blade_motor_power);
+		return k_blade_motor_power > ENGINE_MAX_POWER_VALUE ? ENGINE_MAX_POWER_VALUE :
+			   (k_blade_motor_power < 0 ? 0 : k_blade_motor_power);
 	};
 
 private:
-	const int16_t k_max_power_value = 255;
-
 	const int16_t k_left_wheel_power;
 	const int16_t k_right_wheel_power;
 	const int16_t k_blade_motor_power;
