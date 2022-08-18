@@ -116,6 +116,7 @@ private:
 	BackwardMotion *_backwardMotion;
 	LeftTurnMotion *_leftTurnMotion;
 	RightTurnMotion *_rightTurnMotion;
+	PriorityStrategy *_priorityStrategy;
 	IdleMotion *_idleMotion;
 	LowSpeedForwardMotion *_lowSpeedForwardMotion;
 	MidSpeedForwardMotion *_midSpeedForwardMotion;

@@ -24,24 +24,46 @@ public:
 	 * @param right_speed The speed to apply to the right wheel in percentage of power. Negative for backwards.
 	 * @param blade_speed The speed to apply to the blade motor in percentage of power
 	 */
-	MotionState(const char *name, const int max_self_iterations, const MotionState *followUpState,
-				const MotionState *fallbackState, const float &left_speed, const float &right_speed,
-				const float blade_speed) :
-			k_name(name), k_max_self_iterations(max_self_iterations), _followUpState(followUpState),
-			k_fallbackState(fallbackState), k_left_speed(left_speed), k_right_speed(right_speed),
-			k_blade_speed(blade_speed) {
-		// nothing to do...
+	MotionState(const char *name, const int max_self_iterations, MotionState *followUpState, MotionState *fallbackState,
+				const float &left_speed, const float &right_speed, const float blade_speed)
+			: k_name(name), k_max_self_iterations(max_self_iterations), k_left_speed(left_speed),
+			  k_right_speed(right_speed), k_blade_speed(blade_speed) {
+		_followUpState = followUpState;
+		_fallbackState = fallbackState;
+		_self_iterations = 0;
 	};
 
 	~MotionState() = default;
 
 	/**
 	 * Specialised class must determine whether the next state is the followUpState, this very state again (if
-	 * eligible by max_iterations) or if both of them are not possible the fallbackState
+	 * eligible by check and by max_iterations) or if both of them are not possible the fallbackState
 	 * @return
 	 */
-	const MotionState *getNextState() const {
-		// TODO implement as described
+	virtual MotionState *getNextState() {
+		if (k_max_self_iterations < 0) {
+			_self_iterations = k_max_self_iterations;
+		} else {
+			_self_iterations = (_self_iterations + 1) % k_max_self_iterations;
+		}
+		if (_followUpState == nullptr) {
+			if (_self_iterations > 0 && this->isEligible()) {
+				return this;
+			} else {
+				_self_iterations = 0;
+				return _fallbackState;
+			}
+		} else if (_followUpState->isEligible()) {
+			_self_iterations = 0;
+			return _followUpState;
+		} else {
+			if (_self_iterations > 0 && this->isEligible()) {
+				return this;
+			} else {
+				_self_iterations = 0;
+				return _fallbackState;
+			}
+		}
 	};
 
 	float get_speed_left() const { return k_left_speed; };
@@ -52,11 +74,11 @@ public:
 
 	const char *get_name() const { return k_name; };
 
-	const MotionState *getFollowUpState() const {
+	MotionState *getFollowUpState() const {
 		return _followUpState;
 	};
 
-	void setFollowUpState(const MotionState *motionState) {
+	void setFollowUpState(MotionState *motionState) {
 		if (_followUpState == nullptr) {
 			_followUpState = motionState;
 		} else {
@@ -64,16 +86,17 @@ public:
 		}
 	};
 
-protected:
 	// TODO add distances (front, front_left, front_right, back_left, back_right) and heading just received for getNexttState and isEligble
 	virtual bool isEligible() const = 0;
 
+protected:
+	const int k_max_self_iterations;
+	MotionState *_fallbackState;
+	MotionState *_followUpState;
+	int _self_iterations;
+
 private:
 	const char *k_name;
-
-	const int k_max_self_iterations;
-	const MotionState *_followUpState;
-	const MotionState *k_fallbackState;
 
 	const float k_left_speed;
 	const float k_right_speed;
@@ -83,7 +106,7 @@ private:
 class ErrorMotion : public MotionState {
 public:
 	// An error state for states from which we cannot escape to indicate limits of current motion model
-	ErrorMotion(const MotionState *followUpState = nullptr) :
+	ErrorMotion(MotionState *followUpState = nullptr) :
 			MotionState("ErrorMotion", -1, followUpState, nullptr, 0.0f, 0.0f, 0.0f) {
 		// nothing to do...
 	};
@@ -93,7 +116,7 @@ public:
 
 class IdleMotion : public MotionState {
 public:
-	IdleMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	IdleMotion(MotionState *followUpState, MotionState *fallbackState) :
 			MotionState("IdleMotion", 10, followUpState, fallbackState, 0.0f, 0.0f, 0.0f) {
 		// nothing to do...
 	};
@@ -103,7 +126,7 @@ public:
 
 class LowSpeedForwardMotion : public MotionState {
 public:
-	LowSpeedForwardMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	LowSpeedForwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			MotionState("LowSpeedForwardMotion", -1, followUpState, fallbackState,
 						CLOSE_RANGE_MULTIPLIER, CLOSE_RANGE_MULTIPLIER, 0.5f) {
 		// nothing to do...
@@ -114,7 +137,7 @@ public:
 
 class MidSpeedForwardMotion : public MotionState {
 public:
-	MidSpeedForwardMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	MidSpeedForwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			MotionState("MidSpeedForwardMotion", -1, followUpState, fallbackState,
 						MID_RANGE_MULTIPLIER, MID_RANGE_MULTIPLIER, 1.0f) {
 		// nothing to do...
@@ -125,7 +148,7 @@ public:
 
 class FullSpeedForwardMotion : public MotionState {
 public:
-	FullSpeedForwardMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	FullSpeedForwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			MotionState("FullSpeedForwardMotion", -1, followUpState, fallbackState,
 						OUT_OF_RANGE_MULTIPLIER, OUT_OF_RANGE_MULTIPLIER, 1.0f) {
 		// nothing to do...
@@ -140,16 +163,17 @@ public:
 	 * Please note: 4 iterations left/right is at the origin position. Child classes need to implement the countering
 	 * correctly or otherwise guarantee that motion is done within one iteration.
 	 */
-	CollisionAvoidanceMotion(const char *name, const MotionState *followUpState, const MotionState *fallbackState,
+	CollisionAvoidanceMotion(const char *name, MotionState *followUpState, MotionState *fallbackState,
 							 const float &left_speed, const float &right_speed) :
 			MotionState(name, 4, followUpState, fallbackState, left_speed, right_speed, 0.0f) {
 		// nothing to do...
 	};
+
 };
 
 class LeftTurnMotion : public CollisionAvoidanceMotion {
 public:
-	LeftTurnMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	LeftTurnMotion(MotionState *followUpState, MotionState *fallbackState) :
 			CollisionAvoidanceMotion("LeftTurnMotion", followUpState, fallbackState,
 									 -CLOSE_RANGE_MULTIPLIER, CLOSE_RANGE_MULTIPLIER) {
 		// nothing to do...
@@ -160,7 +184,7 @@ public:
 
 class RightTurnMotion : public CollisionAvoidanceMotion {
 public:
-	RightTurnMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	RightTurnMotion(MotionState *followUpState, MotionState *fallbackState) :
 			CollisionAvoidanceMotion("RightTurnMotion", followUpState, fallbackState,
 									 CLOSE_RANGE_MULTIPLIER, -CLOSE_RANGE_MULTIPLIER) {
 		// nothing to do...
@@ -171,13 +195,49 @@ public:
 
 class BackwardMotion : public CollisionAvoidanceMotion {
 public:
-	BackwardMotion(const MotionState *followUpState, const MotionState *fallbackState) :
+	BackwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			CollisionAvoidanceMotion("BackwardMotion", followUpState, fallbackState,
 									 -CLOSE_RANGE_MULTIPLIER, -CLOSE_RANGE_MULTIPLIER) {
 		// nothing to do...
 	};
 
 	bool isEligible() const override;
+};
+
+
+class PriorityStrategy : public CollisionAvoidanceMotion {
+public:
+	PriorityStrategy(MotionState *followUpState, MotionState *fallbackState) :
+			CollisionAvoidanceMotion("PriorityStrategy", followUpState, fallbackState, 0.0f, 0.0f) {
+		// nothing to do...
+	};
+
+	/**
+	 * Different strategy to get the next state based sorely on the followUpStates decision. This state is just for
+	 * convenience.
+	 *
+	 * @return The next state based on this priority strategy
+	 */
+	MotionState *getNextState() override {
+		if (_followUpState == nullptr && _fallbackState == nullptr) {
+			return nullptr;
+		} else if (_followUpState == nullptr) {
+			return _fallbackState->getNextState();
+		} else {
+			if (_followUpState->isEligible()) {
+				return _followUpState->getNextState();
+			} else {
+				return _fallbackState->getNextState();
+			}
+		}
+	};
+
+	bool isEligible() const override {
+		return true;
+	};
+
+private:
+
 };
 
 #endif // MOTION_STATE_H

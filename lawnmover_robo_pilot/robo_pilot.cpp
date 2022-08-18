@@ -9,8 +9,8 @@ RuleBasedRoboPilot::RuleBasedRoboPilot() :
 	_leftTurnMotion = new LeftTurnMotion(nullptr, _backwardMotion);
 	_rightTurnMotion = new RightTurnMotion(nullptr, _backwardMotion);
 
-	// TODO enable multiple fallbackStates strategies {_leftTurnMotion, _rightTurnMotion}
-	_idleMotion = new IdleMotion(nullptr, _leftTurnMotion);
+	_priorityStrategy = new PriorityStrategy(_leftTurnMotion, _rightTurnMotion);
+	_idleMotion = new IdleMotion(nullptr, _priorityStrategy);
 
 	// Cutting chaining
 	_lowSpeedForwardMotion = new LowSpeedForwardMotion(nullptr, _idleMotion);
@@ -33,6 +33,7 @@ RuleBasedRoboPilot::~RuleBasedRoboPilot() {
 	delete _backwardMotion;
 	delete _leftTurnMotion;
 	delete _rightTurnMotion;
+	delete _priorityStrategy;
 	delete _idleMotion;
 	delete _lowSpeedForwardMotion;
 	delete _midSpeedForwardMotion;
