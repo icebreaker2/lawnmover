@@ -3,17 +3,19 @@
 
 #define OUT_OF_RANGE_MULTIPLIER (float) 1.0f
 #define MID_RANGE_MULTIPLIER (float) 0.7f
-#define CLOSE_RANGE_MULTIPLIER (float) 0.45f
-#define CRITICAL_RANGE_MULTIPLIER (float) 20.0f
+#define CLOSE_RANGE_MULTIPLIER (float) 0.5f
+#define CRITICAL_RANGE_MULTIPLIER (float) 0.25f
 
 #define MAX_DISTANCE (float) 100.0f
 #define MID_RANGE_LIMIT (float) MAX_DISTANCE * MID_RANGE_MULTIPLIER
 #define CLOSE_RANGE_LIMIT (float) MAX_DISTANCE * CLOSE_RANGE_MULTIPLIER
+#define CRITICAL_RANGE_LIMIT (float) MAX_DISTANCE * CRITICAL_RANGE_MULTIPLIER
 
 
 class Category {
 public:
 	enum Distance {
+		TOO_CLOSE,
 		CRITICAL_RANGE,
 		CLOSE_RANGE,
 		MID_RANGE,
@@ -27,13 +29,18 @@ public:
 			return MID_RANGE;
 		} else if (distance >= CLOSE_RANGE_LIMIT) {
 			return CLOSE_RANGE;
-		} else {
+		} else if (distance >= CRITICAL_RANGE_LIMIT) {
 			return CRITICAL_RANGE;
+		} else {
+			return TOO_CLOSE;
 		}
 	};
 
 	static char *getNameFromDistance(const Distance &distance) {
 		switch (distance) {
+			case TOO_CLOSE:
+				return "TooClose";
+				break;
 			case CRITICAL_RANGE:
 				return "CriticalRange";
 				break;
