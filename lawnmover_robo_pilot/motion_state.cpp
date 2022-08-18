@@ -1,11 +1,11 @@
 #include "motion_state.h"
 
 bool ErrorMotion::isEligible() const {
-	return false;
+	return true;
 }
 
 bool IdleMotion::isEligible() const {
-	return false;
+	return true;
 }
 
 bool LowSpeedForwardMotion::isEligible() const {

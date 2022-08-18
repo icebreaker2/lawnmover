@@ -9,6 +9,8 @@
 #include "decision.h"
 #include "motion_state.h"
 
+// TODO better algorithms https://en.wikibooks.org/wiki/Robotics/Navigation/Collision_Avoidance or see README
+
 class RoboPilot {
 public:
 	enum Direction {
@@ -103,11 +105,11 @@ private:
 	std::map<Direction, float> _weighted_moving_averages;
 };
 
-class RuleBasedRoboPilot : public RoboPilot {
+class RuleBasedMotionStateRoboPilot : public RoboPilot {
 public:
-	RuleBasedRoboPilot();
+	RuleBasedMotionStateRoboPilot();
 
-	~RuleBasedRoboPilot();
+	~RuleBasedMotionStateRoboPilot();
 
 	MovementDecision makeMovementDecision() override;
 
@@ -121,6 +123,8 @@ private:
 	LowSpeedForwardMotion *_lowSpeedForwardMotion;
 	MidSpeedForwardMotion *_midSpeedForwardMotion;
 	FullSpeedForwardMotion *_fullSpeedForwardMotion;
+
+	MotionState *_currentMotion;
 };
 
 #endif // ROBO_PILOT_H

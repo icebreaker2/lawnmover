@@ -1,7 +1,7 @@
 #include "robo_pilot.h"
 
-RuleBasedRoboPilot::RuleBasedRoboPilot() :
-		RoboPilot("RuleBasedRoboPilot", 10) {
+RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot() :
+		RoboPilot("RuleBasedMotionStateRoboPilot", 10) {
 	_errorMotion = new ErrorMotion();
 
 	// Collision avoidance chaining
@@ -26,9 +26,11 @@ RuleBasedRoboPilot::RuleBasedRoboPilot() :
 	_leftTurnMotion->setFollowUpState(_idleMotion);
 	_rightTurnMotion->setFollowUpState(_idleMotion);
 	_errorMotion->setFollowUpState(_idleMotion);
+
+	_currentMotion = _idleMotion;
 }
 
-RuleBasedRoboPilot::~RuleBasedRoboPilot() {
+RuleBasedMotionStateRoboPilot::~RuleBasedMotionStateRoboPilot() {
 	delete _errorMotion;
 	delete _backwardMotion;
 	delete _leftTurnMotion;
@@ -40,8 +42,17 @@ RuleBasedRoboPilot::~RuleBasedRoboPilot() {
 	delete _fullSpeedForwardMotion;
 }
 
-// TODO better algorithms https://en.wikibooks.org/wiki/Robotics/Navigation/Collision_Avoidance
-MovementDecision RuleBasedRoboPilot::makeMovementDecision() {
-	// TODO make real movement decision implementation
-	return StopMovementDecision();
+MovementDecision RuleBasedMotionStateRoboPilot::makeMovementDecision() {
+	const char *last_name = _currentMotion->get_name();
+	_currentMotion = _currentMotion->getNextState();
+	if (_currentMotion == nullptr) {
+		_currentMotion = _idleMotion;
+		SerialLogger::error("MotionState chaining did not work and caused a next state that was nullptr. Last motion "
+							"state was %s. Resetting to initial motion %s", last_name, _currentMotion->get_name());
+		return StopMovementDecision();
+	} else {
+		SerialLogger::debug("Switched MotionState from %s to %s", last_name, _currentMotion->get_name());
+		const MovementDecision &movementDecision = MovementDecision::fromState(*_currentMotion);
+		return movementDecision;
+	}
 }

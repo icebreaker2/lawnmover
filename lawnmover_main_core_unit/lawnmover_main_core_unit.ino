@@ -68,7 +68,7 @@ void setup() {
 	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
 	esp32Ps4Ctrl = new ESP32_PS4_Controller(masterMac, _timer);
 
-	_roboPilot = new RuleBasedRoboPilot();
+	_roboPilot = new RuleBasedMotionStateRoboPilot();
 
     _timer.every(restart_check_intervall,[](void *) -> bool {        
         if (esp32_spi_master == nullptr || esp32_spi_master->stopped()) {
