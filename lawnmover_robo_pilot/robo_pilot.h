@@ -2,8 +2,6 @@
 #define ROBO_PILOT_H
 
 #include <Arduino.h>
-#include <vector>
-#include <map>
 #include <numeric>
 
 #include "decision.h"
@@ -13,41 +11,34 @@
 
 class RoboPilot {
 public:
-	enum Direction {
-		FRONT,
-		FRONT_LEFT,
-		FRONT_RIGHT,
-		BACK_LEFT,
-		BACK_RIGHT
-	};
-
-	RoboPilot(const char *name, const int distances_buffer_size, const float weighted_moving_average_alpha = 0.70f) :
+	RoboPilot(const char *name, const int distances_buffer_size,
+			  const float weighted_moving_average_alpha = DEFAULT_WEIGHTED_MOVING_AVERAGE_ALPHA) :
 			k_name(name), k_distances_buffer_size(distances_buffer_size),
 			k_weighted_moving_average_alpha(weighted_moving_average_alpha) {
-		_directionsDistances.insert(std::make_pair(Direction::FRONT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Direction::FRONT_LEFT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Direction::FRONT_RIGHT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Direction::BACK_LEFT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Direction::BACK_RIGHT, std::vector<float>()));
+		_directionsDistances.insert(std::make_pair(Category::Direction::FRONT, std::vector<float>()));
+		_directionsDistances.insert(std::make_pair(Category::Direction::FRONT_LEFT, std::vector<float>()));
+		_directionsDistances.insert(std::make_pair(Category::Direction::FRONT_RIGHT, std::vector<float>()));
+		_directionsDistances.insert(std::make_pair(Category::Direction::BACK_LEFT, std::vector<float>()));
+		_directionsDistances.insert(std::make_pair(Category::Direction::BACK_RIGHT, std::vector<float>()));
 
 		// reserve space for the vectors
-		_directionsDistances[Direction::FRONT].reserve(distances_buffer_size);
-		_directionsDistances[Direction::FRONT_LEFT].reserve(distances_buffer_size);
-		_directionsDistances[Direction::FRONT_RIGHT].reserve(distances_buffer_size);
-		_directionsDistances[Direction::BACK_LEFT].reserve(distances_buffer_size);
-		_directionsDistances[Direction::BACK_RIGHT].reserve(distances_buffer_size);
+		_directionsDistances[Category::Direction::FRONT].reserve(distances_buffer_size);
+		_directionsDistances[Category::Direction::FRONT_LEFT].reserve(distances_buffer_size);
+		_directionsDistances[Category::Direction::FRONT_RIGHT].reserve(distances_buffer_size);
+		_directionsDistances[Category::Direction::BACK_LEFT].reserve(distances_buffer_size);
+		_directionsDistances[Category::Direction::BACK_RIGHT].reserve(distances_buffer_size);
 
 		// fill initial values of weighted moving avergaes
-		_weighted_moving_averages.insert(std::make_pair(Direction::FRONT, 0));
-		_weighted_moving_averages.insert(std::make_pair(Direction::FRONT_LEFT, 0));
-		_weighted_moving_averages.insert(std::make_pair(Direction::FRONT_RIGHT, 0));
-		_weighted_moving_averages.insert(std::make_pair(Direction::BACK_LEFT, 0));
-		_weighted_moving_averages.insert(std::make_pair(Direction::BACK_RIGHT, 0));
+		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT, 0));
+		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT_LEFT, 0));
+		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT_RIGHT, 0));
+		_weighted_moving_averages.insert(std::make_pair(Category::Direction::BACK_LEFT, 0));
+		_weighted_moving_averages.insert(std::make_pair(Category::Direction::BACK_RIGHT, 0));
 	};
 
 	~RoboPilot() = default;
 
-	void putSensorDistance(Direction direction, const float distance) {
+	void putSensorDistance(Category::Direction direction, const float distance) {
 		std::vector<float> &directionDistances = _directionsDistances[direction];
 		if (directionDistances.size() >= k_distances_buffer_size) {
 			directionDistances.pop_back();
@@ -61,35 +52,52 @@ public:
 
 protected:
 
-	float meanSensorDistance(Direction direction) {
-		const std::vector<float> &directionDistances = _directionsDistances[direction];
-		if (directionDistances.size() > 0) {
-			return std::accumulate(directionDistances.begin(), directionDistances.end(), 0) / directionDistances.size();
-		} else {
-			return 0;
+	std::map<Category::Direction, float> getMeanSensorDistances() const {
+		std::map<Category::Direction, float> copy_assigned_tmp_map = _weighted_moving_averages;
+		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+			const std::vector<float> &directionDistances = _directionsDistances.at(it->first);
+			if (directionDistances.size() > 0) {
+				it->second = std::accumulate(directionDistances.begin(), directionDistances.end(), 0) /
+							 directionDistances.size();
+			} else {
+				it->second = 0.0f;
+			}
 		}
+		return copy_assigned_tmp_map;
 	};
 
-	float minSensorDistance(Direction direction) {
-		const std::vector<float> &directionDistances = _directionsDistances[direction];
-		if (directionDistances.size() > 0) {
-			return *std::min_element(directionDistances.begin(), directionDistances.end());
-		} else {
-			return 0;
+	std::map<Category::Direction, float> getMinSensorDistances() const {
+		std::map<Category::Direction, float> copy_assigned_tmp_map = _weighted_moving_averages;
+		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+			const std::vector<float> &directionDistances = _directionsDistances.at(it->first);
+			if (directionDistances.size() > 0) {
+				it->second = *std::min_element(directionDistances.begin(), directionDistances.end());
+			} else {
+				it->second = 0.0f;
+			}
 		}
+		return copy_assigned_tmp_map;
 	};
 
-	float maxSensorDistance(Direction direction) {
-		const std::vector<float> &directionDistances = _directionsDistances[direction];
-		if (directionDistances.size() > 0) {
-			return *std::max_element(directionDistances.begin(), directionDistances.end());
-		} else {
-			return 0;
+	std::map<Category::Direction, float> getMaxSensorDistances() const {
+		std::map<Category::Direction, float> copy_assigned_tmp_map = _weighted_moving_averages;
+		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+			const std::vector<float> &directionDistances = _directionsDistances.at(it->first);
+			if (directionDistances.size() > 0) {
+				it->second = *std::max_element(directionDistances.begin(), directionDistances.end());
+			} else {
+				it->second = 0.0f;
+			}
 		}
+		return copy_assigned_tmp_map;
+	};
+
+	std::map<Category::Direction, float> getWeightedMovingAverageSensorDistances() const {
+		return _weighted_moving_averages;
 	};
 
 private:
-	void updateSensorWeightedMovingAverage(Direction direction, const float distance) {
+	void updateSensorWeightedMovingAverage(Category::Direction direction, const float distance) {
 		float &weightedMovingAverage = _weighted_moving_averages[direction];
 		weightedMovingAverage = k_weighted_moving_average_alpha * distance +
 								(1 - k_weighted_moving_average_alpha) * weightedMovingAverage;
@@ -101,8 +109,8 @@ private:
 	const float k_weighted_moving_average_alpha;
 
 	// TODO volatile?! --> not working with vector or map once you try to use their member functions or operators...
-	std::map <Direction, std::vector<float>> _directionsDistances;
-	std::map<Direction, float> _weighted_moving_averages;
+	std::map <Category::Direction, std::vector<float>> _directionsDistances;
+	std::map<Category::Direction, float> _weighted_moving_averages;
 };
 
 class RuleBasedMotionStateRoboPilot : public RoboPilot {

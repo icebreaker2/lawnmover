@@ -6,21 +6,21 @@
 #define CLOSE_RANGE_MULTIPLIER (float) 0.45f
 #define CRITICAL_RANGE_MULTIPLIER (float) 20.0f
 
-#define MAX_DISTANCE (float) 103.0f
+#define MAX_DISTANCE (float) 100.0f
 #define MID_RANGE_LIMIT (float) MAX_DISTANCE * MID_RANGE_MULTIPLIER
 #define CLOSE_RANGE_LIMIT (float) MAX_DISTANCE * CLOSE_RANGE_MULTIPLIER
 
 
-class DistanceCategory {
+class Category {
 public:
-	enum Category {
+	enum Distance {
 		CRITICAL_RANGE,
 		CLOSE_RANGE,
 		MID_RANGE,
 		OUT_OF_RANGE
 	};
 
-	static Category fromDistance(const float distance) {
+	static Distance fromDistance(const float distance) {
 		if (distance >= MAX_DISTANCE) {
 			return OUT_OF_RANGE;
 		} else if (distance >= MID_RANGE_LIMIT) {
@@ -32,8 +32,8 @@ public:
 		}
 	};
 
-	static char *getNameFromCategory(const Category &category) {
-		switch (category) {
+	static char *getNameFromDistance(const Distance &distance) {
+		switch (distance) {
 			case CRITICAL_RANGE:
 				return "CriticalRange";
 				break;
@@ -50,10 +50,40 @@ public:
 				return "<unknown>";
 		}
 	};
-private:
-	DistanceCategory() = delete;
 
-	~DistanceCategory() = delete;
+	enum Direction {
+		FRONT,
+		FRONT_LEFT,
+		FRONT_RIGHT,
+		BACK_LEFT,
+		BACK_RIGHT
+	};
+
+	static char *getNameFromDirection(const Direction &direction) {
+		switch (direction) {
+			case FRONT:
+				return "FRONT";
+				break;
+			case FRONT_LEFT:
+				return "FRONT_LEFT";
+				break;
+			case FRONT_RIGHT:
+				return "FRONT_RIGHT";
+				break;
+			case BACK_LEFT:
+				return "BACK_LEFT";
+				break;
+			case BACK_RIGHT:
+				return "BACK_RIGHT";
+				break;
+			default:
+				return "<unknown>";
+		}
+	};
+private:
+	Category() = delete;
+
+	~Category() = delete;
 };
 
 #endif // CATEGORY_H

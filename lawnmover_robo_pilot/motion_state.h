@@ -1,6 +1,11 @@
 #ifndef MOTION_STATE_H
 #define MOTION_STATE_H
 
+#define DEFAULT_WEIGHTED_MOVING_AVERAGE_ALPHA (float) 0.70f
+#define DEFAULT_WEIGHTED_MOVING_AVERAGE_MIN_MAX_DISCREPANCY (float) 0.30f
+
+#include <vector>
+#include <map>
 #include <serial_logger.h>
 
 #include "category.h"
@@ -12,7 +17,7 @@ public:
 	 *
 	 * @param name The name of this motion state
 	 * @param max_self_iterations The maximum allowed self iterations of this state (i. e. how may requests on
-	 *        getNextStates are allowed to this state). Put to -1 to make an infinitive amount.
+	 *        getNextState are allowed to this state). Put to -1 to make an infinitive amount.
 	 * @param followUpState The next (better) following state to enter if eligible or nullptr if None exists. Caller
 	 *        does not put ownership of this pointer in this state but needs to guarantee it lives as long as this state.
 	 *        We chain states, thus, its likely that we produce a cycle. A cycle would case segsev upon deletion.
@@ -40,24 +45,26 @@ public:
 	 * eligible by check and by max_iterations) or if both of them are not possible the fallbackState
 	 * @return
 	 */
-	virtual MotionState *getNextState() {
+	virtual MotionState *getNextState(const std::map<Category::Direction, float> &minDistances,
+									  const std::map<Category::Direction, float> &maxDistances,
+									  const std::map<Category::Direction, float> &weightedMovingAvgDistances) {
 		if (k_max_self_iterations < 0) {
 			_self_iterations = k_max_self_iterations;
 		} else {
 			_self_iterations = (_self_iterations + 1) % k_max_self_iterations;
 		}
 		if (_followUpState == nullptr) {
-			if (_self_iterations > 0 && this->isEligible()) {
+			if (_self_iterations > 0 && this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
 				return this;
 			} else {
 				_self_iterations = 0;
 				return _fallbackState;
 			}
-		} else if (_followUpState->isEligible()) {
+		} else if (_followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
 			_self_iterations = 0;
 			return _followUpState;
 		} else {
-			if (_self_iterations > 0 && this->isEligible()) {
+			if (_self_iterations > 0 && this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
 				return this;
 			} else {
 				_self_iterations = 0;
@@ -86,8 +93,9 @@ public:
 		}
 	};
 
-	// TODO add distances (front, front_left, front_right, back_left, back_right) and heading just received for getNexttState and isEligble
-	virtual bool isEligible() const = 0;
+	virtual bool isEligible(const std::map<Category::Direction, float> &minDistances,
+							const std::map<Category::Direction, float> &maxDistances,
+							const std::map<Category::Direction, float> &weightedMovingAvgDistances) const = 0;
 
 protected:
 	const int k_max_self_iterations;
@@ -111,7 +119,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class IdleMotion : public MotionState {
@@ -121,7 +131,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class LowSpeedForwardMotion : public MotionState {
@@ -132,7 +144,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class MidSpeedForwardMotion : public MotionState {
@@ -143,7 +157,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class FullSpeedForwardMotion : public MotionState {
@@ -154,7 +170,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class CollisionAvoidanceMotion : public MotionState {
@@ -179,7 +197,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class RightTurnMotion : public CollisionAvoidanceMotion {
@@ -190,7 +210,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class BackwardMotion : public CollisionAvoidanceMotion {
@@ -201,7 +223,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible() const override;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 
@@ -218,22 +242,36 @@ public:
 	 *
 	 * @return The next state based on this priority strategy
 	 */
-	MotionState *getNextState() override {
+	MotionState *getNextState(const std::map<Category::Direction, float> &minDistances,
+							  const std::map<Category::Direction, float> &maxDistances,
+							  const std::map<Category::Direction, float> &weightedMovingAvgDistances) override {
 		if (_followUpState == nullptr && _fallbackState == nullptr) {
 			return nullptr;
 		} else if (_followUpState == nullptr) {
-			return _fallbackState->getNextState();
+			return _fallbackState->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
 		} else {
-			if (_followUpState->isEligible()) {
-				return _followUpState->getNextState();
+			if (_followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+				return _followUpState->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
 			} else {
-				return _fallbackState->getNextState();
+				return _fallbackState->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
 			}
 		}
 	};
 
-	bool isEligible() const override {
-		return true;
+	bool isEligible(const std::map<Category::Direction, float> &minDistances,
+					const std::map<Category::Direction, float> &maxDistances,
+					const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override {
+		if (_followUpState == nullptr && _fallbackState == nullptr) {
+			return false;
+		} else if (_followUpState == nullptr) {
+			return _fallbackState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances);
+		} else {
+			if (_followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+				return _followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances);
+			} else {
+				return _fallbackState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances);
+			}
+		}
 	};
 
 private:
