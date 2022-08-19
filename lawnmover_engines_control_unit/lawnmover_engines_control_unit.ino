@@ -2,16 +2,11 @@
 #include <serial_logger.h>
 #include <spi_commands.h>
 
+#include <spi_slave.h>
+#include <watchdog.h>
+
 #include "mover.h"
 #include "motor.h"
-#include "led.h"
-#include "spi_slave.h"
-
-// To not mix with internally used pins
-const int SCLK_SPI_INTERNAL_PIN = 13;
-const int MISO_SPI_INTERNAL_PIN = 12;
-const int MOSI_SPI_INTERNAL_PIN = 11;
-const int DEFAULT_SS_PIN_SPI_INTERNAL_PIN = 10;
 
 const int LEFT_FWD_PIN = 8; // is PWM
 const int LEFT_BWD_PIN = 9; // is no PWM
@@ -22,18 +17,13 @@ const int RIGHT_BWD_PIN = 7; // is no PWM
 
 const int MOTOR_PIN = 3; // is PWM / control with 5v only
 
-const int LED_BUNDLE_1 = A0;
-const int LED_BUNDLE_2 = A1;
-const int LED_BUNDLE_3 = A2;
+const int SCK_PIN_ORANGE   = 13; // D13 = pin19 = PortB.5
+const int MISO_PIN_YELLOW  = 12; // D12 = pin18 = PortB.4
+const int MOSI_PIN_GREEN  = 11; // D11 = pin17 = PortB.3
+const int SS_PIN_BLUE    = 10; // D10 = pin16 = PortB.2
 
-const int SCK_PIN   = 13; // D13 = pin19 = PortB.5
-const int MISO_PIN  = 12; // D12 = pin18 = PortB.4
-const int MOSI_PIN  = 11; // D11 = pin17 = PortB.3
-const int SS_PIN    = 10; // D10 = pin16 = PortB.2
+const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 2;
 
-const int EXPECTED_SPI_COMMANDS_PER_SECONDS = 5;
-const int EXPECTED_SPI_COMMANDSERROR_MARGIN = 2 * ENGINE_COMMANDS;
-volatile int watchdog_counter_ = 0;
 
 // Debug
 const int DEBUG_PIN = 2; // is no PWM
@@ -45,53 +35,59 @@ MotorService *_motorService;
 const int steering_set_interval = 100;
 MoverService *_moverService;
 
+const int k_watchdog_validation_interval = 1500;
+const int k_watchdog_valid_threshold = ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS;
+Watchdog *_watchdog = Watchdog::getFromScheduled(k_watchdog_validation_interval, k_watchdog_valid_threshold, [](void) -> bool {
+       _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 0);
+       _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, 0);
+       _motorService->set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
+    }, _timer);
+
+int k_amount_data_push_commands = 3;
+bool (*_data_push_commands[])(int16_t, int16_t) = {
+    [](int16_t id, int16_t wheelsPower) -> bool {
+        _watchdog->incrementCounter();
+        return _moverService->set_left_wheels_power(id, wheelsPower);
+    },
+    [](int16_t id, int16_t wheelsPower) -> bool {
+        _watchdog->incrementCounter();
+        return _moverService->set_right_wheels_power(id, wheelsPower);
+    },
+    [](int16_t id, int16_t rotation_speed) -> bool {
+        _watchdog->incrementCounter();
+        return _motorService->set_rotation_speed(id, rotation_speed);
+    }};
+
+
+int k_amount_data_request_commands = 0;
+bool (*_data_request_commands[])(int16_t, uint8_t *) = {};
+
 void setup() {
     SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
-    _motorService = new MotorService(MOTOR_PIN);
+    // TODO make static object to ease dynamic memory usage
+    _motorService = new MotorService(MOTOR_PIN, MOTOR_SPEED_COMMAND);
     _motorService->printInit();
+    // TODO make static object to ease dynamic memory usage
     _moverService = new MoverService(LEFT_FWD_PIN, LEFT_BWD_PIN, LEFT_PWM_PIN, RIGHT_PWM_PIN, RIGHT_FWD_PIN,
-                                     RIGHT_BWD_PIN);
+                                     RIGHT_BWD_PIN, LEFT_WHEEL_STEERING_COMMAND, RIGHT_WHEEL_STEERING_COMMAND);
     _moverService->printInit();
-    Led3Service _ledService(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
-    SpiSlave spiSlave(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN,
-    [](int16_t wheelsPower) -> bool {
-        watchdog_counter_++;
-        return _moverService->set_left_wheels_power(wheelsPower);
-    },
-    [](int16_t wheelsPower) -> bool {
-        watchdog_counter_++;
-        return _moverService->set_right_wheels_power(wheelsPower);
-    },
-    [](int16_t rotation_speed) -> bool {
-        watchdog_counter_++;
-        return _motorService->set_rotation_speed(rotation_speed);
-    });
+    SpiSlave::ISRfromArgs(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands, 
+                          k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands, 
+                          ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
 
-    _timer.every(motor_spin_set_interval, [](void*) -> bool {
-        _motorService->spinMotor();
-        return true; // to repeat the action - false to stop
-    });
+//    _timer.every(motor_spin_set_interval, [](void*) -> bool {
+//        _motorService->spinMotor();
+//        return true; // to repeat the action - false to stop
+//    });
+//
+//    _timer.every(steering_set_interval, [](void*) -> bool {
+//        _moverService->interpret_state();
+//        return true; // to repeat the action - false to stop
+//    });
 
-    _timer.every(steering_set_interval, [](void*) -> bool {
-        _moverService->interpret_state();
-        return true; // to repeat the action - false to stop
-    });
-
-    _timer.every(1000, [](void*) -> bool {
-        if (watchdog_counter_ < ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN) {
-            SerialLogger::error("This is Watchdog. Did not receive enough commands (%d/%d) for some time. Stopping all engines",
-            watchdog_counter_, ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_PER_SECONDS - EXPECTED_SPI_COMMANDSERROR_MARGIN);
-            _moverService->set_left_wheels_power(0);
-            _moverService->set_right_wheels_power(0);
-            _motorService->set_rotation_speed(0);
-        } else {
-            SerialLogger::debug("This is the watchdog. Everything normal.");
-        }
-        watchdog_counter_ = 0;
-        return true; // to repeat the action - false to stop
-    });
-
-    spiSlave.addSlavePrinting(_timer, 1000);
+    if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG)) {
+        SpiSlave::addSlavePrinting(_timer, 1000); 
+    }
 
     // debug pin always high
     pinMode(DEBUG_PIN, OUTPUT);

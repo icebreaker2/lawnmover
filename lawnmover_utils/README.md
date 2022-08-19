@@ -1,6 +1,16 @@
 # Lawnmover Utils
 Some utils to install globally and use in a multi-project setup like the Lawnmover.
 
+## Installation
+Given the arduino IDE and compilers (same for esp32), we cannot include subdirectories sources or even modules on the same directory layer of the module to compile.
+Unfortunately, the Arduino IDE does not follow symlinks of any kind.
+Thus, please copy this directory to your sketchbook library location. You can find it by:
+1. Opening your Arduino IDE
+2. Go to File > Preferences > Sketchbook location and copy the location
+3. Copy the module to <your-sketchbook-location>/libraries/
+
+It is now available for any project you open.
+
 # Arduino Timer
 * Original Timer Lib: https://www.arduino.cc/reference/en/libraries/arduino-timer/ 
 * I Modified the every function to take const unsigned long values
@@ -29,4 +39,3 @@ Methods are based on standard printf usage. Log-Commands are:
     * Slave responds with id received from Byte 1 to Byte 2 (e. g. 0x00 0x01)
   * Interpretation of the bytes (e. g. bool, int, long, float)
 * Each 9 Byte command conists of 2 byte command id, 4 byte command value and tailing 2 byte command id for acknowledging the command, and the end of the communication as Byte 9
-

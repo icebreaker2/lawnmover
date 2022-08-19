@@ -2,6 +2,7 @@
 #define SPI_COMMANDS_H
 
 #include <Arduino.h>
+#include <serial_logger.h>
 
 #define COMMAND_FRAME_ID_SIZE 2
 #define COMMAND_FRAME_VALUE_SIZE 4
@@ -11,113 +12,114 @@
 
 #define COMMUNICATION_START_SEQUENCE_LENGTH 9
 
+#define ENGINE_COMMANDS 3
 #define LEFT_WHEEL_STEERING_COMMAND (int16_t) 1
 #define RIGHT_WHEEL_STEERING_COMMAND (int16_t) 2
 #define MOTOR_SPEED_COMMAND (int16_t) 3
-#define ENGINE_COMMANDS 3
-#define MAX_ID (int16_t) 3
+#define OBSTACLE_COMMANDS 5
+#define OBSTACLE_FRONT_COMMAND (int16_t) 4
+#define OBSTACLE_FRONT_LEFT_COMMAND (int16_t) 5
+#define OBSTACLE_FRONT_RIGHT_COMMAND (int16_t) 6
+#define OBSTACLE_BACK_LEFT_COMMAND (int16_t) 7
+#define OBSTACLE_BACK_RIGHT_COMMAND (int16_t) 8
+#define MAX_ID (int16_t) 8
+
+#define DATA_REQUEST_VALUE_BYTES (long) 0xFFFFFFFF
 
 // Could not get templates to work...
 class SpiCommand {
-    public:
-        SpiCommand() = delete;
-        SpiCommand(const int id) :
-            k_id(id) {
-            // nothing to do here...
-        };
+public:
+	SpiCommand() = delete;
 
-        int getId() {
-            return k_id;
-        };
+	SpiCommand(const int id) :
+			k_id(id) {
+		// nothing to do here...
+	};
 
-    private:
-        const int k_id;
+	int getId() {
+		return k_id;
+	};
+
+private:
+	const int k_id;
 };
 
-class LongSpiCommand: public SpiCommand {
-    public:
-        using SpiCommand::SpiCommand;
-        long interpretBytes(const byte bytes[]) {
-            long value;
-            memcpy(&value, bytes, sizeof(value));
-            return value;
-        };
+class LongSpiCommand : public SpiCommand {
+public:
+	using SpiCommand::SpiCommand;
+
+	long interpretBytes(const byte bytes[]) {
+		long value;
+		memcpy(&value, bytes, sizeof(value));
+		return value;
+	};
 };
 
-class FloatSpiCommand: public SpiCommand {
-    public:
-        using SpiCommand::SpiCommand;
-        static float interpretBytes(const byte bytes[]) {
-            float value;
-            memcpy(&value, bytes, sizeof(value));
-            return value;
-        };
+class FloatSpiCommand : public SpiCommand {
+public:
+	using SpiCommand::SpiCommand;
+
+	static float interpretBytes(const byte bytes[]) {
+		float value;
+		memcpy(&value, bytes, sizeof(value));
+		return value;
+	};
 };
 
-class IntegerSpiCommand: public SpiCommand {
-    public:
-        using SpiCommand::SpiCommand;
-        static int16_t interpretBytes(const byte bytes[]) {
-            int16_t value;
-            memcpy(&value, bytes, sizeof(value));
-            return value;
-        };
+class IntegerSpiCommand : public SpiCommand {
+public:
+	using SpiCommand::SpiCommand;
+
+	static int16_t interpretBytes(const byte bytes[]) {
+		int16_t value;
+		memcpy(&value, bytes, sizeof(value));
+		return value;
+	};
 };
 
-class BoolSpiCommand: public SpiCommand {
-    public:
-        using SpiCommand::SpiCommand;
-        static  bool interpretBytes(const byte bytes[]) {
-            bool value;
-            memcpy(&value, bytes, sizeof(value));
-            return value;
-        };
+class BoolSpiCommand : public SpiCommand {
+public:
+	using SpiCommand::SpiCommand;
+
+	static bool interpretBytes(const byte bytes[]) {
+		bool value;
+		memcpy(&value, bytes, sizeof(value));
+		return value;
+	};
 };
 
 class SpiCommands {
-    public:
-        template<typename T>
-        static bool valueToBytes(const T value, byte *bytes);
+public:
+	template<typename T>
+	static bool valueToBytes(const T value, byte *bytes);
 
-        template<typename T>
-        static void putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer);
+	template<typename T>
+	static void putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer);
 
-        static bool master_interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size);
+	static int verifyIds(const byte rxIdBytes[], const byte txIdBytes[]);
 
-        static int16_t slave_interpret_command_id(const uint8_t *rx_buffer);
+	static uint8_t COMMUNICATION_START_SEQUENCE[];
 
-        static bool slave_interpret_command(const int16_t id, uint8_t *rx_buffer, uint8_t *tx_buffer,
-                                            bool (*leftWheelSteeringCommand)(int16_t),
-                                            bool (*rightWheelSteeringCommand)(int16_t),
-                                            bool (*motorSpeedCommand)(int16_t));
-
-        static bool slave_process_partial_command(bool &synchronized, const uint8_t rx_byte, uint8_t &tx_byte);
-
-
-        static uint8_t COMMUNICATION_START_SEQUENCE[];
-
-    private:
-        static SpiCommand getCommandFrom(const int id);
+private:
+	static SpiCommand getCommandFrom(const int id);
 };
 
 template<typename T>
 bool SpiCommands::valueToBytes(const T value, byte *bytes) {
-    memcpy(bytes, &value, sizeof(value));
-    return true;
+	memcpy(bytes, &value, sizeof(value));
+	return true;
 }
 
 template<typename T>
 void SpiCommands::putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer) {
-    uint8_t bytes[COMMAND_FRAME_SIZE] = {0};
+	uint8_t bytes[COMMAND_FRAME_SIZE] = {0};
 
-    SpiCommands::valueToBytes(commandId, bytes);
-    SpiCommands::valueToBytes(commandValue, bytes + COMMAND_FRAME_ID_SIZE);
-    SpiCommands::valueToBytes((int16_t) - 1, bytes + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE);
-    bytes[COMMAND_FRAME_SIZE - 1] = 0xFF;
+	SpiCommands::valueToBytes(commandId, bytes);
+	SpiCommands::valueToBytes(commandValue, bytes + COMMAND_FRAME_ID_SIZE);
+	SpiCommands::valueToBytes((int16_t) - 1, bytes + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE);
+	bytes[COMMAND_FRAME_SIZE - COMMAND_SPI_RX_OFFSET] = 0xFF;
 
-    memcpy(buffer, bytes, COMMAND_FRAME_SIZE);
+	memcpy(buffer, bytes, COMMAND_FRAME_SIZE);
 }
-
-
 
 #endif // SPI_COMMANDS_H

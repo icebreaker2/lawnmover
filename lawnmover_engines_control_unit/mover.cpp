@@ -1,10 +1,11 @@
 #include "mover.h"
-#include <serial_logger.h>
 
 MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
-                           const int rightFwdPin, const int rightBwdPin) :
+                           const int rightFwdPin, const int rightBwdPin, const int leftWheelSteeringCommandId, 
+                           const int rightWheelSteeringCommandId) :
     kLeftFwdPin(leftFwdPin), kLeftBwdPin(leftBwdPin), kLeftPwmPin(leftPwmPin), kRightPwmPin(rightPwmPin),
-    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin) {
+    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin), 
+    k_leftWheelSteeringCommandId(leftWheelSteeringCommandId), k_rightWheelSteeringCommandId(rightWheelSteeringCommandId) {
 
     pinMode(kLeftFwdPin, OUTPUT);
     pinMode(kLeftBwdPin, OUTPUT);
@@ -83,29 +84,34 @@ void MoverService::interpret_state() {
     const bool right_forward = right_wheels_power >= 0;
     const int left_rate = left_wheels_power < 0 ? left_wheels_power  * -1 : left_wheels_power ;
     const int right_rate = right_wheels_power < 0 ? right_wheels_power  * -1 : right_wheels_power ;
-    if (left_forward) {
-        SerialLogger::debug("Left forwards");
-        digitalWrite(kLeftBwdPin, LOW);
-        digitalWrite(kLeftFwdPin, HIGH);
-    } else {
-        SerialLogger::debug("Left backwards");
-        digitalWrite(kLeftFwdPin, LOW);
-        digitalWrite(kLeftBwdPin, HIGH);
+    if (left_wheels_power != 0) {
+       if (left_forward) {
+            SerialLogger::debug("Left forwards");
+            digitalWrite(kLeftBwdPin, LOW);
+            digitalWrite(kLeftFwdPin, HIGH);
+        } else {
+            SerialLogger::debug("Left backwards");
+            digitalWrite(kLeftFwdPin, LOW);
+            digitalWrite(kLeftBwdPin, HIGH);
+        } 
     }
 
-    if (right_forward) {
-        SerialLogger::debug("Right forwards");
-        digitalWrite(kRightBwdPin, LOW);
-        digitalWrite(kRightFwdPin, HIGH);
-    } else {
-        SerialLogger::debug("Right backwards");
-        digitalWrite(kRightFwdPin, LOW);
-        digitalWrite(kRightBwdPin, HIGH);
+    if (right_wheels_power != 0) {
+       if (right_forward) {
+            SerialLogger::debug("Right forwards");
+            digitalWrite(kRightBwdPin, LOW);
+            digitalWrite(kRightFwdPin, HIGH);
+        } else {
+            SerialLogger::debug("Right backwards");
+            digitalWrite(kRightFwdPin, LOW);
+            digitalWrite(kRightBwdPin, HIGH);
+        } 
     }
+
 
     changeLeftPwmRate(left_rate);
     changeRightPwmRate(right_rate);
 
     // TODO delete expensive printing....
-    printState();
+    //printState();
 }

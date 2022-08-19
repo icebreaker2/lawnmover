@@ -4,36 +4,38 @@
 #include <Arduino.h>
 
 class SerialLogger {
-    public:
+public:
 
-        enum LOG_LEVEL {
-            TRACE,
-            DEBUG,
-            INFO,
-            WARNING,
-            ERROR
-        };
+	enum LOG_LEVEL {
+		TRACE,
+		DEBUG,
+		INFO,
+		WARNING,
+		ERROR
+	};
 
-        SerialLogger() = delete;
+	SerialLogger() = delete;
 
-        static void init(const int speed);
+	static void init(const int speed);
 
-        static void init(const int speed, const LOG_LEVEL logLevel);
+	static void init(const int speed, const LOG_LEVEL logLevel);
 
-        static void trace(const char * format, ...);
+	static void trace(const char *format, ...);
 
-        static void debug(const char * format, ...);
+	static void debug(const char *format, ...);
 
-        static void info(const char * format, ...);
+	static void info(const char *format, ...);
 
-        static void warn(const char * format, ...);
+	static void warn(const char *format, ...);
 
-        static void error(const char * format, ...);
+	static void error(const char *format, ...);
 
-    private:
-        static LOG_LEVEL logLevel;
+	static bool isBelow(const LOG_LEVEL logLevel);
 
-        static void log(const char *format, va_list argptr);
+private:
+	static LOG_LEVEL logLevel;
+
+	static void log(const char *format, va_list argptr);
 };
 
 #endif // SERIALLOGGER_H
