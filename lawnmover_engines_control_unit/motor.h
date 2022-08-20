@@ -10,7 +10,7 @@ class MotorService {
     public:
         MotorService();
 
-        MotorService(const int motorPin, const int motorSpeedCommandId);
+        MotorService(const int motorPin);
 
         ~MotorService();
 
@@ -26,7 +26,6 @@ class MotorService {
 
     private:
         const int kMotorPin;
-        const int k_motorSpeedCommandId;
         volatile int16_t _rotation_speed = 0;
 };
 

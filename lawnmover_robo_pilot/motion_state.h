@@ -58,11 +58,11 @@ public:
 		if (_followUpState == nullptr) {
 			if ((k_max_self_iterations < 0 || _self_iterations <= k_max_self_iterations) &&
 				this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
-				SerialLogger::debug("No follow up state and %s is still eligible, thus, returning it",
+				SerialLogger::trace("No follow up state and %s is still eligible, thus, returning it",
 									this->get_name());
 				return this;
 			} else {
-				SerialLogger::debug("%s no longer eligible, trying fallback due to nullptr followUpState and "
+				SerialLogger::trace("%s no longer eligible, trying fallback due to nullptr followUpState and "
 									"non-eligibility", this->get_name());
 				return changeState(_fallbackState, minDistances, maxDistances, weightedMovingAvgDistances);
 			}
@@ -71,10 +71,10 @@ public:
 			// t=3 while having reached an angle of 30/90°. If we now move to the fallback, we start with a wrong angle.
 			// If we already use another function to determine eligibility, we need and can safely drop the check.
 			if (this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
-				SerialLogger::debug("Returning %s due to delayed follow up and eligibility", this->get_name());
+				SerialLogger::trace("Returning %s due to delayed follow up and eligibility", this->get_name());
 				return this;
 			} else {
-				SerialLogger::debug("%s no longer eligible, trying fallback due to delayed follow up but "
+				SerialLogger::trace("%s no longer eligible, trying fallback due to delayed follow up but "
 									"non-eligibility", this->get_name());
 				return changeState(_fallbackState, minDistances, maxDistances, weightedMovingAvgDistances);
 			}
@@ -85,11 +85,11 @@ public:
 		} else {
 			if ((k_max_self_iterations < 0 || _self_iterations <= k_max_self_iterations) &&
 				this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
-				SerialLogger::debug("Follow up state is not eligible but this %s is still eligible, thus, returning it",
+				SerialLogger::trace("Follow up state is not eligible but this %s is still eligible, thus, returning it",
 									this->get_name());
 				return this;
 			} else {
-				SerialLogger::debug("Trying fallback due to non-delayed follow up and states non-eligibility");
+				SerialLogger::trace("Trying fallback due to non-delayed follow up and states non-eligibility");
 				return changeState(_fallbackState, minDistances, maxDistances, weightedMovingAvgDistances);
 			}
 		}

@@ -1,11 +1,9 @@
 #include "mover.h"
 
 MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
-                           const int rightFwdPin, const int rightBwdPin, const int leftWheelSteeringCommandId, 
-                           const int rightWheelSteeringCommandId) :
+                           const int rightFwdPin, const int rightBwdPin) :
     kLeftFwdPin(leftFwdPin), kLeftBwdPin(leftBwdPin), kLeftPwmPin(leftPwmPin), kRightPwmPin(rightPwmPin),
-    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin), 
-    k_leftWheelSteeringCommandId(leftWheelSteeringCommandId), k_rightWheelSteeringCommandId(rightWheelSteeringCommandId) {
+    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin) {
 
     pinMode(kLeftFwdPin, OUTPUT);
     pinMode(kLeftBwdPin, OUTPUT);

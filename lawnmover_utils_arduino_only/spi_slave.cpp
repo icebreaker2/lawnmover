@@ -86,7 +86,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 }
 
 bool check_and_set_id() {
-	memcpy(&_current_command_id, _current_command_id_bytes, sizeof(int16_t));
+	memcpy(&_current_command_id, _current_command_id_bytes, sizeof(_current_command_id));
 	if (_current_command_id <= 0) {
 		SerialLogger::error("Bad Id Received. %d is unknown", _current_command_id);
 		return false;

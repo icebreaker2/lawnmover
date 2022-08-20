@@ -1,8 +1,9 @@
 #include "motor.h"
 #include <serial_logger.h>
+#include <spi_commands.h>
 
-MotorService::MotorService(const int motorPin, const int motorSpeedCommandId) :
-    kMotorPin(motorPin), k_motorSpeedCommandId(motorSpeedCommandId) {
+MotorService::MotorService(const int motorPin) :
+    kMotorPin(motorPin) {
 
     pinMode(kMotorPin, OUTPUT);
     stopMotor();
@@ -19,7 +20,7 @@ void MotorService::printInit() {
 bool MotorService::set_rotation_speed(const int16_t id, const int16_t rotation_speed) {
     // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
     // SerialLogger::debug("Inspecting motor speed with id %d and value %d", id, rotation_speed);
-    if (id == k_motorSpeedCommandId) {
+    if (id == MOTOR_SPEED_COMMAND) {
         _rotation_speed = rotation_speed;
         return true;
     } else {
