@@ -22,7 +22,7 @@ const int ENGINE_RESTART_PIN_PIN = 13;
 const int OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN = 12;
 const int OBSTACLE_DETECTION_RESTART_PIN_PIN = 14;
 
-const int spi_schedule_next_slave_commands_intervall = 200;
+const int spi_schedule_next_slave_commands_intervall = 165;
 
 // General processing + PS4 (Bluetooth) settings
 auto _timer = timer_create_default();
@@ -65,7 +65,7 @@ void re_setup_spi_communication() {
 }
 
 void setup() {
-	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
+	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::INFO);
 	esp32Ps4Ctrl = new ESP32_PS4_Controller(masterMac, _timer);
 
 	_roboPilot = new RuleBasedMotionStateRoboPilot();

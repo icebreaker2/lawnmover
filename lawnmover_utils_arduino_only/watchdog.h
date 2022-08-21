@@ -25,7 +25,8 @@ public:
 								  "all engines"), _watchdog_counter, k_valid_threshold);
 			return false;
 		} else {
-			SerialLogger::debug(F("This is the watchdog. Everything normal."));
+			SerialLogger::debug(F("This is the watchdog. Everything normal. Received enough commands (%d/%d)."),
+								_watchdog_counter, k_valid_threshold);
 			return true;
 		}
 	}

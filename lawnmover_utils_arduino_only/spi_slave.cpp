@@ -112,7 +112,7 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 	} else if (_current_command_cursor < COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE) {
 		uint8_t write_byte = rx_byte;
 		if (_current_command_cursor == COMMAND_FRAME_ID_SIZE) {
-			// check&set the id and reset it it fails
+			// check&set the id and reset it if it fails
 			if (!check_and_set_id()) {
 				// Bad Req Id received; failure.
 				tx_byte = 0;
@@ -190,7 +190,7 @@ void interpret_data_push_command(const int id, uint8_t *value_bytes, bool (*data
 ISR (SPI_STC_vect) {
 		const uint8_t rx_byte = SPDR;
 		uint8_t tx_byte = 0;
-
+		
 		if (_synchronized) {
 			if (process_partial_command(rx_byte, tx_byte) &
 				post_process_spi_interrupt_routine(rx_byte, tx_byte)) {

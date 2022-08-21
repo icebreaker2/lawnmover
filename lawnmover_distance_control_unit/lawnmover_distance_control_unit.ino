@@ -5,10 +5,10 @@
 #include "led.h"
 #include "ultrasonic_sensors.h"
 
-const int SCK_PIN_ORANGE = 9; // D13 = pin19 = PortB.5
-const int MISO_PIN_YELLOW = 10; // D12 = pin18 = PortB.4
-const int MOSI_PIN_GREEN = 11; // D11 = pin17 = PortB.3
-const int SS_PIN_BLUE = 12; // D10 = pin16 = PortB.2
+const int SCK_PIN_ORANGE   = 13; // D13 = pin19 = PortB.5
+const int MISO_PIN_YELLOW  = 12; // D12 = pin18 = PortB.4
+const int MOSI_PIN_GREEN  = 11; // D11 = pin17 = PortB.3
+const int SS_PIN_BLUE    = 10; // D10 = pin16 = PortB.2
 
 const int AMOUNT_ULTRA_SENSORS = 5;
 const int ULTRA_RX_FRONT = 2;
@@ -51,6 +51,8 @@ bool (*_data_request_commands[])(int16_t, uint8_t *) = {
 void setup() {
 	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
 
+    _ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
+    
 	// Note: Order matters. We alternate rear and front to reduce risiking receiving the echo of a previous tx if sensoring_frequency_delay was choosen too thin.
 	const int sensorsRxPinList[] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_FRONT, ULTRA_RX_REAR_LEFT,
 									ULTRA_RX_FRONT_RIGHT};
@@ -59,7 +61,6 @@ void setup() {
 	_ultrasonicSensors = UltrasonicSensors::getFromScheduled(ULTRA_TX_PIN, sensorsRxPinList, sensorsSpiIdList,
 															 AMOUNT_ULTRA_SENSORS, PULSE_MAX_TIMEOUT_MICROSECONDS,
 															 _timer);
-	_ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
 
 	if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
 		_ultrasonicSensors->addStatusPrinting(_timer, DEBUG_PRINT_DISTANCE_DELAY);

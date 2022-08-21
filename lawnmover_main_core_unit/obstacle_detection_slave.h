@@ -56,10 +56,14 @@ public:
 
 	void fill_commands_bytes(uint8_t *tx_buffer) override {
 		SpiCommands::putCommandToBuffer(OBSTACLE_FRONT_COMMAND, DATA_REQUEST_VALUE_BYTES, tx_buffer);
-		SpiCommands::putCommandToBuffer(OBSTACLE_FRONT_LEFT_COMMAND, OBSTACLE_FRONT_LEFT_COMMAND, tx_buffer);
-		SpiCommands::putCommandToBuffer(OBSTACLE_FRONT_RIGHT_COMMAND, OBSTACLE_FRONT_RIGHT_COMMAND, tx_buffer);
-		SpiCommands::putCommandToBuffer(OBSTACLE_BACK_LEFT_COMMAND, OBSTACLE_BACK_LEFT_COMMAND, tx_buffer);
-		SpiCommands::putCommandToBuffer(OBSTACLE_BACK_RIGHT_COMMAND, OBSTACLE_BACK_RIGHT_COMMAND, tx_buffer);
+		SpiCommands::putCommandToBuffer(OBSTACLE_FRONT_LEFT_COMMAND, DATA_REQUEST_VALUE_BYTES,
+										tx_buffer + COMMAND_FRAME_SIZE);
+		SpiCommands::putCommandToBuffer(OBSTACLE_FRONT_RIGHT_COMMAND, DATA_REQUEST_VALUE_BYTES,
+										tx_buffer + 2 * COMMAND_FRAME_SIZE);
+		SpiCommands::putCommandToBuffer(OBSTACLE_BACK_LEFT_COMMAND, DATA_REQUEST_VALUE_BYTES,
+										tx_buffer + 3 * COMMAND_FRAME_SIZE);
+		SpiCommands::putCommandToBuffer(OBSTACLE_BACK_RIGHT_COMMAND, DATA_REQUEST_VALUE_BYTES,
+										tx_buffer + 4 * COMMAND_FRAME_SIZE);
 	};
 
 	bool

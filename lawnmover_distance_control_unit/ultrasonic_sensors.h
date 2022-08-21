@@ -16,8 +16,9 @@ public:
 	UltrasonicSensor(const int16_t id, const int txPin, const int rxPin, const int pulseMaxTimeoutMicroSeconds) :
 			k_id(id), k_txPin(txPin), k_rxPin(rxPin), k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
 			k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f) {
-		SerialLogger::debug("Initiating ultrasonic sensor on rxPin %d, with txPin %d and max possible distance at %f",
-							k_rxPin, k_txPin, k_maxDistance);
+		SerialLogger::debug(F("Initiating ultrasonic sensor %s on rxPin=%d with id=%d with txPin=%d and max "
+		                      "possible distance at %f"), SpiCommands::getNameFromId(id), k_rxPin, k_id, k_txPin, 
+		                      k_maxDistance);
 		pinMode(k_txPin, OUTPUT);
 		digitalWrite(k_txPin, LOW);
 		pinMode(k_rxPin, INPUT);
@@ -63,7 +64,7 @@ public:
 		if (_latestDistance < NO_ECHO_DISTANCE && new_distance >= k_maxDistance) {
 			// The object got closer to the robot and is now probably "at" the robot leading to no echo due to the object. Setting to zero!
 			_latestDistance = 0.0f;
-			SerialLogger::debug(F("Setting distance of sensor at pin %d to zero"), k_rxPin);
+			SerialLogger::debug(F("Setting distance of sensor=%s with id %d at rx pin %d to zero"), SpiCommands::getNameFromId(k_id), k_id, k_rxPin);
 		} else {
 			_latestDistance = (_latestDistance + new_distance) / 2.0f;
 		}

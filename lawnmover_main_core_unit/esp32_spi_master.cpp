@@ -65,6 +65,7 @@ void Esp32SpiMaster::put_slave(MasterSpiSlave *spi_slave) {
 
 void Esp32SpiMaster::schedule(const int interval, Timer<> &timer) {
 	_stopped = false;
+   SerialLogger::info(F("Scheduled spi communication (round-robin) every %d milliseconds"), interval);
 	timer.every(interval, [&](void *) -> bool {
 		if (_registered_slaves < 1) {
 			SerialLogger::error(F("No slaves registered. No need to start a timer for spi communication for no "
@@ -110,7 +111,7 @@ void Esp32SpiMaster::schedule(const int interval, Timer<> &timer) {
 				}
 				if (!_stopped) {
 					if (spi_slave->consume(rx_buffer, tx_rx_buffer_size)) {
-						SerialLogger::debug(F("Slave on slave select pin %d (%s) did return correct results!"),
+						SerialLogger::debug(F("Slave on slave select pin %d (%s) did return correct results and remains synchronized!"),
 											spi_slave->get_slave_pin(), spi_slave->get_name());
 					} else {
 						SerialLogger::error(F("Slave on slave select pin %d (%s) did NOT return correct results!"),

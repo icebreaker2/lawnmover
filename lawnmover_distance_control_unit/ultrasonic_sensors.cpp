@@ -30,20 +30,20 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 		k_txPin(txPin), k_amountSensors(amountSensors) {
 
 	_ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
-	char echoPinsString[MAX_ARDUINO_PINS * 16 + 5];
-	strcat(echoPinsString, "pins ");
-
-	int16_t ids_check[amountSensors] = {-1};
-	int rxPins_check[amountSensors] = {-1};
+	int16_t ids_check[k_amountSensors] = {-1};
+	int rxPins_check[k_amountSensors] = {-1};
 
 	for (int i = 0; i < k_amountSensors; i++) {
 		const int rxPin = rxPins[i];
 		const int16_t id = ids[i];
+		SerialLogger::info(F("Creating sensor %d/%d with rxPin=%d and id=%d"), i + 1, k_amountSensors, rxPin, id);
 
 		bool duplicate = false;
 		for (int j = 0; j < k_amountSensors; j++) {
 			if (ids_check[j] == id || rxPins_check[j] == rxPin) {
-				SerialLogger::error("Attempt to add the same sensor twice with id %d on rx pin %d", id, rxPin);
+				SerialLogger::error(F("Attempt to add the same sensor twice with id %d on rx pin %d where at index %d"
+									  " of the check arrays the same value already exists with id=%d and rxpin=%d"), id,
+									rxPin, j, ids_check[j], rxPins_check[j]);
 				duplicate = true;
 				break;
 			}
@@ -51,23 +51,19 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 		if (!duplicate) {
 			ids_check[i] = id;
 			rxPins_check[i] = rxPin;
-			if (rxPin <= MAX_ARDUINO_PINS) {
+			if (rxPin <= MAX_ARDUINO_PINS && rxPin >= 2) {
 				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, k_txPin, rxPin,
 																				pulseMaxTimeoutMicroSeconds);
-				char buf[16];
-				sprintf(buf, "%d, ", rxPin);
-				strcat(echoPinsString, buf);
 			} else {
-				SerialLogger::warn(
-						"Cannot add sensor %d at rx pin %d which is out of range. Max Pin is %d. Assuming a bad malfunctioning and stopping...",
-						i, rxPin, MAX_ARDUINO_PINS);
+				SerialLogger::warn(F("Cannot add sensor %d/%d at rx pin %d which is out of range. Max Pin is %d. "
+									 "Assuming a bad malfunctioning and stopping..."), i + 1, k_amountSensors,
+								   rxPin, MAX_ARDUINO_PINS);
 				break;
 			}
 		}
 	}
 	if (_registeredSensors == k_amountSensors) {
-		SerialLogger::info("Scheduling ultrasonic sonic distance sensoring from pin %d to echo on %s", k_txPin,
-						   echoPinsString);
+		SerialLogger::info(F("Scheduling ultrasonic sonic distance sensoring from pin %d to echo pins"), k_txPin);
 	} else {
 		SerialLogger::error(F("Could only add %d/%d sensors. Expect issues."), _registeredSensors, k_amountSensors);
 	}

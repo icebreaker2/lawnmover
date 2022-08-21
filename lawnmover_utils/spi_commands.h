@@ -99,6 +99,8 @@ public:
 
 	static int verifyIds(const byte rxIdBytes[], const byte txIdBytes[]);
 
+	static const char *getNameFromId(const int16_t id);
+
 	static uint8_t COMMUNICATION_START_SEQUENCE[];
 
 private:

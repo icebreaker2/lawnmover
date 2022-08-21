@@ -7,8 +7,8 @@
 #include "mover.h"
 #include "motor.h"
 
-const int LEFT_FWD_PIN = 8; // is PWM
-const int LEFT_BWD_PIN = 9; // is no PWM
+const int LEFT_FWD_PIN = 9; // is PWM
+const int LEFT_BWD_PIN = 8; // is no PWM
 const int LEFT_PWM_PIN = 6; // is PWM
 const int RIGHT_PWM_PIN = 5; // is PWM
 const int RIGHT_FWD_PIN = 4; // is no PWM
@@ -21,7 +21,7 @@ const int MISO_PIN_YELLOW  = 12; // D12 = pin18 = PortB.4
 const int MOSI_PIN_GREEN  = 11; // D11 = pin17 = PortB.3
 const int SS_PIN_BLUE    = 10; // D10 = pin16 = PortB.2
 
-const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 2;
+const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 3;
 
 
 // Debug
@@ -34,7 +34,7 @@ MotorService *_motorService;
 const int steering_set_interval = 100;
 MoverService *_moverService;
 
-const int k_watchdog_validation_interval = 1500;
+const int k_watchdog_validation_interval = 1200;
 const int k_watchdog_valid_threshold = ENGINE_COMMANDS *  EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS;
 Watchdog *_watchdog = Watchdog::getFromScheduled(k_watchdog_validation_interval, k_watchdog_valid_threshold, [](void) -> bool {
        _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 0);

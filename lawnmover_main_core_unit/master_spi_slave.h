@@ -193,8 +193,7 @@ protected:
 			for (int id_counter = 0; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
 				//Serial.printf("%d: %x\n", COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter]);
 				rxId2[id_counter] = rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE +
-											  COMMAND_FRAME_VALUE_SIZE +
-											  id_counter];
+											  COMMAND_FRAME_VALUE_SIZE + id_counter];
 				txId2_bytes[id_counter] = tx_buffer[i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter];
 			}
 
