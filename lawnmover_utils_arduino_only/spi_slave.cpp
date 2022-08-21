@@ -15,6 +15,7 @@ bool _synchronized = false;
 int _amount_data_push_command_callbacks;
 bool (**_data_push_command_callbacks)(int16_t, int16_t);
 int _amount_data_request_command_callbacks;
+
 bool (**_data_request_command_callbacks)(int16_t, uint8_t *);
 
 void SpiSlave::ISRfromArgs(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
@@ -71,7 +72,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 				_synchronized = true;
 				return;
 			} else {
-				SerialLogger::warn("Bad end-of-sequence-byte received (%x) which should have been %x", rx_byte,
+				SerialLogger::warn(F("Bad end-of-sequence-byte received (%x) which should have been %x"), rx_byte,
 								   SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 			}
 		} else {
@@ -80,7 +81,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 		}
 	} else {
 		_current_command_cursor = 0;
-		//SerialLogger::warn("Lost synchronization. Received byte %c but expected %c at index %d. Restarting synchronization sequence.", rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor], _current_command_cursor);
+		//SerialLogger::warn(F("Lost synchronization. Received byte %c but expected %c at index %d. Restarting synchronization sequence."), rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor], _current_command_cursor);
 	}
 	_synchronized = false;
 }
@@ -88,10 +89,10 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 bool check_and_set_id() {
 	memcpy(&_current_command_id, _current_command_id_bytes, sizeof(_current_command_id));
 	if (_current_command_id <= 0) {
-		SerialLogger::error("Bad Id Received. %d is unknown", _current_command_id);
+		SerialLogger::error(F("Bad Id Received. %d is unknown"), _current_command_id);
 		return false;
 	} else if (_current_command_id > MAX_ID) {
-		SerialLogger::warn("Received bad id %d > %d (max)", _current_command_id, MAX_ID);
+		SerialLogger::warn(F("Received bad id %d > %d (max)"), _current_command_id, MAX_ID);
 		return false;
 	} else {
 		return true;
@@ -122,7 +123,7 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 			// inspect for data request commands
 			for (int i = 0; i < _amount_data_request_command_callbacks && !_current_command_data_request; i++) {
 				_current_command_data_request = (*_data_request_command_callbacks[i])(_current_command_id,
-						_current_command_value_bytes);
+																					  _current_command_value_bytes);
 			}
 		}
 		if (_current_command_data_request) {
@@ -177,7 +178,7 @@ void interpret_data_push_command(const int id, uint8_t *value_bytes, bool (*data
 
 	if (!valid) {
 		// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
-		SerialLogger::warn("Did not receive valid data push command. Cannot interpret value.");
+		SerialLogger::warn(F("Did not receive valid data push command. Cannot interpret value."));
 		_synchronized = false;
 	}
 }
@@ -210,28 +211,28 @@ ISR (SPI_STC_vect) {
 
 void SpiSlave::addSlavePrinting(Timer<> &timer, const int interval) {
 	timer.every(interval, [](void *) -> bool {
-		Serial.print("RxBufferInput:");
+		Serial.print(F("RxBufferInput:"));
 		for (long i = 0; i < _commands_size; i += 1) {
 			if (i % COMMAND_FRAME_SIZE == 0) {
-				Serial.print(" ");
+				Serial.print(F(" "));
 			}
 			Serial.print(_rx_buffer[i], HEX);
 		}
 		Serial.println();
 
 
-		Serial.print("TxBufferInput:");
+		Serial.print(F("TxBufferInput:"));
 		for (long i = 0; i < _commands_size; i += 1) {
 			if (i % COMMAND_FRAME_SIZE == 0) {
-				Serial.print(" ");
+				Serial.print(F(" "));
 			}
 			Serial.print(_tx_buffer[i], HEX);
 		}
 		Serial.println();
 		if (_synchronized) {
-			SerialLogger::info("Slave is synchronized");
+			SerialLogger::info(F("Slave is synchronized"));
 		} else {
-			SerialLogger::info("Slave is NOT synchronized");
+			SerialLogger::info(F("Slave is NOT synchronized"));
 		}
 
 		return true; // to repeat the action - false to stop

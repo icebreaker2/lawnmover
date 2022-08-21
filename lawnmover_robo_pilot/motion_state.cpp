@@ -52,8 +52,8 @@ bool LowSpeedForwardMotion::isEligible(const std::map<Category::Direction, float
 									   const std::map<Category::Direction, float> &maxDistances,
 									   const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
 	if (has_large_min_wAvg_differences_front(minDistances, weightedMovingAvgDistances)) {
-		SerialLogger::warn("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
-						   "eligibility.");
+		SerialLogger::warn(F("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
+							 "eligibility."));
 		return false;
 	} else {
 		const Category::Distance &frontDistance = Category::fromDistance(
@@ -66,9 +66,9 @@ bool LowSpeedForwardMotion::isEligible(const std::map<Category::Direction, float
 		const bool eligible = frontDistance >= Category::CLOSE_RANGE && frontLeftDistance >= Category::CLOSE_RANGE &&
 							  frontRightDistance >= Category::CLOSE_RANGE;
 		if (eligible) {
-			SerialLogger::debug("%s is eligible to be the next state. All ranges are above threshold", get_name());
+			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"), get_name());
 		} else {
-			SerialLogger::debug("%s is NOT eligible to be the next state. Some ranges are below threshold",
+			SerialLogger::debug(F("%s is NOT eligible to be the next state. Some ranges are below threshold"),
 								get_name());
 		}
 		return eligible;
@@ -79,8 +79,8 @@ bool MidSpeedForwardMotion::isEligible(const std::map<Category::Direction, float
 									   const std::map<Category::Direction, float> &maxDistances,
 									   const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
 	if (has_large_min_wAvg_differences_front(minDistances, weightedMovingAvgDistances)) {
-		SerialLogger::warn("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
-						   "eligibility.");
+		SerialLogger::warn(F("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
+							 "eligibility."));
 		return false;
 	} else {
 		const Category::Distance &frontDistance = Category::fromDistance(
@@ -93,9 +93,9 @@ bool MidSpeedForwardMotion::isEligible(const std::map<Category::Direction, float
 		const bool eligible = frontDistance >= Category::MID_RANGE && frontLeftDistance >= Category::CLOSE_RANGE &&
 							  frontRightDistance >= Category::CLOSE_RANGE;
 		if (eligible) {
-			SerialLogger::debug("%s is eligible to be the next state. All ranges are above threshold", get_name());
+			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"), get_name());
 		} else {
-			SerialLogger::debug("%s is NOT eligible to be the next state. Some ranges are below threshold",
+			SerialLogger::debug(F("%s is NOT eligible to be the next state. Some ranges are below threshold"),
 								get_name());
 		}
 		return eligible;
@@ -106,8 +106,8 @@ bool FullSpeedForwardMotion::isEligible(const std::map<Category::Direction, floa
 										const std::map<Category::Direction, float> &maxDistances,
 										const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
 	if (has_large_min_wAvg_differences_front(minDistances, weightedMovingAvgDistances)) {
-		SerialLogger::warn("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
-						   "eligibility.");
+		SerialLogger::warn(F("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
+							 "eligibility."));
 		return false;
 	} else {
 		const Category::Distance &frontDistance = Category::fromDistance(
@@ -120,9 +120,9 @@ bool FullSpeedForwardMotion::isEligible(const std::map<Category::Direction, floa
 		const bool eligible = frontDistance >= Category::OUT_OF_RANGE && frontLeftDistance >= Category::MID_RANGE &&
 							  frontRightDistance >= Category::MID_RANGE;
 		if (eligible) {
-			SerialLogger::debug("%s is eligible to be the next state. All ranges are above threshold", get_name());
+			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"), get_name());
 		} else {
-			SerialLogger::debug("%s is NOT eligible to be the next state. Some ranges are below threshold",
+			SerialLogger::debug(F("%s is NOT eligible to be the next state. Some ranges are below threshold"),
 								get_name());
 		}
 		return eligible;
@@ -133,8 +133,8 @@ bool BackwardMotion::isEligible(const std::map<Category::Direction, float> &minD
 								const std::map<Category::Direction, float> &maxDistances,
 								const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
 	if (has_large_min_wAvg_differences_back(minDistances, weightedMovingAvgDistances)) {
-		SerialLogger::warn("Discrepancy between backwards min and wAvg distances to high. Need cleaner history for "
-						   "save eligibility.");
+		SerialLogger::warn(F("Discrepancy between backwards min and wAvg distances to high. Need cleaner history for "
+							 "save eligibility."));
 		return false;
 	} else {
 		const Category::Distance &backLeftDistance = Category::fromDistance(
@@ -144,9 +144,9 @@ bool BackwardMotion::isEligible(const std::map<Category::Direction, float> &minD
 
 		const bool eligible = backLeftDistance >= Category::CLOSE_RANGE && backRightDistance >= Category::CLOSE_RANGE;
 		if (eligible) {
-			SerialLogger::debug("%s is eligible to be the next state. All ranges are above threshold", get_name());
+			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"), get_name());
 		} else {
-			SerialLogger::debug("%s is NOT eligible to be the next state. Some ranges are below threshold",
+			SerialLogger::debug(F("%s is NOT eligible to be the next state. Some ranges are below threshold"),
 								get_name());
 		}
 		return eligible;
@@ -158,13 +158,13 @@ bool LeftTurnMotion::isEligible(const std::map<Category::Direction, float> &minD
 								const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
 	// If we want to turn, we need clean history in front and backwards sensors
 	if (has_large_min_wAvg_differences_front(minDistances, weightedMovingAvgDistances)) {
-		SerialLogger::warn("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
-						   "eligibility.");
+		SerialLogger::warn(F("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
+							 "eligibility."));
 		return false;
 	} else {
 		if (has_large_min_wAvg_differences_back(minDistances, weightedMovingAvgDistances)) {
-			SerialLogger::warn("Discrepancy between backwards min and wAvg distances to high. Need cleaner history for "
-							   "save eligibility.");
+			SerialLogger::warn(F("Discrepancy between backwards min and wAvg distances to high. Need cleaner history "
+								 "for save eligibility."));
 			return false;
 		} else {
 			const Category::Distance &frontDistance = Category::fromDistance(
@@ -184,9 +184,10 @@ bool LeftTurnMotion::isEligible(const std::map<Category::Direction, float> &minD
 								  backLeftDistance >= Category::CLOSE_RANGE &&
 								  backRightDistance >= Category::CRITICAL_RANGE;
 			if (eligible) {
-				SerialLogger::debug("%s is eligible to be the next state. All ranges are above threshold", get_name());
+				SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"),
+									get_name());
 			} else {
-				SerialLogger::debug("%s is NOT eligible to be the next state. Some ranges are below threshold",
+				SerialLogger::debug(F("%s is NOT eligible to be the next state. Some ranges are below threshold"),
 									get_name());
 			}
 			return eligible;
@@ -199,13 +200,13 @@ bool RightTurnMotion::isEligible(const std::map<Category::Direction, float> &min
 								 const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
 	// If we want to turn, we need clean history in front and backwards sensors
 	if (has_large_min_wAvg_differences_front(minDistances, weightedMovingAvgDistances)) {
-		SerialLogger::warn("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
-						   "eligibility.");
+		SerialLogger::warn(F("Discrepancy between front min and wAvg distances to high. Need cleaner history for save "
+							 "eligibility."));
 		return false;
 	} else {
 		if (has_large_min_wAvg_differences_back(minDistances, weightedMovingAvgDistances)) {
-			SerialLogger::warn("Discrepancy between backwards min and wAvg distances to high. Need cleaner history for "
-							   "save eligibility.");
+			SerialLogger::warn(F("Discrepancy between backwards min and wAvg distances to high. Need cleaner history "
+								 "for save eligibility."));
 			return false;
 		} else {
 			const Category::Distance &frontDistance = Category::fromDistance(
@@ -225,9 +226,10 @@ bool RightTurnMotion::isEligible(const std::map<Category::Direction, float> &min
 								  backLeftDistance >= Category::CRITICAL_RANGE &&
 								  backRightDistance >= Category::CLOSE_RANGE;
 			if (eligible) {
-				SerialLogger::debug("%s is eligible to be the next state. All ranges are above threshold", get_name());
+				SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"),
+									get_name());
 			} else {
-				SerialLogger::debug("%s is NOT eligible to be the next state. Some ranges are below threshold",
+				SerialLogger::debug(F("%s is NOT eligible to be the next state. Some ranges are below threshold"),
 									get_name());
 			}
 			return eligible;

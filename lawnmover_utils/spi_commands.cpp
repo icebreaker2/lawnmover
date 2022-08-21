@@ -10,8 +10,8 @@ int SpiCommands::verifyIds(const byte rxIdBytes[], const byte txIdBytes[]) {
 	if (rxId == txId) {
 		return rxId;
 	} else {
-		SerialLogger::error("Request and Acknowledge Id do not align: rx %d (%x%x) != tx %d(%x%x) ", rxId, rxIdBytes[0],
-							rxIdBytes[1], txId, txIdBytes[0], txIdBytes[1]);
+		SerialLogger::error(F("Request and Acknowledge Id do not align: rx %d (%x%x) != tx %d(%x%x)"), rxId,
+							rxIdBytes[0], rxIdBytes[1], txId, txIdBytes[0], txIdBytes[1]);
 		return -1;
 	}
 }

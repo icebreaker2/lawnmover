@@ -58,12 +58,12 @@ public:
 		}
 		// The signal went back and forth but we do only need one distance
 		const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f;
-		// SerialLogger::debug("new %f vs. old %f (q1: %d, q2: %d)", new_distance, _latestDistance,
+		// SerialLogger::debug(F("new %f vs. old %f (q1: %d, q2: %d)"), new_distance, _latestDistance,
 		//                    _latestDistance < NO_ECHO_DISTANCE, _latestDistance >= k_maxDistance);
 		if (_latestDistance < NO_ECHO_DISTANCE && new_distance >= k_maxDistance) {
 			// The object got closer to the robot and is now probably "at" the robot leading to no echo due to the object. Setting to zero!
 			_latestDistance = 0.0f;
-			SerialLogger::debug("Setting distance of sensor at pin %d to zero", k_rxPin);
+			SerialLogger::debug(F("Setting distance of sensor at pin %d to zero"), k_rxPin);
 		} else {
 			_latestDistance = (_latestDistance + new_distance) / 2.0f;
 		}
@@ -99,10 +99,10 @@ public:
 	void addStatusPrinting(Timer<> &timer, const int frequency) const {
 		timer.every(frequency, [](UltrasonicSensors *ultrasonicSensors) -> bool {
 			if (ultrasonicSensors == nullptr) {
-				SerialLogger::error("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration");
+				SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
 				return false;
 			} else {
-				SerialLogger::info("F: %f, FR: %f, FL: %f, RR: %f, RL: %f",
+				SerialLogger::info(F("F: %f, FR: %f, FL: %f, RR: %f, RL: %f"),
 								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_COMMAND),
 								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_RIGHT_COMMAND),
 								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_LEFT_COMMAND),

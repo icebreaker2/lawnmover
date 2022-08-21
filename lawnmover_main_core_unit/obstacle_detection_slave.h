@@ -70,7 +70,7 @@ public:
 
 private:
 	RoboPilot *_roboPilot;
-	std::vector<std::function<bool(int16_t, float)>> _data_request_callbacks;
+	std::vector <std::function<bool(int16_t, float)>> _data_request_callbacks;
 };
 
 #endif // OBSTACLE_DETECTION_SLAVE_H

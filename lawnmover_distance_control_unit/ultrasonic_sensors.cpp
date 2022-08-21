@@ -14,8 +14,13 @@ UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const in
 	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, amountSensors,
 																 pulseMaxTimeoutMicroSeconds);
 	timer.every(sensoring_frequency_delay, [](UltrasonicSensors *ultrasonicSensors) -> bool {
-		ultrasonicSensors->updateNextDistanceFromSensors();
-		return true; // to repeat the action - false to stop
+		if (ultrasonicSensors == nullptr) {
+			SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
+			return false;
+		} else {
+			ultrasonicSensors->updateNextDistanceFromSensors();
+			return true; // to repeat the action - false to stop
+		}
 	}, ultrasonicSensors);
 	return ultrasonicSensors;
 }
@@ -64,7 +69,7 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 		SerialLogger::info("Scheduling ultrasonic sonic distance sensoring from pin %d to echo on %s", k_txPin,
 						   echoPinsString);
 	} else {
-		SerialLogger::error("Could only add %d/%d sensors. Expect issues.", _registeredSensors, k_amountSensors);
+		SerialLogger::error(F("Could only add %d/%d sensors. Expect issues."), _registeredSensors, k_amountSensors);
 	}
 }
 
@@ -111,7 +116,7 @@ float UltrasonicSensors::getLatestDistanceFromSensorByPin(const int sensorPin) c
 		}
 	}
 	if (distance < 0) {
-		SerialLogger::warn("Could not find ultrasonic sensor on rx pin %d", sensorPin);
+		SerialLogger::warn(F("Could not find ultrasonic sensor on rx pin %d"), sensorPin);
 	}
 	return distance;
 }
@@ -126,7 +131,7 @@ float UltrasonicSensors::getLatestDistanceFromSensorById(const int16_t id) const
 		}
 	}
 	if (distance < 0) {
-		SerialLogger::warn("Could not find ultrasonic sensor from id %d", id);
+		SerialLogger::warn(F("Could not find ultrasonic sensor from id %d"), id);
 	}
 	return distance;
 }

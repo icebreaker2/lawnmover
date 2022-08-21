@@ -45,7 +45,8 @@ bool (*_data_request_commands[])(int16_t, uint8_t *) = {
 				// id not known
 				return false;
 			}
-		}};
+		}
+};
 
 void setup() {
 	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
@@ -60,7 +61,6 @@ void setup() {
 															 _timer);
 	_ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
 
-	// Some
 	if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
 		_ultrasonicSensors->addStatusPrinting(_timer, DEBUG_PRINT_DISTANCE_DELAY);
 	}
@@ -68,7 +68,7 @@ void setup() {
 	SpiSlave::ISRfromArgs(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands,
 						  k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands,
 						  OBSTACLE_COMMANDS * COMMAND_FRAME_SIZE + GYRO_COMMANDS * COMMAND_FRAME_SIZE);
-	
+
 	if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG)) {
 		SpiSlave::addSlavePrinting(_timer, 1000);
 	}
