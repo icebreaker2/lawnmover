@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <serial_logger.h>
+#include <spi_commands.h>
 
 // TODO make MovementService
 #define MOVEMENT_DURATION 500
@@ -10,8 +11,7 @@
 class MoverService {
     public:
         MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
-                     const int rightFwdPin, const int rightBwdPin, const int leftWheelSteeringCommandId, 
-                     const int rightWheelSteeringCommandId);
+                     const int rightFwdPin, const int rightBwdPin);
         ~MoverService();
 
         void printInit();
@@ -21,7 +21,7 @@ class MoverService {
         bool set_left_wheels_power(const int16_t id, const int16_t wheels_power) {
             // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
             // SerialLogger::debug("Inspecting left wheels power with id %d and value %d", id, wheels_power);
-            if (id == k_leftWheelSteeringCommandId) {
+            if (id == LEFT_WHEEL_STEERING_COMMAND) {
                 left_wheels_power = wheels_power;
                 return true;
             } else {
@@ -32,7 +32,7 @@ class MoverService {
         bool set_right_wheels_power(const int16_t id, const int16_t wheels_power) {
             // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
             // SerialLogger::debug("Inspecting right wheels power with id %d and value %d", id, wheels_power);
-            if (id == k_rightWheelSteeringCommandId) {
+            if (id == RIGHT_WHEEL_STEERING_COMMAND) {
                 right_wheels_power = wheels_power;
                 return true;
             } else {
@@ -48,9 +48,6 @@ class MoverService {
         const int kRightPwmPin;
         const int kRightFwdPin;
         const int kRightBwdPin;
-
-        const int k_leftWheelSteeringCommandId;
-        const int k_rightWheelSteeringCommandId;
 
         volatile int left_wheels_power = 0;
         volatile int right_wheels_power = 0;

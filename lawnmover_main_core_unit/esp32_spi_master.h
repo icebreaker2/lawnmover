@@ -10,42 +10,43 @@
 #define MAX_SLAVES 5
 
 class Esp32SpiMaster {
-  public:
-    static int take_free_id();
+public:
+	static int take_free_id();
 
-    static bool put_free_id(const int id);
+	static bool put_free_id(const int id);
 
-    Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, const long frequency = 2000000, 
-                   const int dma_channel = 1, const uint8_t spi_mode = SPI_MODE0, const int tx_rx_buffer_size = 60, 
-                   const int chunk_size = 1, const int inter_transaction_delay_microseconds = 10);
-    ~Esp32SpiMaster();
+	Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, const long frequency = 2000000,
+				   const int dma_channel = 1, const uint8_t spi_mode = SPI_MODE0, const int tx_rx_buffer_size = 60,
+				   const int chunk_size = 1, const int inter_transaction_delay_microseconds = 10);
 
-    void put_slave(MasterSpiSlave *spi_slave);
+	~Esp32SpiMaster();
 
-    SpiSlaveHandler *get_handler(const int slave_pin);
+	void put_slave(MasterSpiSlave *spi_slave);
 
-    void schedule(const int interval, Timer<> &timer);
+	SpiSlaveHandler *get_handler(const int slave_pin);
 
-    bool stopped() const { return _stopped; };
+	void schedule(const int interval, Timer<> &timer);
 
-  private:
+	bool stopped() const { return _stopped; };
 
-    static MasterSpiSlave *_slaves[];
-    static int _registered_slaves;
-    static volatile int _slave_cursor;
-    static int free_ids[];
+private:
 
-    const int k_clock_pin;
-    const int k_miso_pin;
-    const int k_mosi_pin;
-    const int k_frequency;
-    const int k_dma_channel;
-    const uint8_t k_spi_mode;
-    const int k_inter_transaction_delay_microseconds;
+	static MasterSpiSlave *_slaves[];
+	static int _registered_slaves;
+	static volatile int _slave_cursor;
+	static int free_ids[];
 
-    volatile bool _stopped;
+	const int k_clock_pin;
+	const int k_miso_pin;
+	const int k_mosi_pin;
+	const int k_frequency;
+	const int k_dma_channel;
+	const uint8_t k_spi_mode;
+	const int k_inter_transaction_delay_microseconds;
 
-    const int k_chunk_size;
+	volatile bool _stopped;
+
+	const int k_chunk_size;
 };
 
 #endif // ESP32_SPI_MASTER_H

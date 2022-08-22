@@ -39,7 +39,7 @@ std::deque<spi_transaction_t> SpiSlaveHandler::_transactions; // Default init wi
 
 bool SpiSlaveHandler::init_bus(const int8_t sck, const int8_t miso, const int8_t mosi, const uint8_t spi_bus) {
     if (_initialized_once) {
-        SerialLogger::info("Not initializing SPI bus again. Already initialized.");
+        SerialLogger::info(F("Not initializing SPI bus again. Already initialized."));
     } else {
         _bus_cfg.sclk_io_num = sck;
         _bus_cfg.miso_io_num = miso;
@@ -130,7 +130,7 @@ size_t SpiSlaveHandler::transfer(const uint8_t* tx_buf, uint8_t* rx_buf, const s
 
 void SpiSlaveHandler::setDataMode(const uint8_t mode) {
     if (_initialized_once) {
-        SerialLogger::info("Not setting data mode again. Already initialized.");
+        SerialLogger::info(F("Not setting data mode again. Already initialized."));
     } else {
         _mode = mode;
     }
@@ -138,7 +138,7 @@ void SpiSlaveHandler::setDataMode(const uint8_t mode) {
 
 void SpiSlaveHandler::setFrequency(const uint32_t frequency) {
     if (_initialized_once) {
-        SerialLogger::info("Not setting frequency again. Already initialized.");
+        SerialLogger::info(F("Not setting frequency again. Already initialized."));
     } else {
         _frequency = frequency;
     }
@@ -146,7 +146,7 @@ void SpiSlaveHandler::setFrequency(const uint32_t frequency) {
 
 void SpiSlaveHandler::setMaxTransferSize(const int max_size) {
     if (_initialized_once) {
-        SerialLogger::info("Not setting max_size again. Already initialized.");
+        SerialLogger::info(F("Not setting max_size again. Already initialized."));
     } else {
         _max_size = max_size;
     }
@@ -154,7 +154,7 @@ void SpiSlaveHandler::setMaxTransferSize(const int max_size) {
 
 void SpiSlaveHandler::setDMAChannel(const int channel) {
     if (_initialized_once) {
-        SerialLogger::info("Not setting DMA channel again. Already initialized.");
+        SerialLogger::info(F("Not setting DMA channel again. Already initialized."));
     } else {
         _dma_chan = channel;  // 1 or 2 only or 0 to disable
     }

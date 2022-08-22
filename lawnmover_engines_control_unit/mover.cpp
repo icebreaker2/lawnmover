@@ -1,11 +1,9 @@
 #include "mover.h"
 
 MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
-                           const int rightFwdPin, const int rightBwdPin, const int leftWheelSteeringCommandId, 
-                           const int rightWheelSteeringCommandId) :
+                           const int rightFwdPin, const int rightBwdPin) :
     kLeftFwdPin(leftFwdPin), kLeftBwdPin(leftBwdPin), kLeftPwmPin(leftPwmPin), kRightPwmPin(rightPwmPin),
-    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin), 
-    k_leftWheelSteeringCommandId(leftWheelSteeringCommandId), k_rightWheelSteeringCommandId(rightWheelSteeringCommandId) {
+    kRightFwdPin(rightFwdPin), kRightBwdPin(rightBwdPin) {
 
     pinMode(kLeftFwdPin, OUTPUT);
     pinMode(kLeftBwdPin, OUTPUT);
@@ -19,8 +17,8 @@ MoverService::MoverService(const int leftFwdPin, const int leftBwdPin, const int
 }
 
 void MoverService::printInit() {
-    SerialLogger::info("Set up MoverService with leftFwdPin(%d), leftBwdPin(%d), rightFwdPin(%d), rightBwdPin(%d), "
-                       "leftPwmPin(%d), rightPwmPin(%d) with leftPwmPin(%d) and rightPwnPin(%d)",
+    SerialLogger::info(F("Set up MoverService with leftFwdPin(%d), leftBwdPin(%d), rightFwdPin(%d), rightBwdPin(%d), "
+                       "leftPwmPin(%d), rightPwmPin(%d) with leftPwmPin(%d) and rightPwnPin(%d)"),
                        kLeftFwdPin, kLeftBwdPin, kRightFwdPin, kRightBwdPin, kLeftPwmPin, kRightPwmPin,
                        kRightFwdPin, kRightBwdPin);
     printState();
@@ -31,7 +29,7 @@ void MoverService::printState() {
     const bool rightFwdPinState = digitalRead(kRightFwdPin);
     const bool leftBwdPinState = digitalRead(kLeftBwdPin);
     const bool rightBwdPinState = digitalRead(kRightBwdPin);
-    SerialLogger::debug("Pin %d: %d, Pin %d: %d, Pin %d: %d, Pin %d: %d",
+    SerialLogger::debug(F("Pin %d: %d, Pin %d: %d, Pin %d: %d, Pin %d: %d"),
                         kLeftFwdPin, leftFwdPinState, kLeftBwdPin, leftBwdPinState, kRightFwdPin, rightFwdPinState,
                         kRightBwdPin, rightBwdPinState);
 }
@@ -59,10 +57,10 @@ void MoverService::changeLeftPwmRate(const int rate) {
     // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
     if (rate > 15) {
         // reduce sensitivity around anchor point zero
-        SerialLogger::debug("Changing Pwm Pin %i (left) to %d", kLeftPwmPin, rate);
+        SerialLogger::debug(F("Changing Pwm Pin %i (left) to %d"), kLeftPwmPin, rate);
         analogWrite(kLeftPwmPin, rate);
     } else {
-        SerialLogger::debug("Not setting left rate. Pwm rate was below threshold (%d/15). Stopping left pwm.", rate);
+        SerialLogger::debug(F("Not setting left rate. Pwm rate was below threshold (%d/15). Stopping left pwm."), rate);
         analogWrite(kLeftPwmPin, 0);
     }
 }
@@ -71,10 +69,10 @@ void MoverService::changeRightPwmRate(const int rate) {
     // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
     if (rate > 15) {
         // reduce sensitivity around anchor point zero
-        SerialLogger::debug("Changing Pwm Pin %i (right) to %d", kRightPwmPin, rate);
+        SerialLogger::debug(F("Changing Pwm Pin %i (right) to %d"), kRightPwmPin, rate);
         analogWrite(kRightPwmPin, rate);
     } else {
-        SerialLogger::debug("Not setting right rate. Pwm rate was below threshold (%d/15). Stopping right pwm.", rate);
+        SerialLogger::debug(F("Not setting right rate. Pwm rate was below threshold (%d/15). Stopping right pwm."), rate);
         analogWrite(kRightPwmPin, 0);
     }
 }
@@ -86,7 +84,7 @@ void MoverService::interpret_state() {
     const int right_rate = right_wheels_power < 0 ? right_wheels_power  * -1 : right_wheels_power ;
     if (left_wheels_power != 0) {
        if (left_forward) {
-            SerialLogger::debug("Left forwards");
+            SerialLogger::debug(F("Left forwards"));
             digitalWrite(kLeftBwdPin, LOW);
             digitalWrite(kLeftFwdPin, HIGH);
         } else {
@@ -98,11 +96,11 @@ void MoverService::interpret_state() {
 
     if (right_wheels_power != 0) {
        if (right_forward) {
-            SerialLogger::debug("Right forwards");
+            SerialLogger::debug(F("Right forwards"));
             digitalWrite(kRightBwdPin, LOW);
             digitalWrite(kRightFwdPin, HIGH);
         } else {
-            SerialLogger::debug("Right backwards");
+            SerialLogger::debug(F("Right backwards"));
             digitalWrite(kRightFwdPin, LOW);
             digitalWrite(kRightBwdPin, HIGH);
         } 

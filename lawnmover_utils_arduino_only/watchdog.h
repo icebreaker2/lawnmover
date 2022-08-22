@@ -21,11 +21,12 @@ public:
 
 	bool validate() const {
 		if (_watchdog_counter < k_valid_threshold) {
-			SerialLogger::error("This is Watchdog. Did not receive enough commands (%d/%d) for some time. Stopping "
-								"all engines", _watchdog_counter, k_valid_threshold);
+			SerialLogger::error(F("This is Watchdog. Did not receive enough commands (%d/%d) for some time. Stopping "
+								  "all engines"), _watchdog_counter, k_valid_threshold);
 			return false;
 		} else {
-			SerialLogger::debug("This is the watchdog. Everything normal.");
+			SerialLogger::debug(F("This is the watchdog. Everything normal. Received enough commands (%d/%d)."),
+								_watchdog_counter, k_valid_threshold);
 			return true;
 		}
 	}

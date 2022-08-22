@@ -23,21 +23,21 @@ ESP32_PS4_Controller::ESP32_PS4_Controller(const char *masterMac, Timer<> &timer
 	digitalWrite(k_connectedPin, LOW);
 	digitalWrite(k_commandReceivedPin, LOW);
 
-	SerialLogger::info("Beginning listening for master PS4 controller connection to: %s", k_masterMac);
+	SerialLogger::info(F("Beginning listening for master PS4 controller connection to: %s"), k_masterMac);
 	PS4.begin(masterMac);
 
 	timer.every(k_timerDelay, [this](void *) -> bool {
 		if (readState()) {
 			if (!_connected) {
 				digitalWrite(k_connectedPin, HIGH);
-				SerialLogger::info("Connected to: %s", k_masterMac);
+				SerialLogger::info(F("Connected to: %s"), k_masterMac);
 				_connected = true;
 			}
 		} else {
 			if (_connected) {
 				digitalWrite(k_connectedPin, LOW);
 				digitalWrite(k_commandReceivedPin, LOW);
-				SerialLogger::info("Disconnected from: %s", k_masterMac);
+				SerialLogger::info(F("Disconnected from: %s"), k_masterMac);
 				reset_state();
 			}
 			_connected = false;
@@ -137,118 +137,118 @@ bool ESP32_PS4_Controller::checkCommandStates() {
 
 	if (rightButtonPressed != m_rightButtonPressed) {
 		m_rightButtonPressed = rightButtonPressed;
-		SerialLogger::debug("Right Button");
+		SerialLogger::debug(F("Right Button"));
 		stateChanged = true;
 	}
 	if (leftButtonPressed != m_leftButtonPressed) {
 		m_leftButtonPressed = leftButtonPressed;
-		SerialLogger::debug("Left Button");
+		SerialLogger::debug(F("Left Button"));
 		stateChanged = true;
 	}
 	if (downButtonPressed != m_downButtonPressed) {
 		m_downButtonPressed = downButtonPressed;
-		SerialLogger::debug("Down Button");
+		SerialLogger::debug(F("Down Button"));
 		stateChanged = true;
 	}
 	if (upButtonPressed != m_upButtonPressed) {
 		m_upButtonPressed = upButtonPressed;
-		SerialLogger::debug("Up Button");
+		SerialLogger::debug(F("Up Button"));
 		stateChanged = true;
 	}
 
 	// The axis sticks are highly sensitive. Make less sensitive changes by checking range over exact value
 	if (!(m_lStickX - 2 < lStickX && lStickX < m_lStickX + 2)) {
 		m_lStickX = lStickX;
-		SerialLogger::debug("Left Stick x at %d", m_lStickX);
+		SerialLogger::debug(F("Left Stick x at %d"), m_lStickX);
 		stateChanged = true;
 	}
 	if (!(m_lStickY - 2 < lStickY && lStickY < m_lStickY + 2)) {
 		m_lStickY = lStickY;
-		SerialLogger::debug("Left Stick y at %d", m_lStickY);
+		SerialLogger::debug(F("Left Stick y at %d"), m_lStickY);
 		stateChanged = true;
 	}
 	if (!(m_rStickX - 2 < rStickX && rStickX < m_rStickX + 2)) {
 		m_rStickX = rStickX;
-		SerialLogger::debug("Right Stick x at %d", m_rStickX);
+		SerialLogger::debug(F("Right Stick x at %d"), m_rStickX);
 		stateChanged = true;
 	}
 	if (!(m_rStickY - 2 < rStickY && rStickY < m_rStickY + 2)) {
 		m_rStickY = rStickY;
-		SerialLogger::debug("Right Stick y at %d", m_rStickY);
+		SerialLogger::debug(F("Right Stick y at %d"), m_rStickY);
 		stateChanged = true;
 	}
 
 	if (squareButtonPressed != m_squareButtonPressed) {
 		m_squareButtonPressed = squareButtonPressed;
-		SerialLogger::debug("Square Button");
+		SerialLogger::debug(F("Square Button"));
 		stateChanged = true;
 	}
 	if (crossButtonPressed != m_crossButtonPressed) {
 		m_crossButtonPressed = crossButtonPressed;
-		SerialLogger::debug("Cross Button");
+		SerialLogger::debug(F("Cross Button"));
 		stateChanged = true;
 	}
 	if (circleButtonPressed != m_circleButtonPressed) {
 		m_circleButtonPressed = circleButtonPressed;
-		SerialLogger::debug("Circle Button");
+		SerialLogger::debug(F("Circle Button"));
 		stateChanged = true;
 	}
 
 	if (triangleButtonPressed != m_triangleButtonPressed) {
 		m_triangleButtonPressed = triangleButtonPressed;
-		SerialLogger::debug("Triangle Button");
+		SerialLogger::debug(F("Triangle Button"));
 		stateChanged = true;
 	}
 	if (lbButtonPressed != m_lbButtonPressed) {
 		m_lbButtonPressed = lbButtonPressed;
-		SerialLogger::debug("LB Button");
+		SerialLogger::debug(F("LB Button"));
 		stateChanged = true;
 	}
 	if (rbButtonPressed != m_rbButtonPressed) {
 		m_rbButtonPressed = rbButtonPressed;
-		SerialLogger::debug("RB Button");
+		SerialLogger::debug(F("RB Button"));
 		stateChanged = true;
 	}
 	if (ltButtonPressed != m_ltButtonPressed || m_ltValue != ltValue) {
 		m_ltButtonPressed = ltButtonPressed;
 		m_ltValue = ltValue;
-		SerialLogger::debug("LT button at %d", m_ltValue);
+		SerialLogger::debug(F("LT button at %d"), m_ltValue);
 		stateChanged = true;
 	}
 	if (rtButtonPressed != m_rtButtonPressed || m_rtValue != rtValue) {
 		m_rtButtonPressed = rtButtonPressed;
 		m_rtValue = rtValue;
-		SerialLogger::debug("RT button at %d", m_rtValue);
+		SerialLogger::debug(F("RT button at %d"), m_rtValue);
 		stateChanged = true;
 	}
 	if (l3ButtonPressed != m_l3ButtonPressed) {
 		m_l3ButtonPressed = l3ButtonPressed;
-		SerialLogger::debug("L3 Button");
+		SerialLogger::debug(F("L3 Button"));
 		stateChanged = true;
 	}
 	if (r3ButtonPressed != m_r3ButtonPressed) {
 		m_r3ButtonPressed = r3ButtonPressed;
-		SerialLogger::debug("R3 Button");
+		SerialLogger::debug(F("R3 Button"));
 		stateChanged = true;
 	}
 	if (shareButtonPressed != m_shareButtonPressed) {
 		m_shareButtonPressed = shareButtonPressed;
-		SerialLogger::debug("Share Button");
+		SerialLogger::debug(F("Share Button"));
 		stateChanged = true;
 	}
 	if (optionsButtonPressed != m_optionsButtonPressed) {
 		m_optionsButtonPressed = optionsButtonPressed;
-		SerialLogger::debug("Options Button");
+		SerialLogger::debug(F("Options Button"));
 		stateChanged = true;
 	}
 	if (psButtonPressed != m_psButtonPressed) {
 		m_psButtonPressed = psButtonPressed;
-		SerialLogger::debug("PS Button");
+		SerialLogger::debug(F("PS Button"));
 		stateChanged = true;
 	}
 	if (touchpadButtonPressed != m_touchpadButtonPressed) {
 		m_touchpadButtonPressed = touchpadButtonPressed;
-		SerialLogger::debug("Touch Pad Button");
+		SerialLogger::debug(F("Touch Pad Button"));
 		stateChanged = true;
 	}
 	return stateChanged;
@@ -263,34 +263,34 @@ bool ESP32_PS4_Controller::checkAuxiliaryStates() {
 
 	if (m_charging != charging) {
 		if (charging) {
-			SerialLogger::info("The controller is charging");
+			SerialLogger::info(F("The controller is charging"));
 		} else {
-			SerialLogger::info("The controller is not charging (anymore)");
+			SerialLogger::info(F("The controller is not charging (anymore)"));
 		}
 		m_charging = charging;
 		stateChanged = true;
 	}
 	if (m_audioConnected != audioConnected) {
 		if (audioConnected) {
-			SerialLogger::info("The controller has headphones attached");
+			SerialLogger::info(F("The controller has headphones attached"));
 		} else {
-			SerialLogger::info("The controller has no headphones attached (anymore)");
+			SerialLogger::info(F("The controller has no headphones attached (anymore)"));
 		}
 		m_audioConnected = audioConnected;
 		stateChanged = true;
 	}
 	if (m_micConnected != micConnected) {
 		if (micConnected) {
-			SerialLogger::info("The controller has a mic attached");
+			SerialLogger::info(F("The controller has a mic attached"));
 		} else {
-			SerialLogger::info("The controller has no mic attached (anymore)");
+			SerialLogger::info(F("The controller has no mic attached (anymore)"));
 		}
 		m_micConnected = micConnected;
 		stateChanged = true;
 	}
 
 	if (m_batteryLevel != batteryLevel) {
-		SerialLogger::info("Battery Level : %d", batteryLevel);
+		SerialLogger::info(F("Battery Level : %d"), batteryLevel);
 		m_batteryLevel = batteryLevel;
 		stateChanged = true;
 	}

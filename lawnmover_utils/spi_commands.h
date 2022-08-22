@@ -22,6 +22,7 @@
 #define OBSTACLE_FRONT_RIGHT_COMMAND (int16_t) 6
 #define OBSTACLE_BACK_LEFT_COMMAND (int16_t) 7
 #define OBSTACLE_BACK_RIGHT_COMMAND (int16_t) 8
+#define GYRO_COMMANDS 0
 #define MAX_ID (int16_t) 8
 
 #define DATA_REQUEST_VALUE_BYTES (long) 0xFFFFFFFF
@@ -97,6 +98,8 @@ public:
 	static void putCommandToBuffer(const int16_t commandId, const T commandValue, uint8_t *buffer);
 
 	static int verifyIds(const byte rxIdBytes[], const byte txIdBytes[]);
+
+	static const char *getNameFromId(const int16_t id);
 
 	static uint8_t COMMUNICATION_START_SEQUENCE[];
 
