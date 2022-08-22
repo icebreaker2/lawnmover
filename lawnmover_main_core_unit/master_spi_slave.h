@@ -230,10 +230,11 @@ protected:
 				}
 
 				if (processed) {
-					SerialLogger::trace(F("Data response from slave %s is %ld for id %d"), k_name, rx_data, id1);
+					SerialLogger::trace(F("Data response from slave %s with id %d was processed as data request"),
+										k_name, id1);
 				} else {
-					SerialLogger::trace(F("Data push to slave %s with ack response value %ld for id %d"), k_name,
-										rx_data, id1);
+					SerialLogger::trace(F("Data response from slave %s with id %d was processed as data push"),
+										k_name, id1);
 					for (int value_counter; value_counter < COMMAND_FRAME_VALUE_SIZE; value_counter++) {
 						if (rx_value_bytes[value_counter] != tx_value_bytes[value_counter]) {
 							SerialLogger::warn(F("Slave did not return correct value bytes"));

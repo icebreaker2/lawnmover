@@ -28,7 +28,7 @@ public:
 		_directionsDistances[Category::Direction::BACK_LEFT].reserve(distances_buffer_size);
 		_directionsDistances[Category::Direction::BACK_RIGHT].reserve(distances_buffer_size);
 
-		// fill initial values of weighted moving avergaes
+		// fill initial values of weighted moving averages
 		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT, 0));
 		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT_LEFT, 0));
 		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT_RIGHT, 0));
@@ -41,14 +41,30 @@ public:
 	void putSensorDistance(Category::Direction direction, const float distance) {
 		std::vector<float> &directionDistances = _directionsDistances[direction];
 		if (directionDistances.size() >= k_distances_buffer_size) {
+			SerialLogger::trace(F("Removing oldest distance from %s with value %f"),
+								Category::getNameFromDirection(direction), directionDistances.back());
 			directionDistances.pop_back();
 		}
+		SerialLogger::trace(F("Inserting new distance for %s with value %f"),
+							Category::getNameFromDirection(direction), distance);
 		directionDistances.insert(directionDistances.begin(), distance);
 
 		updateSensorWeightedMovingAverage(direction, distance);
-	}
+	};
 
 	virtual MovementDecision makeMovementDecision() = 0;
+
+	void printWeightedMovingAverageDistances() const {
+		if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
+			for (auto it = _weighted_moving_averages.begin(); it != _weighted_moving_averages.end(); ++it) {
+				Serial.print(Category::getNameFromDirection(it->first));
+				Serial.print(F(": "));
+				Serial.print(it->second);
+				Serial.print(F(", "));
+			}
+			Serial.println();
+		}
+	};
 
 protected:
 
@@ -57,10 +73,10 @@ protected:
 		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
 			const std::vector<float> &directionDistances = _directionsDistances.at(it->first);
 			if (directionDistances.size() > 0) {
-				it->second = std::accumulate(directionDistances.begin(), directionDistances.end(), 0) /
+				it->second = std::accumulate(directionDistances.begin(), directionDistances.end(), 0.0f) /
 							 directionDistances.size();
 			} else {
-				it->second = 0.0f;
+				it->second = -1.0f;
 			}
 		}
 		return copy_assigned_tmp_map;
@@ -73,7 +89,7 @@ protected:
 			if (directionDistances.size() > 0) {
 				it->second = *std::min_element(directionDistances.begin(), directionDistances.end());
 			} else {
-				it->second = 0.0f;
+				it->second = -1.0f;
 			}
 		}
 		return copy_assigned_tmp_map;
@@ -86,7 +102,7 @@ protected:
 			if (directionDistances.size() > 0) {
 				it->second = *std::max_element(directionDistances.begin(), directionDistances.end());
 			} else {
-				it->second = 0.0f;
+				it->second = -1.0f;
 			}
 		}
 		return copy_assigned_tmp_map;
@@ -101,6 +117,8 @@ private:
 		float &weightedMovingAverage = _weighted_moving_averages[direction];
 		weightedMovingAverage = k_weighted_moving_average_alpha * distance +
 								(1 - k_weighted_moving_average_alpha) * weightedMovingAverage;
+		SerialLogger::trace(F("Updated weighted moving average for %s to %f"),
+							Category::getNameFromDirection(direction), weightedMovingAverage);
 	};
 
 	const char *k_name;

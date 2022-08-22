@@ -62,7 +62,7 @@ int k_amount_data_request_commands = 0;
 bool (*_data_request_commands[])(int16_t, uint8_t *) = {};
 
 void setup() {
-    SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
+    SerialLogger::init(9600, SerialLogger::LOG_LEVEL::INFO);
     // TODO make static object to ease dynamic memory usage
     _motorService = new MotorService(MOTOR_PIN);
     _motorService->printInit();
@@ -84,9 +84,7 @@ void setup() {
         return true; // to repeat the action - false to stop
     });
 
-    if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG)) {
-        SpiSlave::addSlavePrinting(_timer, 1000); 
-    }
+    SpiSlave::addDebugSlavePrinting(_timer, 1000); 
 
     // debug pin always high
     pinMode(DEBUG_PIN, OUTPUT);
