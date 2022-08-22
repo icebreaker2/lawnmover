@@ -18,7 +18,7 @@ const int ULTRA_RX_REAR_RIGHT = 5;
 const int ULTRA_RX_REAR_LEFT = 3;
 const int ULTRA_TX_PIN = 7;
 const int PULSE_MAX_TIMEOUT_MICROSECONDS = 6000; // 1m distance
-const int DEBUG_PRINT_DISTANCE_DELAY = 500;
+const int DEBUG_PRINT_DISTANCE_DELAY = 1000;
 
 const int LED_BUNDLE_1 = A0;
 const int LED_BUNDLE_2 = A1;

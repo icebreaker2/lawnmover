@@ -72,8 +72,8 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 				_synchronized = true;
 				return;
 			} else {
-				SerialLogger::warn(F("Bad end-of-sequence-byte received (%x) which should have been %x"), rx_byte,
-								   SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
+				SerialLogger::trace(F("Bad end-of-sequence-byte was %x != %x"), rx_byte,
+									SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 			}
 		} else {
 			tx_byte = SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor];
@@ -81,7 +81,8 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 		}
 	} else {
 		_current_command_cursor = 0;
-		//SerialLogger::warn(F("Lost synchronization. Received byte %c but expected %c at index %d. Restarting synchronization sequence."), rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor], _current_command_cursor);
+		SerialLogger::trace(F("Bad sync-sequence-byte was %x != %x"), rx_byte,
+							SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 	}
 	_synchronized = false;
 }
@@ -202,10 +203,7 @@ ISR (SPI_STC_vect) {
 		} else {
 			synchronize(rx_byte, tx_byte);
 			post_process_spi_interrupt_routine(rx_byte, tx_byte);
-			if (_synchronized) {
-				// We are now synchronized and need to start from index 0 for everything_
-				_buffer_counter = 0;
-			}
+			_buffer_counter = _current_command_cursor;
 		}
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
@@ -220,7 +218,7 @@ void SpiSlave::addDebugSlavePrinting(Timer<> &timer, const int interval) {
 				Serial.print(_rx_buffer[i], HEX);
 			}
 			Serial.println();
-			
+
 			Serial.print(F("TxBufferInput:"));
 			for (long i = 0; i < _commands_size; i += 1) {
 				if (i % COMMAND_FRAME_SIZE == 0) {
