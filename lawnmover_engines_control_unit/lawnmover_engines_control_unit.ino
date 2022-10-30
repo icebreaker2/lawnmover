@@ -7,10 +7,10 @@
 #include "mover.h"
 #include "motor.h"
 
-const int LEFT_FWD_PIN = 9; // is PWM
-const int LEFT_BWD_PIN = 8; // is no PWM
-const int LEFT_PWM_PIN = 6; // is PWM
-const int RIGHT_PWM_PIN = 5; // is PWM
+const int LEFT_FWD_PIN = 8; // is PWM
+const int LEFT_BWD_PIN = 9; // is no PWM
+const int LEFT_PWM_PIN = 5; // is PWM
+const int RIGHT_PWM_PIN = 6; // is PWM
 const int RIGHT_FWD_PIN = 4; // is no PWM
 const int RIGHT_BWD_PIN = 7; // is no PWM
 
@@ -62,7 +62,7 @@ int k_amount_data_request_commands = 0;
 bool (*_data_request_commands[])(int16_t, uint8_t *) = {};
 
 void setup() {
-    SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
+    SerialLogger::init(9600, SerialLogger::LOG_LEVEL::INFO);
     // TODO make static object to ease dynamic memory usage
     _motorService = new MotorService(MOTOR_PIN);
     _motorService->printInit();
@@ -84,16 +84,16 @@ void setup() {
         return true; // to repeat the action - false to stop
     });
 
-    if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG)) {
-        SpiSlave::addSlavePrinting(_timer, 1000); 
-    }
+    SpiSlave::addDebugSlavePrinting(_timer, 1000); 
 
     // debug pin always high
     pinMode(DEBUG_PIN, OUTPUT);
     digitalWrite(DEBUG_PIN, HIGH);
 
     // DEBUG START
-    // _moverService->moveForward();
+    // _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 255);
+    // _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, -255);
+    // _moverService->interpret_state();
     // _moverService->moveBackward();
     // _moverService->turnRight();
     // _moverService->turnLeft();

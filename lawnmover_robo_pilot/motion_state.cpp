@@ -14,26 +14,54 @@
  * @return whether there is a discrepancy in one of the front directions larger than configured or not
  */
 bool has_large_min_wAvg_differences(const float minDistance, const float weightedMovingAvgDistance) {
-	const float &min_wAvg_discrepancy = minDistance / weightedMovingAvgDistance;
-	return min_wAvg_discrepancy > DEFAULT_WEIGHTED_MOVING_AVERAGE_MIN_MAX_DISCREPANCY;
+	if (minDistance < 0.0f || weightedMovingAvgDistance <= 0.0f) {
+		// empty array or zero division, so nothing to check
+		return false;
+	} else {
+		const float &min_wAvg_discrepancy = minDistance / weightedMovingAvgDistance;
+		return min_wAvg_discrepancy <= DEFAULT_WEIGHTED_MOVING_AVERAGE_MIN_MAX_DISCREPANCY;
+	}
 }
 
 bool has_large_min_wAvg_differences_front(const std::map<Category::Direction, float> &minDistances,
 										  const std::map<Category::Direction, float> &weightedMovingAvgDistances) {
-	return has_large_min_wAvg_differences(minDistances.at(Category::FRONT_LEFT),
-										  weightedMovingAvgDistances.at(Category::FRONT_LEFT)) ||
-		   has_large_min_wAvg_differences(minDistances.at(Category::FRONT),
-										  weightedMovingAvgDistances.at(Category::FRONT)) ||
-		   has_large_min_wAvg_differences(minDistances.at(Category::FRONT_RIGHT),
-										  weightedMovingAvgDistances.at(Category::FRONT_RIGHT));
+
+	if (has_large_min_wAvg_differences(minDistances.at(Category::FRONT_LEFT),
+									   weightedMovingAvgDistances.at(Category::FRONT_LEFT))) {
+		SerialLogger::warn(F("FRONT_LEFT min_wAvg difference too high with min=%f and wAvg=%f"),
+						   minDistances.at(Category::FRONT_LEFT), weightedMovingAvgDistances.at(Category::FRONT_LEFT));
+		return true;
+	} else if (has_large_min_wAvg_differences(minDistances.at(Category::FRONT),
+											  weightedMovingAvgDistances.at(Category::FRONT))) {
+		SerialLogger::warn(F("FRONT min_wAvg difference too high with min=%f and wAvg=%f"),
+						   minDistances.at(Category::FRONT), weightedMovingAvgDistances.at(Category::FRONT));
+		return true;
+	} else if (has_large_min_wAvg_differences(minDistances.at(Category::FRONT_RIGHT),
+											  weightedMovingAvgDistances.at(Category::FRONT_RIGHT))) {
+		SerialLogger::warn(F("FRONT_RIGHT min_wAvg difference too high with min=%f and wAvg=%f"),
+						   minDistances.at(Category::FRONT_RIGHT),
+						   weightedMovingAvgDistances.at(Category::FRONT_RIGHT));
+		return true;
+	} else {
+		return false;
+	}
 }
 
 bool has_large_min_wAvg_differences_back(const std::map<Category::Direction, float> &minDistances,
 										 const std::map<Category::Direction, float> &weightedMovingAvgDistances) {
-	return has_large_min_wAvg_differences(minDistances.at(Category::BACK_LEFT),
-										  weightedMovingAvgDistances.at(Category::BACK_LEFT)) ||
-		   has_large_min_wAvg_differences(minDistances.at(Category::BACK_RIGHT),
-										  weightedMovingAvgDistances.at(Category::BACK_RIGHT));
+	if (has_large_min_wAvg_differences(minDistances.at(Category::BACK_LEFT),
+									   weightedMovingAvgDistances.at(Category::BACK_LEFT))) {
+		SerialLogger::warn(F("BACK_LEFT min_wAvg difference too high with min=%f and wAvg=%f"),
+						   minDistances.at(Category::BACK_LEFT), weightedMovingAvgDistances.at(Category::BACK_LEFT));
+		return true;
+	} else if (has_large_min_wAvg_differences(minDistances.at(Category::BACK_RIGHT),
+											  weightedMovingAvgDistances.at(Category::BACK_RIGHT))) {
+		SerialLogger::warn(F("BACK_RIGHT min_wAvg difference too high with min=%f and wAvg=%f"),
+						   minDistances.at(Category::BACK_RIGHT), weightedMovingAvgDistances.at(Category::BACK_RIGHT));
+		return true;
+	} else {
+		return false;
+	}
 }
 
 bool ErrorMotion::isEligible(const std::map<Category::Direction, float> &minDistances,

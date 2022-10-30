@@ -72,8 +72,8 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 				_synchronized = true;
 				return;
 			} else {
-				SerialLogger::warn(F("Bad end-of-sequence-byte received (%x) which should have been %x"), rx_byte,
-								   SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
+				SerialLogger::trace(F("Bad end-of-sequence-byte was %x != %x"), rx_byte,
+									SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 			}
 		} else {
 			tx_byte = SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor];
@@ -81,7 +81,8 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 		}
 	} else {
 		_current_command_cursor = 0;
-		//SerialLogger::warn(F("Lost synchronization. Received byte %c but expected %c at index %d. Restarting synchronization sequence."), rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor], _current_command_cursor);
+		SerialLogger::trace(F("Bad sync-sequence-byte was %x != %x"), rx_byte,
+							SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 	}
 	_synchronized = false;
 }
@@ -190,7 +191,7 @@ void interpret_data_push_command(const int id, uint8_t *value_bytes, bool (*data
 ISR (SPI_STC_vect) {
 		const uint8_t rx_byte = SPDR;
 		uint8_t tx_byte = 0;
-		
+
 		if (_synchronized) {
 			if (process_partial_command(rx_byte, tx_byte) &
 				post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
@@ -202,39 +203,36 @@ ISR (SPI_STC_vect) {
 		} else {
 			synchronize(rx_byte, tx_byte);
 			post_process_spi_interrupt_routine(rx_byte, tx_byte);
-			if (_synchronized) {
-				// We are now synchronized and need to start from index 0 for everything_
-				_buffer_counter = 0;
-			}
+			_buffer_counter = _current_command_cursor;
 		}
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
-void SpiSlave::addSlavePrinting(Timer<> &timer, const int interval) {
+void SpiSlave::addDebugSlavePrinting(Timer<> &timer, const int interval) {
 	timer.every(interval, [](void *) -> bool {
-		Serial.print(F("RxBufferInput:"));
-		for (long i = 0; i < _commands_size; i += 1) {
-			if (i % COMMAND_FRAME_SIZE == 0) {
-				Serial.print(F(" "));
+		if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG) || !_synchronized) {
+			Serial.print(F("RxBufferInput:"));
+			for (long i = 0; i < _commands_size; i += 1) {
+				if (i % COMMAND_FRAME_SIZE == 0) {
+					Serial.print(F(" "));
+				}
+				Serial.print(_rx_buffer[i], HEX);
 			}
-			Serial.print(_rx_buffer[i], HEX);
-		}
-		Serial.println();
+			Serial.println();
 
-
-		Serial.print(F("TxBufferInput:"));
-		for (long i = 0; i < _commands_size; i += 1) {
-			if (i % COMMAND_FRAME_SIZE == 0) {
-				Serial.print(F(" "));
+			Serial.print(F("TxBufferInput:"));
+			for (long i = 0; i < _commands_size; i += 1) {
+				if (i % COMMAND_FRAME_SIZE == 0) {
+					Serial.print(F(" "));
+				}
+				Serial.print(_tx_buffer[i], HEX);
 			}
-			Serial.print(_tx_buffer[i], HEX);
+			Serial.println();
+			if (_synchronized) {
+				SerialLogger::info(F("Slave is synchronized"));
+			} else {
+				SerialLogger::info(F("Slave is NOT synchronized"));
+			}
 		}
-		Serial.println();
-		if (_synchronized) {
-			SerialLogger::info(F("Slave is synchronized"));
-		} else {
-			SerialLogger::info(F("Slave is NOT synchronized"));
-		}
-
 		return true; // to repeat the action - false to stop
 	});
 }
