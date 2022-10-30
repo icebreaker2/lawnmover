@@ -7,10 +7,10 @@
 #include "mover.h"
 #include "motor.h"
 
-const int LEFT_FWD_PIN = 9; // is PWM
-const int LEFT_BWD_PIN = 8; // is no PWM
-const int LEFT_PWM_PIN = 6; // is PWM
-const int RIGHT_PWM_PIN = 5; // is PWM
+const int LEFT_FWD_PIN = 8; // is PWM
+const int LEFT_BWD_PIN = 9; // is no PWM
+const int LEFT_PWM_PIN = 5; // is PWM
+const int RIGHT_PWM_PIN = 6; // is PWM
 const int RIGHT_FWD_PIN = 4; // is no PWM
 const int RIGHT_BWD_PIN = 7; // is no PWM
 
@@ -91,7 +91,9 @@ void setup() {
     digitalWrite(DEBUG_PIN, HIGH);
 
     // DEBUG START
-    // _moverService->moveForward();
+    // _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 255);
+    // _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, -255);
+    // _moverService->interpret_state();
     // _moverService->moveBackward();
     // _moverService->turnRight();
     // _moverService->turnLeft();
