@@ -9,10 +9,10 @@ void UltrasonicSensor::triggerTx(const int txPin) {
 }
 
 UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
-													   const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-													   Timer<> &timer, const int sensoring_frequency_delay) {
+                                                       const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
+                                                       Timer<> &timer, const int sensoring_frequency_delay) {
 	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, amountSensors,
-																 pulseMaxTimeoutMicroSeconds);
+	                                                             pulseMaxTimeoutMicroSeconds);
 	timer.every(sensoring_frequency_delay, [](UltrasonicSensors *ultrasonicSensors) -> bool {
 		if (ultrasonicSensors == nullptr) {
 			SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
@@ -26,7 +26,7 @@ UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const in
 }
 
 UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int16_t ids[], const int amountSensors,
-									 const int pulseMaxTimeoutMicroSeconds) :
+                                     const int pulseMaxTimeoutMicroSeconds) :
 		k_txPin(txPin), k_amountSensors(amountSensors) {
 
 	_ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
@@ -42,8 +42,8 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 		for (int j = 0; j < k_amountSensors; j++) {
 			if (ids_check[j] == id || rxPins_check[j] == rxPin) {
 				SerialLogger::error(F("Attempt to add the same sensor twice with id %d on rx pin %d where at index %d"
-									  " of the check arrays the same value already exists with id=%d and rxpin=%d"), id,
-									rxPin, j, ids_check[j], rxPins_check[j]);
+				                      " of the check arrays the same value already exists with id=%d and rxpin=%d"), id,
+				                    rxPin, j, ids_check[j], rxPins_check[j]);
 				duplicate = true;
 				break;
 			}
@@ -53,11 +53,11 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 			rxPins_check[i] = rxPin;
 			if (rxPin <= MAX_ARDUINO_PINS && rxPin >= 2) {
 				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, k_txPin, rxPin,
-																				pulseMaxTimeoutMicroSeconds);
+				                                                                pulseMaxTimeoutMicroSeconds);
 			} else {
 				SerialLogger::warn(F("Cannot add sensor %d/%d at rx pin %d which is out of range. Max Pin is %d. "
-									 "Assuming a bad malfunctioning and stopping..."), i + 1, k_amountSensors,
-								   rxPin, MAX_ARDUINO_PINS);
+				                     "Assuming a bad malfunctioning and stopping..."), i + 1, k_amountSensors,
+				                   rxPin, MAX_ARDUINO_PINS);
 				break;
 			}
 		}

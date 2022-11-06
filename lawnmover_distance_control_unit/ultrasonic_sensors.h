@@ -17,8 +17,8 @@ public:
 			k_id(id), k_txPin(txPin), k_rxPin(rxPin), k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
 			k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f) {
 		SerialLogger::debug(F("Initiating ultrasonic sensor %s on rxPin=%d with id=%d with txPin=%d and max "
-		                      "possible distance at %f"), SpiCommands::getNameFromId(id), k_rxPin, k_id, k_txPin, 
-		                      k_maxDistance);
+		                      "possible distance at %f"), SpiCommands::getNameFromId(id), k_rxPin, k_id, k_txPin,
+		                    k_maxDistance);
 		pinMode(k_txPin, OUTPUT);
 		digitalWrite(k_txPin, LOW);
 		pinMode(k_rxPin, INPUT);
@@ -64,7 +64,8 @@ public:
 		if (_latestDistance < NO_ECHO_DISTANCE && new_distance >= k_maxDistance) {
 			// The object got closer to the robot and is now probably "at" the robot leading to no echo due to the object. Setting to zero!
 			_latestDistance = 0.0f;
-			SerialLogger::debug(F("Setting distance of sensor=%s with id %d at rx pin %d to zero"), SpiCommands::getNameFromId(k_id), k_id, k_rxPin);
+			SerialLogger::debug(F("Setting distance of sensor=%s with id %d at rx pin %d to zero"),
+			                    SpiCommands::getNameFromId(k_id), k_id, k_rxPin);
 		} else {
 			_latestDistance = (_latestDistance + new_distance) / 2.0f;
 		}
@@ -84,12 +85,12 @@ class UltrasonicSensors {
 public:
 
 	static UltrasonicSensors *getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
-											   const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-											   Timer<> &timer,
-											   const int sensoring_frequency_delay = SENSORING_FREQUENCY_DELAY);
+	                                           const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
+	                                           Timer<> &timer,
+	                                           const int sensoring_frequency_delay = SENSORING_FREQUENCY_DELAY);
 
 	UltrasonicSensors(const int txPin, const int *rxPins, const int16_t ids[], const int amountSensors,
-					  const int pulseMaxTimeoutMicroSeconds);
+	                  const int pulseMaxTimeoutMicroSeconds);
 
 	~UltrasonicSensors();
 
@@ -104,11 +105,11 @@ public:
 				return false;
 			} else {
 				SerialLogger::info(F("F: %f, FR: %f, FL: %f, RR: %f, RL: %f"),
-								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_COMMAND),
-								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_RIGHT_COMMAND),
-								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_LEFT_COMMAND),
-								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_BACK_RIGHT_COMMAND),
-								   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_BACK_LEFT_COMMAND));
+				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_COMMAND),
+				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_RIGHT_COMMAND),
+				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_LEFT_COMMAND),
+				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_BACK_RIGHT_COMMAND),
+				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_BACK_LEFT_COMMAND));
 				return true; // to repeat the action - false to stop
 			}
 		}, this);

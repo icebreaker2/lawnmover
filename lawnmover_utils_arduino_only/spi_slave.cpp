@@ -19,10 +19,10 @@ int _amount_data_request_command_callbacks;
 bool (**_data_request_command_callbacks)(int16_t, uint8_t *);
 
 void SpiSlave::ISRfromArgs(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
-						   bool (*data_push_command_callbacks[])(int16_t, int16_t),
-						   const int amount_data_push_command_callbacks,
-						   bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
-						   const int amount_data_request_command_callbacks, const int buffer_length) {
+                           bool (*data_push_command_callbacks[])(int16_t, int16_t),
+                           const int amount_data_push_command_callbacks,
+                           bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
+                           const int amount_data_request_command_callbacks, const int buffer_length) {
 	pinMode(sck_pin, INPUT);
 	pinMode(mosi_pin, INPUT);
 	pinMode(miso_pin, OUTPUT);
@@ -73,7 +73,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 				return;
 			} else {
 				SerialLogger::trace(F("Bad end-of-sequence-byte was %x != %x"), rx_byte,
-									SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
+				                    SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 			}
 		} else {
 			tx_byte = SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor];
@@ -82,7 +82,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 	} else {
 		_current_command_cursor = 0;
 		SerialLogger::trace(F("Bad sync-sequence-byte was %x != %x"), rx_byte,
-							SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
+		                    SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 	}
 	_synchronized = false;
 }
@@ -124,7 +124,7 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 			// inspect for data request commands
 			for (int i = 0; i < _amount_data_request_command_callbacks && !_current_command_data_request; i++) {
 				_current_command_data_request = (*_data_request_command_callbacks[i])(_current_command_id,
-																					  _current_command_value_bytes);
+				                                                                      _current_command_value_bytes);
 			}
 		}
 		if (_current_command_data_request) {
@@ -169,7 +169,7 @@ bool post_process_spi_interrupt_routine(const uint8_t rx_byte, const uint8_t tx_
 */
 template<typename V>
 void interpret_data_push_command(const int id, uint8_t *value_bytes, bool (*data_push_callbacks[])(int16_t, V),
-								 const int amount_data_push_callbacks) {
+                                 const int amount_data_push_callbacks) {
 	bool valid = false;
 	V value;
 	memcpy(&value, value_bytes, sizeof(value));
@@ -194,10 +194,10 @@ ISR (SPI_STC_vect) {
 
 		if (_synchronized) {
 			if (process_partial_command(rx_byte, tx_byte) &
-				post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
+			    post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
 				if (!_current_command_data_request) {
 					interpret_data_push_command(_current_command_id, _current_command_value_bytes,
-												_data_push_command_callbacks, _amount_data_push_command_callbacks);
+					                            _data_push_command_callbacks, _amount_data_push_command_callbacks);
 				}
 			}
 		} else {

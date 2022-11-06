@@ -33,40 +33,45 @@
 #include <deque>
 
 class SpiSlaveHandler {
-    public:
-        bool begin(const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss, const uint8_t spi_bus = HSPI);
-        bool end();
+public:
+	bool begin(const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss, const uint8_t spi_bus = HSPI);
 
-        uint8_t* allocDMABuffer(const size_t s);
+	bool end();
 
-        // execute transaction and wait for transmission one by one
-        size_t transfer(const uint8_t* tx_buf, const size_t size);
-        size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size);
+	uint8_t *allocDMABuffer(const size_t s);
 
-        // set these optional parameters before begin() if you want
-        static void setDataMode(const uint8_t mode);
-        static void setFrequency(const uint32_t frequency);
-        static void setMaxTransferSize(const int max_size);
-        static void setDMAChannel(const int channel);
+	// execute transaction and wait for transmission one by one
+	size_t transfer(const uint8_t *tx_buf, const size_t size);
 
-    private:
-        static bool init_bus(const int8_t sck, const int8_t miso, const int8_t mosi, const uint8_t spi_bus);
+	size_t transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size);
 
-        void addTransaction(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size);
+	// set these optional parameters before begin() if you want
+	static void setDataMode(const uint8_t mode);
 
-        static bool _initialized_once;
-        static spi_bus_config_t _bus_cfg;
-        static spi_host_device_t _host;
-        static uint8_t _mode;
-        static uint32_t _frequency;
-        static int _queue_size;
+	static void setFrequency(const uint32_t frequency);
 
-        static int _dma_chan;
-        static int _max_size;
-        static std::deque<spi_transaction_t> _transactions;
+	static void setMaxTransferSize(const int max_size);
 
-        spi_device_interface_config_t _if_cfg;
-        spi_device_handle_t _handle;
+	static void setDMAChannel(const int channel);
+
+private:
+	static bool init_bus(const int8_t sck, const int8_t miso, const int8_t mosi, const uint8_t spi_bus);
+
+	void addTransaction(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size);
+
+	static bool _initialized_once;
+	static spi_bus_config_t _bus_cfg;
+	static spi_host_device_t _host;
+	static uint8_t _mode;
+	static uint32_t _frequency;
+	static int _queue_size;
+
+	static int _dma_chan;
+	static int _max_size;
+	static std::deque <spi_transaction_t> _transactions;
+
+	spi_device_interface_config_t _if_cfg;
+	spi_device_handle_t _handle;
 };
 
 #endif  // SPI_SLAVE_HANDLER_H

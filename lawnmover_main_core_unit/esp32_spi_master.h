@@ -16,8 +16,8 @@ public:
 	static bool put_free_id(const int id);
 
 	Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, const long frequency = 2000000,
-				   const int dma_channel = 1, const uint8_t spi_mode = SPI_MODE0, const int tx_rx_buffer_size = 60,
-				   const int chunk_size = 1, const int inter_transaction_delay_microseconds = 10);
+	               const int dma_channel = 1, const uint8_t spi_mode = SPI_MODE0, const int tx_rx_buffer_size = 60,
+	               const int chunk_size = 1, const int inter_transaction_delay_microseconds = 10);
 
 	~Esp32SpiMaster();
 

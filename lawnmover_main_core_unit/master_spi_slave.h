@@ -16,8 +16,8 @@
 class MasterSpiSlave {
 public:
 	MasterSpiSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const char *name, const int slave_pin,
-				   const int slave_restart_pin, const int amount_data_push_commands,
-				   const int amount_data_request_commands) :
+	               const int slave_restart_pin, const int amount_data_push_commands,
+	               const int amount_data_request_commands) :
 			k_slave_id(slave_id), k_name(name), k_slave_pin(slave_pin), k_slave_restart_pin(slave_restart_pin),
 			k_amount_data_push_commands(amount_data_push_commands),
 			k_amount_data_request_callbacks(amount_data_request_commands),
@@ -50,7 +50,7 @@ public:
 	uint8_t *get_rx_buffer(long tx_rx_buffer_size) {
 		if (tx_rx_buffer_size > k_buffer_size) {
 			SerialLogger::warn(F("Attempt to get rx buffer with %d bytes while buffer has size %d"), tx_rx_buffer_size,
-							   k_buffer_size);
+			                   k_buffer_size);
 			return nullptr;
 		} else {
 			// reset rx buffer first for cleanness
@@ -64,7 +64,7 @@ public:
 		if (_slave_synchronized) {
 			if (buffer_size != k_buffer_size) {
 				SerialLogger::error(F("Cannot consume slave output from %s. Buffer size does not match written "
-									  "bytes to slave"), k_name);
+				                      "bytes to slave"), k_name);
 				valid = false;
 			} else {
 				valid = consume_commands(slave_response_buffer, buffer_size, _tx_buffer);
@@ -72,7 +72,7 @@ public:
 		} else {
 			if (buffer_size != COMMUNICATION_START_SEQUENCE_LENGTH) {
 				SerialLogger::error(F("Cannot consume slave output from %s. Buffer size does not match written bytes "
-									  "to slave"), k_name);
+				                      "to slave"), k_name);
 				valid = false;
 			} else {
 				// the latest (n+1) byte send is 0xFF which is needed to read the nth byte
@@ -80,10 +80,10 @@ public:
 					const char &rx_byte = slave_response_buffer[i + COMMAND_SPI_RX_OFFSET];
 					if (rx_byte == SpiCommands::COMMUNICATION_START_SEQUENCE[i]) {
 						SerialLogger::trace(F("Slave from %s rx byte on index %d is %x and does match expected byte "
-											  "%x "), k_name, i, rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[i]);
+						                      "%x "), k_name, i, rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[i]);
 					} else {
 						SerialLogger::warn(F("Slave from %s rx byte on index %d is %x and does not match expected byte "
-											 "%x "), k_name, i, rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[i]);
+						                     "%x "), k_name, i, rx_byte, SpiCommands::COMMUNICATION_START_SEQUENCE[i]);
 						valid = false;
 						break;
 					}
@@ -111,7 +111,7 @@ public:
 
 	void restart() {
 		SerialLogger::info(F("(Re)Starting slave %d (%s) connected to slave-select pin %d with power supply on pin %d"),
-						   k_slave_id + 1, k_name, k_slave_pin, k_slave_restart_pin);
+		                   k_slave_id + 1, k_name, k_slave_pin, k_slave_restart_pin);
 		// if we put some voltage on the reset pin, the board will restart
 		pinMode(k_slave_restart_pin, OUTPUT);
 		digitalWrite(k_slave_restart_pin, HIGH);
@@ -163,8 +163,8 @@ protected:
 	 */
 	template<typename T>
 	bool interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size,
-								 const int amount_data_request_callbacks,
-								 std::vector <std::function<bool(int16_t, T)>> data_request_callbacks) {
+	                             const int amount_data_request_callbacks,
+	                             std::vector <std::function<bool(int16_t, T)>> data_request_callbacks) {
 		SerialLogger::trace(F("Validating master-slave communication for %s"), k_name);
 		uint8_t rxId1[COMMAND_FRAME_ID_SIZE];
 		uint8_t rxId2[COMMAND_FRAME_ID_SIZE];
@@ -185,7 +185,7 @@ protected:
 			for (int value_counter = 0; value_counter < COMMAND_FRAME_VALUE_SIZE; value_counter++) {
 				//Serial.printf("%d: %x\n", COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + value_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + value_counter]);
 				rx_value_bytes[value_counter] = rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE +
-														  value_counter];
+				                                          value_counter];
 				tx_value_bytes[value_counter] = tx_buffer[i + COMMAND_FRAME_ID_SIZE + value_counter];
 			}
 
@@ -193,7 +193,7 @@ protected:
 			for (int id_counter = 0; id_counter < COMMAND_FRAME_ID_SIZE; id_counter++) {
 				//Serial.printf("%d: %x\n", COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter, rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter]);
 				rxId2[id_counter] = rx_buffer[COMMAND_SPI_RX_OFFSET + i + COMMAND_FRAME_ID_SIZE +
-											  COMMAND_FRAME_VALUE_SIZE + id_counter];
+				                              COMMAND_FRAME_VALUE_SIZE + id_counter];
 				txId2_bytes[id_counter] = tx_buffer[i + COMMAND_FRAME_ID_SIZE + COMMAND_FRAME_VALUE_SIZE + id_counter];
 			}
 
@@ -203,15 +203,15 @@ protected:
 			memcpy(&txId2, txId2_bytes, sizeof(txId2));
 			if (txId2 != -1) {
 				SerialLogger::warn(F("Master did send wrong 2nd (ack) id which must be -1 but was %d. This is rather "
-									 "strange..."), txId2);
+				                     "strange..."), txId2);
 			}
 
 			const int16_t id1 = SpiCommands::verifyIds(rxId1, txId1_bytes);
 			// txId2 is the request to ack the very first id of a command, thus we use txId1 again to compare against rxId2
 			const int16_t id2 = SpiCommands::verifyIds(rxId2, txId1_bytes);
 			SerialLogger::trace(F("Comparing %d (txId1) with %d (rxId1) with %d (rxId2/ackId) and value %x%x%x%x"),
-								txId1, id1, id2, rx_value_bytes[0], rx_value_bytes[1], rx_value_bytes[2],
-								rx_value_bytes[3]);
+			                    txId1, id1, id2, rx_value_bytes[0], rx_value_bytes[1], rx_value_bytes[2],
+			                    rx_value_bytes[3]);
 			if (id1 <= 0 || id2 <= 0) {
 				SerialLogger::error(F("Unknown ids received %d, %d"), id1, id2);
 				return false;
@@ -231,10 +231,10 @@ protected:
 
 				if (processed) {
 					SerialLogger::trace(F("Data response from slave %s with id %d was processed as data request"),
-										k_name, id1);
+					                    k_name, id1);
 				} else {
 					SerialLogger::trace(F("Data response from slave %s with id %d was processed as data push"),
-										k_name, id1);
+					                    k_name, id1);
 					for (int value_counter; value_counter < COMMAND_FRAME_VALUE_SIZE; value_counter++) {
 						if (rx_value_bytes[value_counter] != tx_value_bytes[value_counter]) {
 							SerialLogger::warn(F("Slave did not return correct value bytes"));

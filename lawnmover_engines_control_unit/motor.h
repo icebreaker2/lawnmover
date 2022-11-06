@@ -7,26 +7,26 @@
 #define MOTOR_SPIN_CHECK_THRESHOLD 5
 
 class MotorService {
-    public:
-        MotorService();
+public:
+	MotorService();
 
-        MotorService(const int motorPin);
+	MotorService(const int motorPin);
 
-        ~MotorService();
+	~MotorService();
 
-        void printInit() ;
+	void printInit();
 
-        void startMotor();
+	void startMotor();
 
-        void stopMotor();
+	void stopMotor();
 
-        void spinMotor();
+	void spinMotor();
 
-        bool set_rotation_speed(const int16_t id, const int16_t rotation_speed);
+	bool set_rotation_speed(const int16_t id, const int16_t rotation_speed);
 
-    private:
-        const int kMotorPin;
-        volatile int16_t _rotation_speed = 0;
+private:
+	const int kMotorPin;
+	volatile int16_t _rotation_speed = 0;
 };
 
 #endif // MOTOR_H

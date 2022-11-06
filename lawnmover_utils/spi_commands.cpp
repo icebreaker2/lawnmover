@@ -11,7 +11,7 @@ int SpiCommands::verifyIds(const byte rxIdBytes[], const byte txIdBytes[]) {
 		return rxId;
 	} else {
 		SerialLogger::error(F("Request and Acknowledge Id do not align: rx %d (%x%x) != tx %d(%x%x)"), rxId,
-							rxIdBytes[0], rxIdBytes[1], txId, txIdBytes[0], txIdBytes[1]);
+		                    rxIdBytes[0], rxIdBytes[1], txId, txIdBytes[0], txIdBytes[1]);
 		return -1;
 	}
 }
@@ -40,4 +40,4 @@ const char *SpiCommands::getNameFromId(const int16_t id) {
 }
 
 uint8_t SpiCommands::COMMUNICATION_START_SEQUENCE[COMMUNICATION_START_SEQUENCE_LENGTH] = {0x08, 0x07, 0x06, 0x05, 0x04,
-																						  0x03, 0x02, 0x01, 0xFF};
+                                                                                          0x03, 0x02, 0x01, 0xFF};

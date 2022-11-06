@@ -3,7 +3,7 @@
 
 #define OUT_OF_RANGE_MULTIPLIER (float) 1.0f
 #define MID_RANGE_MULTIPLIER (float) 0.7f
-#define CLOSE_RANGE_MULTIPLIER (float) 0.5f
+#define CLOSE_RANGE_MULTIPLIER (float) 0.4f
 #define CRITICAL_RANGE_MULTIPLIER (float) 0.25f
 
 #define MAX_DISTANCE (float) 100.0f
