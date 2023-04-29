@@ -13,7 +13,7 @@ public:
 			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 0, OBSTACLE_COMMANDS),
 			_roboPilot(roboPilot) {
 		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
-			if (id == OBSTACLE_FRONT_COMMAND) {
+			if (id == OBSTACLE_FRONT_COMMAND && _roboPilot != nullptr) {
 				_roboPilot->putSensorDistance(Category::Direction::FRONT, distance);
 				return true;
 			} else {
@@ -21,7 +21,7 @@ public:
 			}
 		});
 		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
-			if (id == OBSTACLE_FRONT_LEFT_COMMAND) {
+			if (id == OBSTACLE_FRONT_LEFT_COMMAND && _roboPilot != nullptr) {
 				_roboPilot->putSensorDistance(Category::Direction::FRONT_LEFT, distance);
 				return true;
 			} else {
@@ -29,7 +29,7 @@ public:
 			}
 		});
 		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
-			if (id == OBSTACLE_FRONT_RIGHT_COMMAND) {
+			if (id == OBSTACLE_FRONT_RIGHT_COMMAND && _roboPilot != nullptr) {
 				_roboPilot->putSensorDistance(Category::Direction::FRONT_RIGHT, distance);
 				return true;
 			} else {
@@ -37,7 +37,7 @@ public:
 			}
 		});
 		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
-			if (id == OBSTACLE_BACK_LEFT_COMMAND) {
+			if (id == OBSTACLE_BACK_LEFT_COMMAND && _roboPilot != nullptr) {
 				_roboPilot->putSensorDistance(Category::Direction::BACK_LEFT, distance);
 				return true;
 			} else {
@@ -45,7 +45,7 @@ public:
 			}
 		});
 		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
-			if (id == OBSTACLE_BACK_RIGHT_COMMAND) {
+			if (id == OBSTACLE_BACK_RIGHT_COMMAND && _roboPilot != nullptr) {
 				_roboPilot->putSensorDistance(Category::Direction::BACK_RIGHT, distance);
 				return true;
 			} else {

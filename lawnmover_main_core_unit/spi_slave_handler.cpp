@@ -108,22 +108,25 @@ void SpiSlaveHandler::transfer(const uint8_t *tx_buf, const size_t size) {
 }
 
 void SpiSlaveHandler::transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size) {
-	if (!_transactions.empty()) {
-		std::stringstream ss;
-		ss << "Cannot execute transfer if queued transaction exits. Queueed size = " << _transactions.size();
-		throw std::runtime_error(ss.str());
-	}
+	if (_initialized_once) {
+		if (!_transactions.empty()) {
+			std::stringstream ss;
+			ss << "Cannot execute transfer if queued transaction exits. Queueed size = " << _transactions.size();
+			throw std::runtime_error(ss.str());
+		}
 
-	addTransaction(tx_buf, rx_buf, size);
+		addTransaction(tx_buf, rx_buf, size);
 
-	// send a spi transaction, wait for it to complete, and return the result
-	esp_err_t e = spi_device_transmit(_handle, &_transactions.back());
-	if (e == ESP_OK) {
-		size_t len = _transactions.back().rxlength / 8;
-		_transactions.pop_back();
-	} else {
-		printf("[ERROR] SPI device transmit failed : %d\n", e);
-		_transactions.pop_back();
+		// send a spi transaction, wait for it to complete, and return the result
+		esp_err_t e = spi_device_transmit(_handle, &_transactions.back());
+		if (e == ESP_OK) {
+			size_t len = _transactions.back().rxlength / 8;
+			_transactions.pop_back();
+		} else {
+			printf("[ERROR] SPI device transmit failed : %d\n", e);
+			_transactions.pop_back();
+		}
+		delayMicroseconds(k_inter_transaction_delay_microseconds);
 	}
 }
 

@@ -181,6 +181,10 @@ SpiSlaveHandler *Esp32SpiMaster::get_handler(const int slave_pin) {
 	// Disabling DMA limits to 64 bytes per transaction only
 	slave_handler->setDMAChannel(k_dma_channel);  // 1 or 2 only
 	// VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-	slave_handler->begin(k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin, VSPI);
-	return slave_handler;
+	if (slave_handler->begin(k_clock_pin, k_miso_pin, k_mosi_pin, slave_pin, VSPI)) {
+		return slave_handler;
+	} else {
+		delete slave_handler;
+		return nullptr;
+	}
 }

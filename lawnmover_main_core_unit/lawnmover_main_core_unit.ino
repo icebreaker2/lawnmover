@@ -42,9 +42,14 @@ void re_setup_spi_communication() {
 	const int engine_slave_id = Esp32SpiMaster::take_free_id();
 	if (engine_slave_id >= 0) {
 		SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(ENGINE_CONTROL_SS_PIN_BLUE);
-		EngineSlave *spi_slave = new EngineSlave(spi_slave_handler, engine_slave_id, ENGINE_CONTROL_SS_PIN_BLUE,
-		                                         ENGINE_RESTART_PIN_PIN, esp32Ps4Ctrl, _roboPilot);
-		esp32_spi_master->put_slave(spi_slave);
+		if (spi_slave_handler == nullptr) {
+			SerialLogger::error(F("Cannot add a new engine slave. Failed to set up a new spi slave handler"));
+			Esp32SpiMaster::put_free_id(engine_slave_id);
+		} else {
+			EngineSlave *spi_slave = new EngineSlave(spi_slave_handler, engine_slave_id, ENGINE_CONTROL_SS_PIN_BLUE,
+			                                         ENGINE_RESTART_PIN_PIN, esp32Ps4Ctrl, _roboPilot);
+			esp32_spi_master->put_slave(spi_slave);
+		}
 	} else {
 		SerialLogger::error(F("Cannot add a new engine slave to. Got no free id from Esp32SpiMaster"));
 	}
@@ -52,10 +57,15 @@ void re_setup_spi_communication() {
 	const int obstacle_slave_id = Esp32SpiMaster::take_free_id();
 	if (obstacle_slave_id >= 0) {
 		SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN);
-		ObstacleDetectionSlave *spi_slave = new ObstacleDetectionSlave(spi_slave_handler, obstacle_slave_id,
-		                                                               OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN,
-		                                                               OBSTACLE_DETECTION_RESTART_PIN_PIN, _roboPilot);
-		esp32_spi_master->put_slave(spi_slave);
+		if (spi_slave_handler == nullptr) {
+			SerialLogger::error(F("Cannot add a new obstacle slave. Failed to set up a new spi slave handler"));
+			Esp32SpiMaster::put_free_id(obstacle_slave_id);
+		} else {
+			ObstacleDetectionSlave *spi_slave = new ObstacleDetectionSlave(spi_slave_handler, obstacle_slave_id,
+			                                                               OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN,
+			                                                               OBSTACLE_DETECTION_RESTART_PIN_PIN, _roboPilot);
+			esp32_spi_master->put_slave(spi_slave);
+		}
 	} else {
 		SerialLogger::error(F("Cannot add a new obstacle detection slave to. Got no free id from Esp32SpiMaster"));
 	}
