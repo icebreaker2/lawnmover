@@ -21,7 +21,7 @@ const int MISO_PIN_YELLOW = 12; // D12 = pin18 = PortB.4
 const int MOSI_PIN_GREEN = 11; // D11 = pin17 = PortB.3
 const int SS_PIN_BLUE = 10; // D10 = pin16 = PortB.2
 
-const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 3;
+const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 2;
 
 
 // Debug
@@ -43,6 +43,7 @@ Watchdog *_watchdog = Watchdog::getFromScheduled(k_watchdog_validation_interval,
 	                                                 _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND,
 	                                                                                       0);
 	                                                 _motorService->set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
+	                                                 SpiSlave::reset();
                                                  }, _timer);
 
 int k_amount_data_push_commands = 3;

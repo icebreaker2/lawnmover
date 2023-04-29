@@ -13,6 +13,8 @@ public:
 
 	static void addDebugSlavePrinting(Timer<> &timer, const int interval);
 
+	static void reset();
+
 };
 
 #endif // SPI_SLAVE_H

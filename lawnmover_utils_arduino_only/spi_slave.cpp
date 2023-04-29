@@ -207,6 +207,16 @@ ISR (SPI_STC_vect) {
 		}
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
+
+void SpiSlave::reset() {
+	_current_command_cursor = 0;
+	_buffer_counter = _current_command_cursor;
+	_synchronized = false;
+	memset(_rx_buffer, 0, _commands_size * sizeof *_rx_buffer);
+	memset(_tx_buffer, 0, _commands_size * sizeof *_tx_buffer);
+	SerialLogger::info(F("SPI slave reset."));
+}
+
 void SpiSlave::addDebugSlavePrinting(Timer<> &timer, const int interval) {
 	timer.every(interval, [](void *) -> bool {
 		if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG) || !_synchronized) {
