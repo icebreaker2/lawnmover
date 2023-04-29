@@ -17,11 +17,12 @@ class MasterSpiSlave {
 public:
 	MasterSpiSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const char *name, const int slave_pin,
 	               const int slave_restart_pin, const int amount_data_push_commands,
-	               const int amount_data_request_commands) :
+	               const int amount_data_request_commands, const int inter_transaction_delay_microseconds = 5) :
 			k_slave_id(slave_id), k_name(name), k_slave_pin(slave_pin), k_slave_restart_pin(slave_restart_pin),
 			k_amount_data_push_commands(amount_data_push_commands),
 			k_amount_data_request_callbacks(amount_data_request_commands),
-			k_buffer_size((amount_data_push_commands + amount_data_request_commands) * COMMAND_FRAME_SIZE) {
+			k_buffer_size((amount_data_push_commands + amount_data_request_commands) * COMMAND_FRAME_SIZE),
+			k_inter_transaction_delay_microseconds(inter_transaction_delay_microseconds) {
 		_spi_slave_handler = spi_slave_handler;
 
 		// to use DMA buffer, use these methods to allocate buffer
@@ -99,8 +100,6 @@ public:
 		} else {
 			if (_slave_synchronized) {
 				SerialLogger::warn(F("%s slave no longer synchronized with this master"), k_name);
-			} else {
-				SerialLogger::warn(F("%s slave not synchronized with this master"), k_name);
 			}
 			_slave_synchronized = false;
 		}
@@ -151,8 +150,9 @@ public:
 		return _slave_synchronized;
 	};
 
-	SpiSlaveHandler *get_spi_slave_handler() const {
-		return _spi_slave_handler;
+	void transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size) const {
+		_spi_slave_handler->transfer(tx_buf, rx_buf, size);
+		delayMicroseconds(k_inter_transaction_delay_microseconds);
 	};
 
 protected:
@@ -268,6 +268,8 @@ private:
 
 	bool _slave_synchronized;
 	SpiSlaveHandler *_spi_slave_handler;
+
+	const int k_inter_transaction_delay_microseconds;
 };
 
 #endif //LAWNMOVER_UTILS_SPI_SLAVE_H

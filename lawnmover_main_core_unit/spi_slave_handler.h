@@ -34,6 +34,7 @@
 
 class SpiSlaveHandler {
 public:
+
 	bool begin(const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss, const uint8_t spi_bus = HSPI);
 
 	bool end();
@@ -41,9 +42,9 @@ public:
 	uint8_t *allocDMABuffer(const size_t s);
 
 	// execute transaction and wait for transmission one by one
-	size_t transfer(const uint8_t *tx_buf, const size_t size);
+	void transfer(const uint8_t *tx_buf, const size_t size);
 
-	size_t transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size);
+	void transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size);
 
 	// set these optional parameters before begin() if you want
 	static void setDataMode(const uint8_t mode);

@@ -12,7 +12,6 @@ const int MISO_PIN_YELLOW = 19;
 const int SCK_PIN_ORANGE = 18;
 const long frequency = 2000000;
 const long clock_divide = SPI_CLOCK_DIV8;
-const int INTER_TRANSACTION_DELAY_MICROSECONDS = 10;
 
 // Engine SPI slave settings
 const int ENGINE_CONTROL_SS_PIN_BLUE = 5;
@@ -38,8 +37,7 @@ void re_setup_spi_communication() {
 	SerialLogger::info(F("Shutting down all previous slaves"));
 	delete esp32_spi_master;
 	SerialLogger::info(F("(Re)Setting up all slaves"));
-	esp32_spi_master = new Esp32SpiMaster(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN,
-	                                      frequency, INTER_TRANSACTION_DELAY_MICROSECONDS);
+	esp32_spi_master = new Esp32SpiMaster(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, frequency);
 
 	const int engine_slave_id = Esp32SpiMaster::take_free_id();
 	if (engine_slave_id >= 0) {

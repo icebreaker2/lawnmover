@@ -26,10 +26,9 @@ volatile int Esp32SpiMaster::_slave_cursor = 0;
 
 Esp32SpiMaster::Esp32SpiMaster(const int clock_pin, const int miso_pin, const int mosi_pin, const long frequency,
                                const int dma_channel, const uint8_t spi_mode, const int tx_rx_buffer_size,
-                               const int chunk_size, const int inter_transaction_delay_microseconds) :
+                               const int chunk_size) :
 		k_clock_pin(clock_pin), k_miso_pin(miso_pin), k_mosi_pin(mosi_pin), k_frequency(frequency),
-		k_dma_channel(dma_channel), k_spi_mode(spi_mode), k_chunk_size(chunk_size),
-		k_inter_transaction_delay_microseconds(inter_transaction_delay_microseconds) {
+		k_dma_channel(dma_channel), k_spi_mode(spi_mode), k_chunk_size(chunk_size) {
 	for (int i = 0; i < MAX_SLAVES; i++) {
 		free_ids[i] = i;
 	}
@@ -96,12 +95,7 @@ void Esp32SpiMaster::schedule(const int interval, Timer<> &timer) {
 			} else {
 				for (long counter = 0; counter < tx_rx_buffer_size; counter += k_chunk_size) {
 					try {
-						size_t sendBytes = spi_slave->get_spi_slave_handler()->transfer(tx_buffer + counter,
-						                                                                rx_buffer + counter,
-						                                                                k_chunk_size);
-
-						// TODO can we omit small delays?
-						delayMicroseconds(k_inter_transaction_delay_microseconds);
+						spi_slave->transfer(tx_buffer + counter, rx_buffer + counter, k_chunk_size);
 					} catch (const std::runtime_error &e) {
 						SerialLogger::error(F("Failed to transfer bytes for slave on slave select %d: %s"),
 						                    spi_slave->get_slave_pin(), e.what());

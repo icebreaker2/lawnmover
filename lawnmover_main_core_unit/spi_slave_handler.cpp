@@ -103,11 +103,11 @@ uint8_t *SpiSlaveHandler::allocDMABuffer(const size_t s) {
 	return (uint8_t *) heap_caps_malloc(s, MALLOC_CAP_DMA);
 }
 
-size_t SpiSlaveHandler::transfer(const uint8_t *tx_buf, const size_t size) {
-	return transfer(tx_buf, NULL, size);
+void SpiSlaveHandler::transfer(const uint8_t *tx_buf, const size_t size) {
+	transfer(tx_buf, NULL, size);
 }
 
-size_t SpiSlaveHandler::transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size) {
+void SpiSlaveHandler::transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const size_t size) {
 	if (!_transactions.empty()) {
 		std::stringstream ss;
 		ss << "Cannot execute transfer if queued transaction exits. Queueed size = " << _transactions.size();
@@ -121,11 +121,9 @@ size_t SpiSlaveHandler::transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const s
 	if (e == ESP_OK) {
 		size_t len = _transactions.back().rxlength / 8;
 		_transactions.pop_back();
-		return len;
 	} else {
 		printf("[ERROR] SPI device transmit failed : %d\n", e);
 		_transactions.pop_back();
-		return 0;
 	}
 }
 
