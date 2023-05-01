@@ -13,23 +13,34 @@
 
 class UltrasonicSensor {
 public:
+	UltrasonicSensor(const int16_t id, const int pulseMaxTimeoutMicroSeconds) :
+			UltrasonicSensor(id, -1, -1, pulseMaxTimeoutMicroSeconds) {
+		// nothing to do here...
+	}
+
 	UltrasonicSensor(const int16_t id, const int txPin, const int rxPin, const int pulseMaxTimeoutMicroSeconds) :
-			k_id(id), k_txPin(txPin), k_rxPin(rxPin), k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
+			k_id(id), k_txPin(-1), k_rxPin(rxPin), k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
 			k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f) {
 		SerialLogger::debug(F("Initiating ultrasonic sensor %s on rxPin=%d with id=%d with txPin=%d and max "
 		                      "possible distance at %f"), SpiCommands::getNameFromId(id), k_rxPin, k_id, k_txPin,
 		                    k_maxDistance);
-		pinMode(k_txPin, OUTPUT);
-		digitalWrite(k_txPin, LOW);
-		pinMode(k_rxPin, INPUT);
-		_latestDistance = k_maxDistance;
+		if (k_txPin > 0) {
+			pinMode(k_txPin, OUTPUT);
+			digitalWrite(k_txPin, LOW);
+		}
+		if (k_rxPin > 0) {
+			pinMode(k_rxPin, INPUT);
+		}
+		_latestDistance = 0;
 	}
 
 	// having const values is more valuable than this copy-assignment; if you need to move use (smart) pointers
 	UltrasonicSensor &UltrasonicSensor::operator=(const UltrasonicSensor &ultrasonicSensor) = delete;
 
 	~UltrasonicSensor() {
-		digitalWrite(k_txPin, LOW);
+		if (k_txPin > 0) {
+			digitalWrite(k_txPin, LOW);
+		}
 	}
 
 	int getRxPin() const {
@@ -44,32 +55,36 @@ public:
 		return _latestDistance;
 	};
 
-	static void triggerTx(const int txPin);
+	void updateLatestDistanceWithTx();
 
-	void updateLatestDistanceWithTx() {
-		triggerTx(k_txPin);
-		updateLatestDistanceWithoutTx();
+protected:
+	void triggerTx() const {
+		if (k_txPin > 0) {
+			digitalWrite(k_txPin, LOW);
+			delayMicroseconds(2);
+			digitalWrite(k_txPin, HIGH);
+			delayMicroseconds(10);
+			digitalWrite(k_txPin, LOW);
+		}
 	};
 
-	void updateLatestDistanceWithoutTx() {
-		long duration_microseconds = pulseIn(k_rxPin, HIGH, k_pulseMaxTimeoutMicroSeconds);
-		if (duration_microseconds == 0) {
-			// no echo read before timeout
-			duration_microseconds = k_pulseMaxTimeoutMicroSeconds;
-		}
-		// The signal went back and forth but we do only need one distance
-		const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f;
-		// SerialLogger::debug(F("new %f vs. old %f (q1: %d, q2: %d)"), new_distance, _latestDistance,
-		//                    _latestDistance < NO_ECHO_DISTANCE, _latestDistance >= k_maxDistance);
+	virtual void updateLatestDistanceWithoutTx();
+
+	float weightNewDistance(const float new_distance) {
+		const char *sensorName = SpiCommands::getNameFromId(k_id);
 		if (_latestDistance < NO_ECHO_DISTANCE && new_distance >= k_maxDistance) {
 			// The object got closer to the robot and is now probably "at" the robot leading to no echo due to the object. Setting to zero!
 			_latestDistance = 0.0f;
 			SerialLogger::debug(F("Setting distance of sensor=%s with id %d at rx pin %d to zero"),
-			                    SpiCommands::getNameFromId(k_id), k_id, k_rxPin);
+			                    sensorName, k_id, k_rxPin);
 		} else {
 			_latestDistance = (_latestDistance + new_distance) / 2.0f;
+			SerialLogger::info(F("Setting distance of sensor=%s with id %d at rx pin %d to %f/%f"),
+			                   sensorName, k_id, k_rxPin, _latestDistance, new_distance);
 		}
-	};
+
+		return _latestDistance;
+	}
 
 private:
 	const int k_txPin;
@@ -86,11 +101,14 @@ public:
 
 	static UltrasonicSensors *getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
 	                                           const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-	                                           Timer<> &timer,
-	                                           const int sensoring_frequency_delay = SENSORING_FREQUENCY_DELAY);
+	                                           Timer<> &timer);
+
+	static void schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors);
 
 	UltrasonicSensors(const int txPin, const int *rxPins, const int16_t ids[], const int amountSensors,
 	                  const int pulseMaxTimeoutMicroSeconds);
+
+	UltrasonicSensors(const int amountSensors);
 
 	~UltrasonicSensors();
 
@@ -123,14 +141,14 @@ public:
 
 	float getLatestDistanceFromSensorById(const int16_t id) const;
 
-private:
-	const int k_txPin;
+
+protected:
 	const int k_amountSensors;
-
 	UltrasonicSensor **_ultrasonicSensors;
-	volatile int _nextSensorIndex = 0;
-
 	int _registeredSensors = 0;
+
+private:
+	volatile int _nextSensorIndex = 0;
 };
 
 #endif // ULTRASONIC_SENSORS_H

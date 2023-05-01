@@ -126,7 +126,6 @@ void SpiSlaveHandler::transfer(const uint8_t *tx_buf, uint8_t *rx_buf, const siz
 			printf("[ERROR] SPI device transmit failed : %d\n", e);
 			_transactions.pop_back();
 		}
-		delayMicroseconds(k_inter_transaction_delay_microseconds);
 	}
 }
 

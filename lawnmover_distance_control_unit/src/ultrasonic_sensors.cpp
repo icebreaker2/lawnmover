@@ -1,19 +1,16 @@
 #include "ultrasonic_sensors.h"
 
-void UltrasonicSensor::triggerTx(const int txPin) {
-	digitalWrite(txPin, LOW);
-	delayMicroseconds(2);
-	digitalWrite(txPin, HIGH);
-	delayMicroseconds(10);
-	digitalWrite(txPin, LOW);
-}
-
 UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
                                                        const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-                                                       Timer<> &timer, const int sensoring_frequency_delay) {
+                                                       Timer<> &timer) {
 	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, amountSensors,
 	                                                             pulseMaxTimeoutMicroSeconds);
-	timer.every(sensoring_frequency_delay, [](UltrasonicSensors *ultrasonicSensors) -> bool {
+	UltrasonicSensors::schedule(timer, ultrasonicSensors);
+	return ultrasonicSensors;
+}
+
+void UltrasonicSensors::schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors) {
+	timer.every(SENSORING_FREQUENCY_DELAY, [](UltrasonicSensors *ultrasonicSensors) -> bool {
 		if (ultrasonicSensors == nullptr) {
 			SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
 			return false;
@@ -22,12 +19,17 @@ UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const in
 			return true; // to repeat the action - false to stop
 		}
 	}, ultrasonicSensors);
+	SerialLogger::info(F("Scheduled UltrasonicSensor update every %d ms in round-robin."), SENSORING_FREQUENCY_DELAY);
 	return ultrasonicSensors;
 }
 
+UltrasonicSensors::UltrasonicSensors(const int amountSensors) : k_amountSensors(amountSensors) {
+	// nothing to do here...
+}
+
+
 UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int16_t ids[], const int amountSensors,
-                                     const int pulseMaxTimeoutMicroSeconds) :
-		k_txPin(txPin), k_amountSensors(amountSensors) {
+                                     const int pulseMaxTimeoutMicroSeconds) : UltrasonicSensors(amountSensors) {
 
 	_ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
 	int16_t ids_check[k_amountSensors] = {-1};
@@ -52,7 +54,7 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 			ids_check[i] = id;
 			rxPins_check[i] = rxPin;
 			if (rxPin <= MAX_ARDUINO_PINS && rxPin >= 2) {
-				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, k_txPin, rxPin,
+				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, txPin, rxPin,
 				                                                                pulseMaxTimeoutMicroSeconds);
 			} else {
 				SerialLogger::warn(F("Cannot add sensor %d/%d at rx pin %d which is out of range. Max Pin is %d. "
@@ -63,18 +65,37 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 		}
 	}
 	if (_registeredSensors == k_amountSensors) {
-		SerialLogger::info(F("Scheduling ultrasonic sonic distance sensoring from pin %d to echo pins"), k_txPin);
+		SerialLogger::info(F("Scheduling ultrasonic sonic distance sensoring from pin %d to echo pins"), txPin);
 	} else {
 		SerialLogger::error(F("Could only add %d/%d sensors. Expect issues."), _registeredSensors, k_amountSensors);
 	}
 }
 
 UltrasonicSensors::~UltrasonicSensors() {
-	digitalWrite(k_txPin, LOW);
 	for (int i = 0; i < _registeredSensors; i++) {
 		delete _ultrasonicSensors[i];
 	}
 	delete _ultrasonicSensors;
+}
+
+void UltrasonicSensor::updateLatestDistanceWithTx() {
+	triggerTx();
+	updateLatestDistanceWithoutTx();
+}
+
+void UltrasonicSensor::updateLatestDistanceWithoutTx() {
+	if (k_txPin > 0) {
+		long duration_microseconds = pulseIn(k_rxPin, HIGH, k_pulseMaxTimeoutMicroSeconds);
+		if (duration_microseconds == 0) {
+			// no echo read before timeout
+			duration_microseconds = k_pulseMaxTimeoutMicroSeconds;
+		}
+		// The signal went back and forth but we do only need one distance
+		const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f;
+		// SerialLogger::debug(F("new %f vs. old %f (q1: %d, q2: %d)"), new_distance, _latestDistance,
+		//                    _latestDistance < NO_ECHO_DISTANCE, _latestDistance >= k_maxDistance);
+		weightNewDistance(new_distance);
+	}
 }
 
 void UltrasonicSensors::updateNextDistanceFromSensors() {

@@ -4,6 +4,8 @@
 
 #include "src/led.h"
 #include "src/ultrasonic_sensors.h"
+#include "test/ultrasonic_sensor_impostors.h"
+#include "test/test_cases.h"
 
 const int SCK_PIN_ORANGE = 13; // D13 = pin19 = PortB.5
 const int MISO_PIN_YELLOW = 12; // D12 = pin18 = PortB.4
@@ -24,19 +26,22 @@ const int LED_BUNDLE_1 = A0;
 const int LED_BUNDLE_2 = A1;
 const int LED_BUNDLE_3 = A2;
 
+auto _timer = timer_create_default();
+
+UltrasonicSensors *_ultrasonicSensors;
+Led3Service *_ledService;
+
 // Note: Order matters. We alternate rear and front to reduce risiking receiving the echo of a previous tx if sensoring_frequency_delay was choosen too thin.
 const int sensorsRxPinList[] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_FRONT, ULTRA_RX_REAR_LEFT,
                                 ULTRA_RX_FRONT_RIGHT};
 const int sensorsSpiIdList[] = {OBSTACLE_FRONT_LEFT_COMMAND, OBSTACLE_BACK_RIGHT_COMMAND, OBSTACLE_FRONT_COMMAND,
                                 OBSTACLE_BACK_LEFT_COMMAND, OBSTACLE_FRONT_RIGHT_COMMAND};
 
-auto _timer = timer_create_default();
-
-UltrasonicSensors *_ultrasonicSensors;
-Led3Service *_ledService;
+int16_t _scheduleEnd = 0;
+const float **_ultrasonicSensorsSchedules = forwardSlowObstacleApproachingStop(_scheduleEnd);
 
 int k_amount_data_push_commands = 0;
-bool (*_data_push_commands[])(int16_t, int16_t) = {};
+bool (*_data_push_commands[])(int16_t, int16_t)= {};
 
 // TODO add GYRO commands
 int k_amount_data_request_commands = 1;
@@ -58,10 +63,10 @@ void setup() {
 	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
 
 	_ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
-
-	_ultrasonicSensors = UltrasonicSensors::getFromScheduled(ULTRA_TX_PIN, sensorsRxPinList, sensorsSpiIdList,
-	                                                         AMOUNT_ULTRA_SENSORS, PULSE_MAX_TIMEOUT_MICROSECONDS,
-	                                                         _timer);
+	_ultrasonicSensors = UltrasonicSensorImpostors::getFromScheduled(sensorsRxPinList, sensorsSpiIdList,
+	                                                                 AMOUNT_ULTRA_SENSORS,
+	                                                                 PULSE_MAX_TIMEOUT_MICROSECONDS,
+	                                                                 _timer, _ultrasonicSensorsSchedules, _scheduleEnd);
 
 	if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
 		_ultrasonicSensors->addStatusPrinting(_timer, DEBUG_PRINT_DISTANCE_DELAY);
