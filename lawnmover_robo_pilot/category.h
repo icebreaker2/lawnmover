@@ -5,17 +5,20 @@
 #define MID_RANGE_MULTIPLIER (float) 0.7f
 #define CLOSE_RANGE_MULTIPLIER (float) 0.4f
 #define CRITICAL_RANGE_MULTIPLIER (float) 0.25f
+#define NOT_TOUCHED_MULTIPLIER (float) 0.1f
 
 #define MAX_DISTANCE (float) 100.0f
 #define MID_RANGE_LIMIT (float) MAX_DISTANCE * MID_RANGE_MULTIPLIER
 #define CLOSE_RANGE_LIMIT (float) MAX_DISTANCE * CLOSE_RANGE_MULTIPLIER
 #define CRITICAL_RANGE_LIMIT (float) MAX_DISTANCE * CRITICAL_RANGE_MULTIPLIER
+#define NOT_TOUCHED_LIMIT (float) MAX_DISTANCE * NOT_TOUCHED_MULTIPLIER
 
 
 class Category {
 public:
 	enum Distance {
 		TOO_CLOSE,
+		NOT_TOUCHED,
 		CRITICAL_RANGE,
 		CLOSE_RANGE,
 		MID_RANGE,
@@ -31,6 +34,8 @@ public:
 			return CLOSE_RANGE;
 		} else if (distance >= CRITICAL_RANGE_LIMIT) {
 			return CRITICAL_RANGE;
+		} else if (distance >= NOT_TOUCHED_LIMIT) {
+			return NOT_TOUCHED;
 		} else {
 			return TOO_CLOSE;
 		}
@@ -52,6 +57,9 @@ public:
 				break;
 			case OUT_OF_RANGE:
 				return "OutOfRange";
+				break;
+			case NOT_TOUCHED:
+				return "NOT_TOUCHED";
 				break;
 			default:
 				return "<unknown>";
