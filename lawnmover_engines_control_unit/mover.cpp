@@ -57,10 +57,10 @@ void MoverService::changeLeftPwmRate(const int rate) {
 	// analogRead values go from 0 to 1023, analogWrite values from 0 to 255
 	if (rate > 15) {
 		// reduce sensitivity around anchor point zero
-		SerialLogger::debug(F("Changing Pwm Pin %i (left) to %d"), kLeftPwmPin, rate);
+		SerialLogger::trace(F("Changing Pwm Pin %i (left) to %d"), kLeftPwmPin, rate);
 		analogWrite(kLeftPwmPin, rate);
 	} else {
-		SerialLogger::debug(F("Not setting left rate. Pwm rate was below threshold (%d/15). Stopping left pwm."), rate);
+		SerialLogger::trace(F("Not setting left rate. Pwm rate was below threshold (%d/15). Stopping left pwm."), rate);
 		analogWrite(kLeftPwmPin, 0);
 	}
 }
@@ -69,11 +69,10 @@ void MoverService::changeRightPwmRate(const int rate) {
 	// analogRead values go from 0 to 1023, analogWrite values from 0 to 255
 	if (rate > 15) {
 		// reduce sensitivity around anchor point zero
-		SerialLogger::debug(F("Changing Pwm Pin %i (right) to %d"), kRightPwmPin, rate);
+		SerialLogger::trace(F("Changing Pwm Pin %i (right) to %d"), kRightPwmPin, rate);
 		analogWrite(kRightPwmPin, rate);
 	} else {
-		SerialLogger::debug(F("Not setting right rate. Pwm rate was below threshold (%d/15). Stopping right pwm."),
-		                    rate);
+		SerialLogger::trace(F("Not setting right rate. Pwm rate was below threshold (%d/15). Stopping right pwm."), rate);
 		analogWrite(kRightPwmPin, 0);
 	}
 }
@@ -83,29 +82,35 @@ void MoverService::interpret_state() {
 	const bool right_forward = right_wheels_power >= 0;
 	const int left_rate = left_wheels_power < 0 ? left_wheels_power * -1 : left_wheels_power;
 	const int right_rate = right_wheels_power < 0 ? right_wheels_power * -1 : right_wheels_power;
-	if (left_wheels_power != 0) {
-		if (left_forward) {
-			SerialLogger::debug(F("Left forwards"));
-			digitalWrite(kLeftBwdPin, LOW);
-			digitalWrite(kLeftFwdPin, HIGH);
-		} else {
-			SerialLogger::debug("Left backwards");
-			digitalWrite(kLeftFwdPin, LOW);
-			digitalWrite(kLeftBwdPin, HIGH);
-		}
-	}
+	if (left_wheels_power != _last_left_wheels_power) {    
+        _last_left_wheels_power =  left_wheels_power;
+        if (left_rate > 15) {
+            if (left_forward) {
+                SerialLogger::debug(F("Left forwards"));
+                digitalWrite(kLeftBwdPin, LOW);
+                digitalWrite(kLeftFwdPin, HIGH);
+            } else {
+                SerialLogger::debug("Left backwards");
+                digitalWrite(kLeftFwdPin, LOW);
+                digitalWrite(kLeftBwdPin, HIGH);
+            }
+        }
+    }
 
-	if (right_wheels_power != 0) {
-		if (right_forward) {
-			SerialLogger::debug(F("Right forwards"));
-			digitalWrite(kRightBwdPin, LOW);
-			digitalWrite(kRightFwdPin, HIGH);
-		} else {
-			SerialLogger::debug(F("Right backwards"));
-			digitalWrite(kRightFwdPin, LOW);
-			digitalWrite(kRightBwdPin, HIGH);
-		}
-	}
+    if (right_wheels_power != _last_right_wheels_power) {  
+        _last_right_wheels_power = right_wheels_power;
+    	if (right_rate > 15) {
+    		if (right_forward) {
+    			SerialLogger::debug(F("Right forwards"));
+    			digitalWrite(kRightBwdPin, LOW);
+    			digitalWrite(kRightFwdPin, HIGH);
+    		} else {
+    			SerialLogger::debug(F("Right backwards"));
+    			digitalWrite(kRightFwdPin, LOW);
+    			digitalWrite(kRightBwdPin, HIGH);
+    		}
+    	}
+    }
 
 
 	changeLeftPwmRate(left_rate);

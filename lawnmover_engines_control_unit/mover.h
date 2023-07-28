@@ -53,7 +53,9 @@ private:
 
 	volatile int left_wheels_power = 0;
 	volatile int right_wheels_power = 0;
-
+    volatile int _last_left_wheels_power = 0;
+    volatile int _last_right_wheels_power = 0;
+    
 	void stopMovement();
 
 	void changeLeftPwmRate(const int rate);

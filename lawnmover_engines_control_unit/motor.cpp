@@ -7,6 +7,7 @@ MotorService::MotorService(const int motorPin) :
 
 	pinMode(kMotorPin, OUTPUT);
 	stopMotor();
+    spinMotor();
 }
 
 MotorService::~MotorService() {
@@ -30,12 +31,12 @@ bool MotorService::set_rotation_speed(const int16_t id, const int16_t rotation_s
 
 void MotorService::startMotor() {
 	SerialLogger::trace(F("Starting motor"));
-	analogWrite(kMotorPin, 255);
+    set_rotation_speed(MOTOR_SPEED_COMMAND, 255);
 }
 
 void MotorService::stopMotor() {
 	SerialLogger::trace(F("Stopping motor"));
-	analogWrite(kMotorPin, 0);
+    set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
 }
 
 void MotorService::spinMotor() {
@@ -43,7 +44,8 @@ void MotorService::spinMotor() {
 		SerialLogger::debug(F("Spinning motor with %d/%d"), _rotation_speed, 255);
 		analogWrite(kMotorPin, _rotation_speed);
 	} else {
-		SerialLogger::debug(F("Rotation speed was below threshold (%d/10). Stop motor spinning."), _rotation_speed);
+        SerialLogger::trace(F("Rotation speed was below threshold (%d/10). Stop motor spinning."), _rotation_speed);
 		stopMotor();
+        analogWrite(kMotorPin, _rotation_speed);
 	}
 }
