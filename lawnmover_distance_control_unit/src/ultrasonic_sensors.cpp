@@ -2,15 +2,21 @@
 
 UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
                                                        const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-                                                       Timer<> &timer) {
+                                                       Timer<> &timer, const int updateFrequencyMS) {
 	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, amountSensors,
 	                                                             pulseMaxTimeoutMicroSeconds);
-	UltrasonicSensors::schedule(timer, ultrasonicSensors);
+    if (2*(pulseMaxTimeoutMicroSeconds / 1000.0) > updateFrequencyMS) {
+        SerialLogger::error(F("Cannot add UltrasonicSensors schedule. The update frequency every %d milliseconds is "
+                              "too high for the pulseTimeout of %d microseconds. Increase update frequency or "
+                              "reduce timeout!!!"), updateFrequencyMS, pulseMaxTimeoutMicroSeconds);
+    } else {
+        UltrasonicSensors::schedule(timer, ultrasonicSensors, updateFrequencyMS);
+    }
 	return ultrasonicSensors;
 }
 
-void UltrasonicSensors::schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors) {
-	timer.every(SENSORING_FREQUENCY_DELAY, [](UltrasonicSensors *ultrasonicSensors) -> bool {
+void UltrasonicSensors::schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors, const int updateFrequencyMS) {
+	timer.every(updateFrequencyMS, [](UltrasonicSensors *ultrasonicSensors) -> bool {
 		if (ultrasonicSensors == nullptr) {
 			SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
 			return false;
@@ -19,7 +25,7 @@ void UltrasonicSensors::schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSe
 			return true; // to repeat the action - false to stop
 		}
 	}, ultrasonicSensors);
-	SerialLogger::info(F("Scheduled UltrasonicSensor update every %d ms in round-robin."), SENSORING_FREQUENCY_DELAY);
+	SerialLogger::info(F("Scheduled UltrasonicSensor update every %d ms in round-robin."), updateFrequencyMS);
 	return ultrasonicSensors;
 }
 

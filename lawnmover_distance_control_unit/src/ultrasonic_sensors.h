@@ -9,7 +9,6 @@
 #define SENSORING_FREQUENCY_DELAY 45
 #define MAX_ARDUINO_PINS 13
 #define ULTRASONIC_CM_PER_MICROSECOND_AIR 29
-#define NO_ECHO_DISTANCE 7.5f
 
 class UltrasonicSensor {
 public:
@@ -28,7 +27,7 @@ public:
 			k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f) {
 		SerialLogger::debug(F("Initiating ultrasonic sensor %s on rxPin=%d with id=%d with txPin=%d and max "
 		                      "possible distance at %f"), SpiCommands::getNameFromId(id), k_rxPin, k_id, k_txPin,
-		                    k_maxDistance);
+		                      k_maxDistance);
 		if (k_txPin > 0) {
 			pinMode(k_txPin, OUTPUT);
 			digitalWrite(k_txPin, LOW);
@@ -36,7 +35,7 @@ public:
 		if (k_rxPin > 0) {
 			pinMode(k_rxPin, INPUT);
 		}
-		_latestDistance = NO_ECHO_DISTANCE + 0.1;
+		_latestDistance = 0.0f;
 	};
 
 	// having const values is more valuable than this copy-assignment; if you need to move use (smart) pointers
@@ -80,16 +79,16 @@ protected:
 
     void updateLatestDistanceWithoutTx() {
         if (k_txPin > 0) {
-            long duration_microseconds = pulseIn(k_rxPin, HIGH, k_pulseMaxTimeoutMicroSeconds);
+            // Use pulseInLong to work with SPI interrupts and timer execution?!
+            long duration_microseconds = pulseInLong(k_rxPin, HIGH, k_pulseMaxTimeoutMicroSeconds);
             if (duration_microseconds == 0) {
                 // no echo read before timeout
                 duration_microseconds = k_pulseMaxTimeoutMicroSeconds;
             }
             // The signal went back and forth but we do only need one distance
             const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f;
-            SerialLogger::trace(F("UltrasonicSensor %d has distance update: new %f vs. old %f "
-                                "(recently_close: %d, over_max_distance: %d)"), k_id, new_distance, _latestDistance,
-                                _latestDistance < NO_ECHO_DISTANCE, _latestDistance >= k_maxDistance);
+            SerialLogger::trace(F("UltrasonicSensor %d has distance update: new %f vs. old %f"),
+                                  k_id, new_distance, _latestDistance);
             weightNewDistance(new_distance);
         } else {
             SerialLogger::warn(F("No txPin set. Cannot measure latest distance from ultrasonic response "
@@ -99,13 +98,7 @@ protected:
 
 	float weightNewDistance(const float new_distance) {
 		const char *sensorName = SpiCommands::getNameFromId(k_id);
-		if (_latestDistance <= NO_ECHO_DISTANCE && new_distance >= k_maxDistance) {
-			// The object got closer to the robot and is now probably "at" the robot leading to no echo due to the object. Setting to zero!
-			_latestDistance = 0.0f;
-			SerialLogger::warn(F("No echo received. Probably an obstacle at robot."), sensorName, k_id, k_rxPin);
-		} else {
-			_latestDistance = (_latestDistance + new_distance) / 2.0f;
-		}
+        _latestDistance = (_latestDistance + new_distance) / 2.0f;
         SerialLogger::trace(F("Setting distance of sensor=%s with id %d at rx pin %d to %f/%f"),
 			                   sensorName, k_id, k_rxPin, _latestDistance, new_distance);
 		return _latestDistance;
@@ -126,9 +119,9 @@ public:
 
 	static UltrasonicSensors *getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
 	                                           const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-	                                           Timer<> &timer);
+	                                           Timer<> &timer, const int updateFrequencyMS = SENSORING_FREQUENCY_DELAY);
 
-	static void schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors);
+	static void schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors, const int updateFrequencyMS);
 
 	UltrasonicSensors(const int txPin, const int *rxPins, const int16_t ids[], const int amountSensors,
 	                  const int pulseMaxTimeoutMicroSeconds);
