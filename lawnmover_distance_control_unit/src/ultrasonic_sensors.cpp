@@ -34,7 +34,7 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 	_ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
 	int16_t ids_check[k_amountSensors] = {-1};
 	int rxPins_check[k_amountSensors] = {-1};
-
+    SerialLogger::info(F("Creating %d UltrasonicSensors with txPin %d"), k_amountSensors, txPin);
 	for (int i = 0; i < k_amountSensors; i++) {
 		const int rxPin = rxPins[i];
 		const int16_t id = ids[i];
@@ -78,26 +78,6 @@ UltrasonicSensors::~UltrasonicSensors() {
 	delete _ultrasonicSensors;
 }
 
-void UltrasonicSensor::updateLatestDistanceWithTx() {
-	triggerTx();
-	updateLatestDistanceWithoutTx();
-}
-
-void UltrasonicSensor::updateLatestDistanceWithoutTx() {
-	if (k_txPin > 0) {
-		long duration_microseconds = pulseIn(k_rxPin, HIGH, k_pulseMaxTimeoutMicroSeconds);
-		if (duration_microseconds == 0) {
-			// no echo read before timeout
-			duration_microseconds = k_pulseMaxTimeoutMicroSeconds;
-		}
-		// The signal went back and forth but we do only need one distance
-		const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f;
-		// SerialLogger::debug(F("new %f vs. old %f (q1: %d, q2: %d)"), new_distance, _latestDistance,
-		//                    _latestDistance < NO_ECHO_DISTANCE, _latestDistance >= k_maxDistance);
-		weightNewDistance(new_distance);
-	}
-}
-
 void UltrasonicSensors::updateNextDistanceFromSensors() {
 	/* Note: updateDistanceFromSensors performs a round-robin. This has the drawback of imposing a delay of up to
 	  n x pulseMaxTimeoutMicroSeconds at worst where n is the amount of sensors to update distance from. Given the
@@ -106,9 +86,12 @@ void UltrasonicSensors::updateNextDistanceFromSensors() {
 	  to allow other callbacks to get executed without (or smaller) delay.
 	*/
 	if (_registeredSensors > 0) {
+	    SerialLogger::trace(F("Updating next distance from UltrasonicSensor %d"), _nextSensorIndex);
 		UltrasonicSensor *sensor = _ultrasonicSensors[_nextSensorIndex];
 		sensor->updateLatestDistanceWithTx();
 		_nextSensorIndex = (_nextSensorIndex + 1) % _registeredSensors;
+	} else {
+        SerialLogger::warn(F("Cannot update any UltrasonicSensor. None registered"));
 	}
 }
 

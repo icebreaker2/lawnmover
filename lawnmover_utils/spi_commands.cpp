@@ -34,6 +34,10 @@ const char *SpiCommands::getNameFromId(const int16_t id) {
 			return "OBSTACLE_BACK_LEFT";
 		case OBSTACLE_BACK_RIGHT_COMMAND :
 			return "OBSTACLE_BACK_RIGHT";
+        case OBSTACLE_LEFT_COMMAND :
+			return "OBSTACLE_LEFT";
+		case OBSTACLE_RIGHT_COMMAND :
+			return "OBSTACLE_RIGHT";
 		default:
 			return "<unknown>";
 	}

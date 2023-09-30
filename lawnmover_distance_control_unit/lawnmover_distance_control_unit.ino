@@ -10,10 +10,12 @@ const int MISO_PIN_YELLOW = 12; // D12 = pin18 = PortB.4
 const int MOSI_PIN_GREEN = 11; // D11 = pin17 = PortB.3
 const int SS_PIN_BLUE = 10; // D10 = pin16 = PortB.2
 
-const int AMOUNT_ULTRA_SENSORS = 5;
+const int AMOUNT_ULTRA_SENSORS = 7;
 const int ULTRA_RX_FRONT = 2;
 const int ULTRA_RX_FRONT_RIGHT = 6;
 const int ULTRA_RX_FRONT_LEFT = 4;
+const int ULTRA_RX_RIGHT = 9;
+const int ULTRA_RX_LEFT = 8;
 const int ULTRA_RX_REAR_RIGHT = 5;
 const int ULTRA_RX_REAR_LEFT = 3;
 const int ULTRA_TX_PIN = 7;
@@ -25,10 +27,10 @@ const int LED_BUNDLE_2 = A1;
 const int LED_BUNDLE_3 = A2;
 
 // Note: Order matters. We alternate rear and front to reduce risiking receiving the echo of a previous tx if sensoring_frequency_delay was choosen too thin.
-const int sensorsRxPinList[] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_FRONT, ULTRA_RX_REAR_LEFT,
+const int sensorsRxPinList[] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_LEFT, ULTRA_RX_FRONT, ULTRA_RX_RIGHT, ULTRA_RX_REAR_LEFT,
                                 ULTRA_RX_FRONT_RIGHT};
-const int sensorsSpiIdList[] = {OBSTACLE_FRONT_LEFT_COMMAND, OBSTACLE_BACK_RIGHT_COMMAND, OBSTACLE_FRONT_COMMAND,
-                                OBSTACLE_BACK_LEFT_COMMAND, OBSTACLE_FRONT_RIGHT_COMMAND};
+const int sensorsSpiIdList[] = {OBSTACLE_FRONT_LEFT_COMMAND, OBSTACLE_BACK_RIGHT_COMMAND, OBSTACLE_LEFT_COMMAND, OBSTACLE_FRONT_COMMAND,
+                                OBSTACLE_RIGHT_COMMAND, OBSTACLE_BACK_LEFT_COMMAND, OBSTACLE_FRONT_RIGHT_COMMAND};
 
 auto _timer = timer_create_default();
 

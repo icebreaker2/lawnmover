@@ -22,6 +22,8 @@
 #define OBSTACLE_FRONT_RIGHT_COMMAND (int16_t) 6
 #define OBSTACLE_BACK_LEFT_COMMAND (int16_t) 7
 #define OBSTACLE_BACK_RIGHT_COMMAND (int16_t) 8
+#define OBSTACLE_LEFT_COMMAND (int16_t) 9
+#define OBSTACLE_RIGHT_COMMAND (int16_t) 10
 #define GYRO_COMMANDS 0
 #define MAX_ID (int16_t) 8
 
