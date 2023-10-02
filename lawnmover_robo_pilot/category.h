@@ -1,6 +1,9 @@
 #ifndef CATEGORY_H
 #define CATEGORY_H
 
+#include <numeric>
+#include <vector>
+
 #define OUT_OF_RANGE_MULTIPLIER (float) 1.0f
 #define MID_RANGE_MULTIPLIER (float) 0.7f
 #define CLOSE_RANGE_MULTIPLIER (float) 0.4f
@@ -107,6 +110,74 @@ private:
 	Category() = delete;
 
 	~Category() = delete;
+};
+
+class DirectionDistance {
+public:
+	DirectionDistance(const char *name, const int buffer_size, const float weightedMovingAverageAlpha) :
+		k_name(name), k_buffer_size(buffer_size), k_weightedMovingAverageAlpha(weightedMovingAverageAlpha) {
+		const float averageDefaultDistance = CLOSE_RANGE_LIMIT;
+		SerialLogger::info("Creating %s distance buffers with size %d and add moving avg distances map entry with "
+							"default of %d centimeters", name, k_buffer_size, averageDefaultDistance);
+		// reserve space for the vector
+		_distances.reserve(k_buffer_size);
+		// fill initial values of weighted moving average and distances vector
+		_movingAverageDistance = averageDefaultDistance;
+		for (int i = 0; i < k_buffer_size; i++) {
+			pushDistance(averageDefaultDistance);
+		}
+	};
+
+	void pushDistance(const float distance) {
+		_head = (_head + 1) % k_buffer_size;
+		SerialLogger::trace(F("Pushing new distance for %s with value %f at index %d"), k_name, distance, _head);
+
+		_distances[_head] = distance;
+		updateMovingAverage(distance);
+	};
+
+	const char* getName() const { return k_name; };
+
+	float getMovingAverageDistance() const {
+		return _movingAverageDistance;
+	};
+
+	float getMinDistance() const {
+		// TODO the vector is volatile, is a copy necessary?!
+		return *std::min_element(_distances.begin(), _distances.end());
+	};
+
+	float getMaxDistance() const {
+		// TODO the vector is volatile, is a copy necessary?!
+		return *std::max_element(_distances.begin(), _distances.end());
+	};
+
+	float getMeanDistance() const {
+		// TODO the vector is volatile, is a copy necessary?!
+		return std::accumulate(_distances.begin(), _distances.end(), 0.0f) / k_weightedMovingAverageAlpha;
+	};
+
+	std::vector<float> getDistances() const {
+		return _distances;
+	};
+
+private:
+
+	void updateMovingAverage(const float distance) {
+		_movingAverageDistance = k_weightedMovingAverageAlpha * _movingAverageDistance +
+		                        (1 - k_weightedMovingAverageAlpha) * distance;
+		SerialLogger::trace(F("Updated weighted moving average for %s to %f"), k_name, _movingAverageDistance);
+	}
+
+	const char *k_name;
+	const int k_buffer_size;
+	const float k_weightedMovingAverageAlpha;
+
+	// TODO volatile?! --> not working with vector or map once you try to use their member functions or operators...
+	std::vector<float> _distances;
+	float _movingAverageDistance;
+
+	int _head = -1;
 };
 
 #endif // CATEGORY_H
