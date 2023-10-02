@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <numeric>
+#include <vector>
 
 #include "decision.h"
 #include "motion_state.h"
@@ -11,40 +12,22 @@
 
 class RoboPilot {
 public:
-	RoboPilot(const char *name, const int distances_buffer_size,
+	RoboPilot(const char *name, const int distances_buffer_size, const std::vector<Category::Direction> &directions,
 	          const float weighted_moving_average_alpha = DEFAULT_WEIGHTED_MOVING_AVERAGE_ALPHA) :
 			k_name(name), k_distances_buffer_size(distances_buffer_size),
 			k_weighted_moving_average_alpha(weighted_moving_average_alpha) {
-
-		SerialLogger::info("Creating FRONT distance buffers with size %d and add moving avg distances map entry",
-		                   k_distances_buffer_size);
-		SerialLogger::info("Creating FRONT_LEFT distance buffers with size %d and add moving avg distances map entry",
-		                   k_distances_buffer_size);
-		SerialLogger::info("Creating FRONT_RIGHT distance buffers with size %d and add moving avg distances map entry",
-		                   k_distances_buffer_size);
-		SerialLogger::info("Creating BACK_LEFT distance buffers with size %d and add moving avg distances map entry",
-		                   k_distances_buffer_size);
-		SerialLogger::info("Creating BACK_RIGHT distance buffers with size %d and add moving avg distances map entry",
-		                   k_distances_buffer_size);
-		_directionsDistances.insert(std::make_pair(Category::Direction::FRONT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Category::Direction::FRONT_LEFT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Category::Direction::FRONT_RIGHT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Category::Direction::BACK_LEFT, std::vector<float>()));
-		_directionsDistances.insert(std::make_pair(Category::Direction::BACK_RIGHT, std::vector<float>()));
-
-		// reserve space for the vectors
-		_directionsDistances[Category::Direction::FRONT].reserve(distances_buffer_size);
-		_directionsDistances[Category::Direction::FRONT_LEFT].reserve(distances_buffer_size);
-		_directionsDistances[Category::Direction::FRONT_RIGHT].reserve(distances_buffer_size);
-		_directionsDistances[Category::Direction::BACK_LEFT].reserve(distances_buffer_size);
-		_directionsDistances[Category::Direction::BACK_RIGHT].reserve(distances_buffer_size);
-
-		// fill initial values of weighted moving averages
-		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT, 1.0));
-		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT_LEFT, 1.0));
-		_weighted_moving_averages.insert(std::make_pair(Category::Direction::FRONT_RIGHT, 1.0));
-		_weighted_moving_averages.insert(std::make_pair(Category::Direction::BACK_LEFT, 1.0));
-		_weighted_moving_averages.insert(std::make_pair(Category::Direction::BACK_RIGHT, 1.0));
+		for (const Category::Direction &direction : directions) {
+			const float averageDefaultDistance = CLOSE_RANGE_LIMIT;
+			SerialLogger::info("Creating %s distance buffers with size %d and add moving avg distances map entry with "
+								"default of %d centimeters", Category::getNameFromDirection(direction),
+								k_distances_buffer_size, averageDefaultDistance);
+            // insert new direction
+			_directionsDistances.insert(std::make_pair(direction, std::vector<float>()));
+			// reserve space for the vectors
+			_directionsDistances[direction].reserve(k_distances_buffer_size);
+		    // fill initial values of weighted moving averages
+			_weighted_moving_averages.insert(std::make_pair(direction, averageDefaultDistance));
+		}
 	};
 
 	~RoboPilot() = default;
@@ -144,7 +127,7 @@ private:
 
 class RuleBasedMotionStateRoboPilot : public RoboPilot {
 public:
-	RuleBasedMotionStateRoboPilot();
+	RuleBasedMotionStateRoboPilot(const std::vector<Category::Direction> &directions);
 
 	~RuleBasedMotionStateRoboPilot();
 

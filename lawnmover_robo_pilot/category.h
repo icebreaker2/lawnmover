@@ -70,6 +70,8 @@ public:
 		FRONT,
 		FRONT_LEFT,
 		FRONT_RIGHT,
+		LEFT,
+		RIGHT,
 		BACK_LEFT,
 		BACK_RIGHT
 	};
@@ -84,6 +86,12 @@ public:
 				break;
 			case FRONT_RIGHT:
 				return "FRONT_RIGHT";
+				break;
+			case LEFT:
+				return "LEFT";
+				break;
+			case RIGHT:
+				return "RIGHT";
 				break;
 			case BACK_LEFT:
 				return "BACK_LEFT";

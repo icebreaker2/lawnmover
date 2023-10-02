@@ -1,7 +1,7 @@
 #include "robo_pilot.h"
 
-RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot() :
-		RoboPilot("RuleBasedMotionStateRoboPilot", 5) {
+RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot(const std::vector<Category::Direction> &directions) :
+		RoboPilot("RuleBasedMotionStateRoboPilot", 5, directions) {
 	_errorMotion = new ErrorMotion();
 
 	// Collision avoidance chaining
