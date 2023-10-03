@@ -20,7 +20,6 @@ public:
 			_directionsDistances.insert(std::make_pair(direction,
 										new DirectionDistance(DirectionDistance::getNameFromDirection(direction),
 										distances_buffer_size, weighted_moving_average_alpha)));
-			copyMap.insert(std::make_pair(direction, -1.0));
 		}
 	};
 
@@ -50,43 +49,10 @@ public:
 	virtual MovementDecision makeMovementDecision() = 0;
 
 protected:
-
-	std::map<DirectionDistance::Direction, float> getMeanSensorDistances() const {
-		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
-		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
-			it->second = _directionsDistances.at(it->first)->getMeanDistance();
-		}
-		return tmpMap;
-	};
-
-	std::map<DirectionDistance::Direction, float> getMinSensorDistances() const {
-		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
-		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
-			it->second = _directionsDistances.at(it->first)->getMinDistance();
-		}
-		return tmpMap;
-	};
-
-	std::map<DirectionDistance::Direction, float> getMaxSensorDistances() const {
-		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
-		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
-			it->second = _directionsDistances.at(it->first)->getMaxDistance();;
-		}
-		return tmpMap;
-	};
-
-	std::map<DirectionDistance::Direction, float> getWeightedMovingAverageSensorDistances() const {
-		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
-		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
-			it->second = _directionsDistances.at(it->first)->getMovingAverageDistance();;
-		}
-		return tmpMap;
-	};
+	std::map<DirectionDistance::Direction, DirectionDistance*> _directionsDistances;
 
 private:
 	const char *k_name;
-	std::map<DirectionDistance::Direction, DirectionDistance*> _directionsDistances;
-	std::map<DirectionDistance::Direction, float> copyMap;
 };
 
 class RuleBasedMotionStateRoboPilot : public RoboPilot {

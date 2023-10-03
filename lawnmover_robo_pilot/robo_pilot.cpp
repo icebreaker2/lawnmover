@@ -45,11 +45,8 @@ RuleBasedMotionStateRoboPilot::~RuleBasedMotionStateRoboPilot() {
 
 MovementDecision RuleBasedMotionStateRoboPilot::makeMovementDecision() {
 	const char *last_name = _currentMotion->get_name();
-	const std::map<DirectionDistance::Direction, float> &minDistances = getMinSensorDistances();
-	const std::map<DirectionDistance::Direction, float> &maxDistances = getMaxSensorDistances();
-	const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances = getWeightedMovingAverageSensorDistances();
 
-	_currentMotion = _currentMotion->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
+	_currentMotion = _currentMotion->getNextState(_directionsDistances);
 	if (_currentMotion == nullptr) {
 		_currentMotion = _idleMotion;
 		SerialLogger::error(F("MotionState chaining did not work and caused a next state that was nullptr. Last motion "

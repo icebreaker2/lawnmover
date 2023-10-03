@@ -50,13 +50,11 @@ public:
 	 * eligible by check and by max_iterations) or if both of them are not possible the fallbackState
 	 * @return
 	 */
-	virtual MotionState *getNextState(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                                  const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                                  const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) {
+	virtual MotionState *getNextState(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) {
 		_self_iterations++;
 		if (_followUpState == nullptr) {
 			if ((k_max_self_iterations < 0 || _self_iterations <= k_max_self_iterations) &&
-			    this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+			    this->isEligible(directionDistances)) {
 				SerialLogger::trace(F("No follow up state and %s is (still) eligible, thus, returning it"), get_name());
 				return this;
 			} else {
@@ -64,14 +62,13 @@ public:
 					SerialLogger::trace(F("%s no longer eligible, trying fallback %s due to nullptr followUpState and "
 					                      "non-eligibility"), get_name(), _fallbackState->get_name());
 				}
-				return changeState(_fallbackState)->getNextState(minDistances, maxDistances,
-				                                                 weightedMovingAvgDistances);
+				return changeState(_fallbackState)->getNextState(directionDistances);
 			}
-		} else if (delayedFollowUp(minDistances, maxDistances, weightedMovingAvgDistances)) {
+		} else if (delayedFollowUp()) {
 			// Note: We do not check the self iterations for good reasons. Assume we stop a left turn at a random step
 			// t=3 while having reached an angle of 30/90°. If we now move to the fallback, we start with a wrong angle.
 			// If we already use another function to determine eligibility, we need and can safely drop the check.
-			if (this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+			if (this->isEligible(directionDistances)) {
 				SerialLogger::trace(F("Returning %s due to delayed follow up and self-eligibility"), get_name());
 				return this;
 			} else {
@@ -79,16 +76,15 @@ public:
 					SerialLogger::trace(F("%s no longer eligible, trying fallback %s due to delayed follow up but "
 					                      "non-eligibility"), get_name(), _fallbackState->get_name());
 				}
-				return changeState(_fallbackState)->getNextState(minDistances, maxDistances,
-				                                                 weightedMovingAvgDistances);
+				return changeState(_fallbackState)->getNextState(directionDistances);
 			}
-		} else if (_followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+		} else if (_followUpState->isEligible(directionDistances)) {
 			SerialLogger::debug(F("Returning follow up state %s due to non-delayed follow up and follow-up states "
 			                      "eligibility"), _followUpState->get_name());
 			return changeState(_followUpState);
 		} else {
 			if ((k_max_self_iterations < 0 || _self_iterations <= k_max_self_iterations) &&
-			    this->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+			    this->isEligible(directionDistances)) {
 				SerialLogger::trace(
 						F("Follow up state %s is not eligible but this %s is (still) eligible, thus, returning "
 						  "it"), _followUpState->get_name(), get_name());
@@ -99,8 +95,7 @@ public:
 							F("%s is no longer valide. Trying fallback %s due to non-delayed follow up and states non-eligibility"),
 							get_name(), _fallbackState->get_name());
 				}
-				return changeState(_fallbackState)->getNextState(minDistances, maxDistances,
-				                                                 weightedMovingAvgDistances);
+				return changeState(_fallbackState)->getNextState(directionDistances);
 			}
 		}
 	};
@@ -135,15 +130,11 @@ public:
 	 * @param weightedMovingAvgDistances The weighted moving averages of distances (configurable) for each direction.
 	 * @return Whether this state must be executed again or not by extra options.
 	 */
-	virtual bool delayedFollowUp(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                             const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                             const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const {
+	virtual bool delayedFollowUp() const {
 		return _self_iterations <= k_min_self_iterations;
 	};
 
-	virtual bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                        const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                        const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const = 0;
+	virtual bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const = 0;
 
 protected:
 	const int k_min_self_iterations;
@@ -174,9 +165,7 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class IdleMotion : public MotionState {
@@ -186,9 +175,7 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class ForwardMotion : public MotionState {
@@ -210,39 +197,33 @@ class LowSpeedForwardMotion : public ForwardMotion {
 public:
 	LowSpeedForwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			ForwardMotion("LowSpeedForwardMotion", followUpState, fallbackState,
-			              CLOSE_RANGE_MULTIPLIER, CLOSE_RANGE_MULTIPLIER, 0.5f) {
+			              CLOSE_RANGE_PERCENTAGE, CLOSE_RANGE_PERCENTAGE, 0.5f) {
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class MidSpeedForwardMotion : public ForwardMotion {
 public:
 	MidSpeedForwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			ForwardMotion("MidSpeedForwardMotion", followUpState, fallbackState,
-			              MID_RANGE_MULTIPLIER, MID_RANGE_MULTIPLIER, 1.0f) {
+			              MID_RANGE_PERCENTAGE, MID_RANGE_PERCENTAGE, 1.0f) {
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class FullSpeedForwardMotion : public ForwardMotion {
 public:
 	FullSpeedForwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			ForwardMotion("FullSpeedForwardMotion", followUpState, fallbackState,
-			              OUT_OF_RANGE_MULTIPLIER, OUT_OF_RANGE_MULTIPLIER, 1.0f) {
+			              OUT_OF_RANGE_PERCENTAGE, OUT_OF_RANGE_PERCENTAGE, 1.0f) {
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class CollisionAvoidanceMotion : public MotionState {
@@ -257,9 +238,7 @@ public:
 		// nothing to do...
 	};
 
-	virtual bool delayedFollowUp(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                             const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                             const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override {
+	virtual bool delayedFollowUp() const override {
 		// TODO iterations are bad. We need to take the angle/azimuth difference from a starting angle/azimuth to the
 		//  current angle/azimuth into account (e. g. whether we performed a 90° turn already or are still on the line)
 		return _self_iterations <= k_max_self_iterations;
@@ -270,39 +249,33 @@ class LeftTurnMotion : public CollisionAvoidanceMotion {
 public:
 	LeftTurnMotion(MotionState *followUpState, MotionState *fallbackState) :
 			CollisionAvoidanceMotion("LeftTurnMotion", followUpState, fallbackState,
-			                         -CLOSE_RANGE_MULTIPLIER, CLOSE_RANGE_MULTIPLIER) {
+			                         -CLOSE_RANGE_PERCENTAGE, CLOSE_RANGE_PERCENTAGE) {
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class RightTurnMotion : public CollisionAvoidanceMotion {
 public:
 	RightTurnMotion(MotionState *followUpState, MotionState *fallbackState) :
 			CollisionAvoidanceMotion("RightTurnMotion", followUpState, fallbackState,
-			                         CLOSE_RANGE_MULTIPLIER, -CLOSE_RANGE_MULTIPLIER) {
+			                         CLOSE_RANGE_PERCENTAGE, -CLOSE_RANGE_PERCENTAGE) {
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 class BackwardMotion : public CollisionAvoidanceMotion {
 public:
 	BackwardMotion(MotionState *followUpState, MotionState *fallbackState) :
 			CollisionAvoidanceMotion("BackwardMotion", followUpState, fallbackState,
-			                         -CLOSE_RANGE_MULTIPLIER, -CLOSE_RANGE_MULTIPLIER) {
+			                         -CLOSE_RANGE_PERCENTAGE, -CLOSE_RANGE_PERCENTAGE) {
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override;
 };
 
 
@@ -320,35 +293,31 @@ public:
 	 *
 	 * @return The next state based on this priority strategy
 	 */
-	MotionState *getNextState(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                          const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                          const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) override {
+	MotionState *getNextState(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) override {
 		if (_fallbackState == nullptr) {
 			return nullptr;
 		} else {
 			for (MotionState *followUpState: _followUpStates) {
-				if (followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
-					return followUpState->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
+				if (followUpState->isEligible(directionDistances)) {
+					return followUpState->getNextState(directionDistances);
 				}
 			}
-			return _fallbackState->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
+			return _fallbackState->getNextState(directionDistances);
 		}
 	};
 
-	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
-	                const std::map<DirectionDistance::Direction, float> &maxDistances,
-	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override {
+	bool isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const override {
 		if (_fallbackState == nullptr) {
 			return false;
 		} else {
 			bool eligible = false;
 			for (MotionState *followUpState: _followUpStates) {
-				if (followUpState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances)) {
+				if (followUpState->isEligible(directionDistances)) {
 					eligible = true;
 					break;
 				}
 			}
-			return eligible || _fallbackState->isEligible(minDistances, maxDistances, weightedMovingAvgDistances);
+			return eligible || _fallbackState->isEligible(directionDistances);
 		}
 	};
 

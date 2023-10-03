@@ -4,76 +4,16 @@
 #include <numeric>
 #include <vector>
 
-#define OUT_OF_RANGE_MULTIPLIER (float) 1.0f
-#define MID_RANGE_MULTIPLIER (float) 0.7f
-#define CLOSE_RANGE_MULTIPLIER (float) 0.4f
-#define CRITICAL_RANGE_MULTIPLIER (float) 0.25f
-#define NOT_TOUCHED_MULTIPLIER (float) 0.1f
+#define OUT_OF_RANGE_PERCENTAGE (float) 1.0f
+#define MID_RANGE_PERCENTAGE (float) 0.7f
+#define CLOSE_RANGE_PERCENTAGE (float) 0.3f
+#define CRITICAL_RANGE_PERCENTAGE (float) 0.15f
 
 #define MAX_DISTANCE (float) 100.0f
-#define MID_RANGE_LIMIT (float) MAX_DISTANCE * MID_RANGE_MULTIPLIER
-#define CLOSE_RANGE_LIMIT (float) MAX_DISTANCE * CLOSE_RANGE_MULTIPLIER
-#define CRITICAL_RANGE_LIMIT (float) MAX_DISTANCE * CRITICAL_RANGE_MULTIPLIER
-#define NOT_TOUCHED_LIMIT (float) MAX_DISTANCE * NOT_TOUCHED_MULTIPLIER
+#define MID_RANGE_LIMIT (float) MAX_DISTANCE * MID_RANGE_PERCENTAGE
+#define CLOSE_RANGE_LIMIT (float) MAX_DISTANCE * CLOSE_RANGE_PERCENTAGE
+#define CRITICAL_RANGE_LIMIT (float) MAX_DISTANCE * CRITICAL_RANGE_PERCENTAGE
 
-
-class Category {
-public:
-	enum Distance {
-		TOO_CLOSE,
-		NOT_TOUCHED,
-		CRITICAL_RANGE,
-		CLOSE_RANGE,
-		MID_RANGE,
-		OUT_OF_RANGE
-	};
-
-	static Distance fromDistance(const float distance) {
-		if (distance >= MAX_DISTANCE) {
-			return OUT_OF_RANGE;
-		} else if (distance >= MID_RANGE_LIMIT) {
-			return MID_RANGE;
-		} else if (distance >= CLOSE_RANGE_LIMIT) {
-			return CLOSE_RANGE;
-		} else if (distance >= CRITICAL_RANGE_LIMIT) {
-			return CRITICAL_RANGE;
-		} else if (distance >= NOT_TOUCHED_LIMIT) {
-			return NOT_TOUCHED;
-		} else {
-			return TOO_CLOSE;
-		}
-	};
-
-	static char *getNameFromDistance(const Distance &distance) {
-		switch (distance) {
-			case TOO_CLOSE:
-				return "TooClose";
-				break;
-			case CRITICAL_RANGE:
-				return "CriticalRange";
-				break;
-			case CLOSE_RANGE:
-				return "CloseRange";
-				break;
-			case MID_RANGE:
-				return "MidRange";
-				break;
-			case OUT_OF_RANGE:
-				return "OutOfRange";
-				break;
-			case NOT_TOUCHED:
-				return "NOT_TOUCHED";
-				break;
-			default:
-				return "<unknown>";
-		}
-	};
-
-private:
-	Category() = delete;
-
-	~Category() = delete;
-};
 
 class DirectionDistance {
 public:
@@ -115,6 +55,37 @@ public:
 		}
 	};
 
+
+	enum Distance {
+		STOP,
+		CRITICAL_RANGE,
+		CLOSE_RANGE,
+		MID_RANGE,
+		OUT_OF_RANGE
+	};
+
+	static char *getNameFromDistance(const Distance &distance) {
+		switch (distance) {
+			case STOP:
+				return "STOP";
+				break;
+			case CRITICAL_RANGE:
+				return "CRITICAL_RANGE";
+				break;
+			case CLOSE_RANGE:
+				return "CLOSE_RANGE";
+				break;
+			case MID_RANGE:
+				return "MID_RANGE";
+				break;
+			case OUT_OF_RANGE:
+				return "OUT_OF_RANGE";
+				break;
+			default:
+				return "<unknown>";
+		}
+	};
+
 	DirectionDistance(const char *name, const int buffer_size, const float weightedMovingAverageAlpha) :
 		k_name(name), k_buffer_size(buffer_size), k_weightedMovingAverageAlpha(weightedMovingAverageAlpha) {
 		const float averageDefaultDistance = CLOSE_RANGE_LIMIT;
@@ -143,9 +114,19 @@ public:
 		return _movingAverageDistance;
 	};
 
+	Distance getMovingAverageDistanceCategory() const {
+		const float distance = getMovingAverageDistanceCategory();
+		return fromDistance(distance);
+	};
+
 	float getMinDistance() const {
 		// TODO the vector is volatile, is a copy necessary?!
 		return *std::min_element(_distances.begin(), _distances.end());
+	};
+
+	Distance getMinDistanceCategory() const {
+		const float distance = getMinDistanceCategory();
+		return fromDistance(distance);
 	};
 
 	float getMaxDistance() const {
@@ -153,9 +134,19 @@ public:
 		return *std::max_element(_distances.begin(), _distances.end());
 	};
 
+	Distance getMaxDistanceCategory() const {
+		const float distance = getMaxDistanceCategory();
+		return fromDistance(distance);
+	};
+
 	float getMeanDistance() const {
 		// TODO the vector is volatile, is a copy necessary?!
 		return std::accumulate(_distances.begin(), _distances.end(), 0.0f) / k_weightedMovingAverageAlpha;
+	};
+
+	Distance getMeanDistanceCategory() const {
+		const float distance = getMeanDistanceCategory();
+		return fromDistance(distance);
 	};
 
 	std::vector<float> getDistances() const {
@@ -163,6 +154,20 @@ public:
 	};
 
 private:
+
+	Distance fromDistance(const float distance) const {
+		if (distance >= MAX_DISTANCE) {
+			return OUT_OF_RANGE;
+		} else if (distance >= MID_RANGE_LIMIT) {
+			return MID_RANGE;
+		} else if (distance >= CLOSE_RANGE_LIMIT) {
+			return CLOSE_RANGE;
+		} else if (distance >= CRITICAL_RANGE_LIMIT) {
+			return CRITICAL_RANGE;
+		} else {
+			return STOP;
+		}
+	};
 
 	void updateMovingAverage(const float distance) {
 		_movingAverageDistance = k_weightedMovingAverageAlpha * _movingAverageDistance +
