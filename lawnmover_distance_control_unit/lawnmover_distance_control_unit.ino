@@ -40,7 +40,6 @@ Led3Service *_ledService;
 int k_amount_data_push_commands = 0;
 bool (*_data_push_commands[])(int16_t, int16_t) = {};
 
-// TODO add GYRO commands
 int k_amount_data_request_commands = 1;
 
 bool (*_data_request_commands[])(int16_t, uint8_t *) = {
@@ -71,7 +70,7 @@ void setup() {
 
 	SpiSlave::ISRfromArgs(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands,
 	                      k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands,
-	                      OBSTACLE_COMMANDS * COMMAND_FRAME_SIZE + GYRO_COMMANDS * COMMAND_FRAME_SIZE);
+	                      OBSTACLE_COMMANDS * COMMAND_FRAME_SIZE);
 
 	SpiSlave::addDebugSlavePrinting(_timer, 1000);
 }

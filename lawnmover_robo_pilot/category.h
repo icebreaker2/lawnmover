@@ -115,7 +115,7 @@ public:
 	};
 
 	Distance getMovingAverageDistanceCategory() const {
-		const float distance = getMovingAverageDistanceCategory();
+		const float distance = getMovingAverageDistance();
 		return fromDistance(distance);
 	};
 
@@ -125,7 +125,7 @@ public:
 	};
 
 	Distance getMinDistanceCategory() const {
-		const float distance = getMinDistanceCategory();
+		const float distance = getMinDistance();
 		return fromDistance(distance);
 	};
 
@@ -135,7 +135,7 @@ public:
 	};
 
 	Distance getMaxDistanceCategory() const {
-		const float distance = getMaxDistanceCategory();
+		const float distance = getMaxDistance();
 		return fromDistance(distance);
 	};
 
@@ -145,7 +145,7 @@ public:
 	};
 
 	Distance getMeanDistanceCategory() const {
-		const float distance = getMeanDistanceCategory();
+		const float distance = getMeanDistance();
 		return fromDistance(distance);
 	};
 

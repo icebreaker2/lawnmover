@@ -15,6 +15,10 @@ bool LowSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Directi
 			directionDistances.at(DirectionDistance::Direction::FRONT_LEFT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &frontRightDistance = 
 			directionDistances.at(DirectionDistance::Direction::FRONT_RIGHT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &leftDistance =
+			directionDistances.at(DirectionDistance::Direction::LEFT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &rightDistance =
+			directionDistances.at(DirectionDistance::Direction::RIGHT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backLeftDistance = 
 			directionDistances.at(DirectionDistance::Direction::BACK_LEFT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backRightDistance = 
@@ -23,6 +27,8 @@ bool LowSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Directi
 	const bool eligible = frontDistance >= DirectionDistance::CLOSE_RANGE &&
 	                      frontLeftDistance >= DirectionDistance::CLOSE_RANGE &&
 	                      frontRightDistance >= DirectionDistance::CLOSE_RANGE &&
+	                      leftDistance >= DirectionDistance::CRITICAL_RANGE &&
+	                      rightDistance >= DirectionDistance::CRITICAL_RANGE &&
 	                      backLeftDistance >= DirectionDistance::STOP &&
 	                      backRightDistance >= DirectionDistance::STOP;
 	if (this->_self_iterations == 0) {
@@ -38,12 +44,16 @@ bool LowSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Directi
 }
 
 bool MidSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const {
-	const DirectionDistance::Distance &frontDistance = 
+	const DirectionDistance::Distance &frontDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontLeftDistance = 
+	const DirectionDistance::Distance &frontLeftDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_LEFT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontRightDistance = 
+	const DirectionDistance::Distance &frontRightDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_RIGHT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &leftDistance =
+			directionDistances.at(DirectionDistance::Direction::LEFT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &rightDistance =
+			directionDistances.at(DirectionDistance::Direction::RIGHT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backLeftDistance = 
 			directionDistances.at(DirectionDistance::Direction::BACK_LEFT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backRightDistance = 
@@ -52,6 +62,8 @@ bool MidSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Directi
 	const bool eligible = frontDistance >= DirectionDistance::MID_RANGE &&
 	                      frontLeftDistance >= DirectionDistance::CLOSE_RANGE &&
 	                      frontRightDistance >= DirectionDistance::CLOSE_RANGE &&
+                          leftDistance >= DirectionDistance::CRITICAL_RANGE &&
+	                      rightDistance >= DirectionDistance::CRITICAL_RANGE &&
 	                      backLeftDistance >= DirectionDistance::STOP &&
 	                      backRightDistance >= DirectionDistance::STOP;
 	if (this->_self_iterations == 0) {
@@ -67,12 +79,16 @@ bool MidSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Directi
 }
 
 bool FullSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const {
-	const DirectionDistance::Distance &frontDistance = 
+	const DirectionDistance::Distance &frontDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontLeftDistance = 
+	const DirectionDistance::Distance &frontLeftDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_LEFT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontRightDistance = 
+	const DirectionDistance::Distance &frontRightDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_RIGHT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &leftDistance =
+			directionDistances.at(DirectionDistance::Direction::LEFT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &rightDistance =
+			directionDistances.at(DirectionDistance::Direction::RIGHT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backLeftDistance = 
 			directionDistances.at(DirectionDistance::Direction::BACK_LEFT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backRightDistance = 
@@ -81,6 +97,8 @@ bool FullSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Direct
 	const bool eligible = frontDistance >= DirectionDistance::OUT_OF_RANGE &&
 	                      frontLeftDistance >= DirectionDistance::MID_RANGE &&
 	                      frontRightDistance >= DirectionDistance::MID_RANGE &&
+                          leftDistance >= DirectionDistance::CLOSE_RANGE &&
+	                      rightDistance >= DirectionDistance::CLOSE_RANGE &&
 	                      backLeftDistance >= DirectionDistance::STOP &&
 	                      backRightDistance >= DirectionDistance::STOP;
 	if (this->_self_iterations == 0) {
@@ -96,23 +114,28 @@ bool FullSpeedForwardMotion::isEligible(const std::map<DirectionDistance::Direct
 }
 
 bool BackwardMotion::isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const {
-	const DirectionDistance::Distance &frontDistance = 
+	const DirectionDistance::Distance &frontDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontLeftDistance = 
+	const DirectionDistance::Distance &frontLeftDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_LEFT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontRightDistance = 
+	const DirectionDistance::Distance &frontRightDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_RIGHT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &backLeftDistance = 
+	const DirectionDistance::Distance &leftDistance =
+			directionDistances.at(DirectionDistance::Direction::LEFT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &rightDistance =
+			directionDistances.at(DirectionDistance::Direction::RIGHT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &backLeftDistance =
 			directionDistances.at(DirectionDistance::Direction::BACK_LEFT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &backRightDistance = 
+	const DirectionDistance::Distance &backRightDistance =
 			directionDistances.at(DirectionDistance::Direction::BACK_RIGHT)->getMovingAverageDistanceCategory();
 
-
-	const bool eligible = backLeftDistance >= DirectionDistance::CLOSE_RANGE &&
-	                      backRightDistance >= DirectionDistance::CLOSE_RANGE &&
-	                      frontDistance >= DirectionDistance::STOP &&
+	const bool eligible = frontDistance >= DirectionDistance::STOP &&
 	                      frontLeftDistance >= DirectionDistance::STOP &&
 	                      frontRightDistance >= DirectionDistance::STOP;
+						  leftDistance >= DirectionDistance::CRITICAL_RANGE &&
+	                      rightDistance >= DirectionDistance::CRITICAL_RANGE &&
+                          backLeftDistance >= DirectionDistance::CLOSE_RANGE &&
+	                      backRightDistance >= DirectionDistance::CLOSE_RANGE;
 	if (this->_self_iterations == 0) {
 		if (eligible) {
 			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"),
@@ -126,12 +149,16 @@ bool BackwardMotion::isEligible(const std::map<DirectionDistance::Direction, Dir
 }
 
 bool LeftTurnMotion::isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const {
-	const DirectionDistance::Distance &frontDistance = 
+	const DirectionDistance::Distance &frontDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontLeftDistance = 
+	const DirectionDistance::Distance &frontLeftDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_LEFT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontRightDistance = 
+	const DirectionDistance::Distance &frontRightDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_RIGHT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &leftDistance =
+			directionDistances.at(DirectionDistance::Direction::LEFT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &rightDistance =
+			directionDistances.at(DirectionDistance::Direction::RIGHT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backLeftDistance = 
 			directionDistances.at(DirectionDistance::Direction::BACK_LEFT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backRightDistance = 
@@ -140,8 +167,10 @@ bool LeftTurnMotion::isEligible(const std::map<DirectionDistance::Direction, Dir
 	const bool eligible = frontDistance >= DirectionDistance::CRITICAL_RANGE &&
 	                      frontLeftDistance >= DirectionDistance::CLOSE_RANGE &&
 	                      frontRightDistance >= DirectionDistance::CRITICAL_RANGE &&
-	                      backLeftDistance >= DirectionDistance::CLOSE_RANGE &&
-	                      backRightDistance >= DirectionDistance::CRITICAL_RANGE;
+                          leftDistance >= DirectionDistance::CLOSE_RANGE &&
+	                      rightDistance >= DirectionDistance::CRITICAL_RANGE &&
+	                      backLeftDistance >= DirectionDistance::STOP &&
+	                      backRightDistance >= DirectionDistance::STOP;
 	if (this->_self_iterations == 0) {
 		if (eligible) {
 			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"),
@@ -155,12 +184,16 @@ bool LeftTurnMotion::isEligible(const std::map<DirectionDistance::Direction, Dir
 }
 
 bool RightTurnMotion::isEligible(const std::map<DirectionDistance::Direction, DirectionDistance*> &directionDistances) const {
-	const DirectionDistance::Distance &frontDistance = 
+	const DirectionDistance::Distance &frontDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontLeftDistance = 
+	const DirectionDistance::Distance &frontLeftDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_LEFT)->getMovingAverageDistanceCategory();
-	const DirectionDistance::Distance &frontRightDistance = 
+	const DirectionDistance::Distance &frontRightDistance =
 			directionDistances.at(DirectionDistance::Direction::FRONT_RIGHT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &leftDistance =
+			directionDistances.at(DirectionDistance::Direction::LEFT)->getMovingAverageDistanceCategory();
+	const DirectionDistance::Distance &rightDistance =
+			directionDistances.at(DirectionDistance::Direction::RIGHT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backLeftDistance = 
 			directionDistances.at(DirectionDistance::Direction::BACK_LEFT)->getMovingAverageDistanceCategory();
 	const DirectionDistance::Distance &backRightDistance = 
@@ -169,8 +202,10 @@ bool RightTurnMotion::isEligible(const std::map<DirectionDistance::Direction, Di
 	const bool eligible = frontDistance >= DirectionDistance::CRITICAL_RANGE &&
 	                      frontLeftDistance >= DirectionDistance::CRITICAL_RANGE &&
 	                      frontRightDistance >= DirectionDistance::CLOSE_RANGE &&
-	                      backLeftDistance >= DirectionDistance::CRITICAL_RANGE &&
-	                      backRightDistance >= DirectionDistance::CLOSE_RANGE;
+                          leftDistance >= DirectionDistance::CRITICAL_RANGE &&
+	                      rightDistance >= DirectionDistance::CLOSE_RANGE &&
+	                      backLeftDistance >= DirectionDistance::STOP &&
+	                      backRightDistance >= DirectionDistance::STOP;
 	if (this->_self_iterations == 0) {
 		if (eligible) {
 			SerialLogger::debug(F("%s is eligible to be the next state. All ranges are above threshold"),

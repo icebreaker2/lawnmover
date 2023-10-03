@@ -19,8 +19,6 @@ public:
 	               const int slave_restart_pin, const int amount_data_push_commands,
 	               const int amount_data_request_commands, const int inter_transaction_delay_microseconds = 5) :
 			k_slave_id(slave_id), k_name(name), k_slave_pin(slave_pin), k_slave_restart_pin(slave_restart_pin),
-			k_amount_data_push_commands(amount_data_push_commands),
-			k_amount_data_request_callbacks(amount_data_request_commands),
 			k_buffer_size((amount_data_push_commands + amount_data_request_commands) * COMMAND_FRAME_SIZE),
 			k_inter_transaction_delay_microseconds(inter_transaction_delay_microseconds) {
 		_spi_slave_handler = spi_slave_handler;
@@ -134,14 +132,6 @@ public:
 		return k_slave_restart_pin;
 	};
 
-	int get_amount_data_push_commands() const {
-		return k_amount_data_push_commands;
-	};
-
-	int get_amount_data_request_commands() const {
-		return k_amount_data_request_callbacks;
-	};
-
 	long get_buffer_size() const {
 		return k_buffer_size;
 	};
@@ -163,7 +153,6 @@ protected:
 	 */
 	template<typename T>
 	bool interpret_communication(const uint8_t *tx_buffer, const uint8_t *rx_buffer, const long buffer_size,
-	                             const int amount_data_request_callbacks,
 	                             std::vector <std::function<bool(int16_t, T)>> data_request_callbacks) {
 		SerialLogger::trace(F("Validating master-slave communication for %s"), k_name);
 		uint8_t rxId1[COMMAND_FRAME_ID_SIZE];
@@ -225,7 +214,7 @@ protected:
 				T rx_data = 0;
 				memcpy(&rx_data, rx_value_bytes, COMMAND_FRAME_VALUE_SIZE);
 				bool processed = false;
-				for (int i = 0; i < amount_data_request_callbacks && !processed; i++) {
+				for (int i = 0; i < data_request_callbacks.size() && !processed; i++) {
 					processed = data_request_callbacks[i](id1, rx_data);
 				}
 
@@ -253,14 +242,11 @@ protected:
 	virtual bool
 	consume_commands(uint8_t *slave_response_buffer, long slave_response_buffer_size, uint8_t *tx_buffer) = 0;
 
-	const int k_amount_data_request_callbacks;
-
 private:
 	const int k_slave_id;
 	const char *k_name;
 	const int k_slave_pin;
 	const int k_slave_restart_pin;
-	const int k_amount_data_push_commands;
 	const long k_buffer_size;
 
 	uint8_t *_tx_buffer;
