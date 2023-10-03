@@ -13,12 +13,12 @@
 
 class RoboPilot {
 public:
-	RoboPilot(const char *name, const int distances_buffer_size, const std::vector<Category::Direction> &directions,
+	RoboPilot(const char *name, const int distances_buffer_size, const std::vector<DirectionDistance::Direction> &directions,
 	          const float weighted_moving_average_alpha = DEFAULT_WEIGHTED_MOVING_AVERAGE_ALPHA) :
 			k_name(name) {
-		for (const Category::Direction &direction : directions) {
+		for (const DirectionDistance::Direction &direction : directions) {
 			_directionsDistances.insert(std::make_pair(direction,
-										new DirectionDistance(Category::getNameFromDirection(direction),
+										new DirectionDistance(DirectionDistance::getNameFromDirection(direction),
 										distances_buffer_size, weighted_moving_average_alpha)));
 			copyMap.insert(std::make_pair(direction, -1.0));
 		}
@@ -30,7 +30,7 @@ public:
 		}
 	};
 
-	void putSensorDistance(Category::Direction direction, const float distance) {
+	void putSensorDistance(DirectionDistance::Direction direction, const float distance) {
 		_directionsDistances[direction]->pushDistance(distance);
 	};
 
@@ -51,47 +51,47 @@ public:
 
 protected:
 
-	std::map<Category::Direction, float> getMeanSensorDistances() const {
-		std::map<Category::Direction, float> copy_assigned_tmp_map = copyMap;
-		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+	std::map<DirectionDistance::Direction, float> getMeanSensorDistances() const {
+		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
+		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
 			it->second = _directionsDistances.at(it->first)->getMeanDistance();
 		}
-		return copy_assigned_tmp_map;
+		return tmpMap;
 	};
 
-	std::map<Category::Direction, float> getMinSensorDistances() const {
-		std::map<Category::Direction, float> copy_assigned_tmp_map = copyMap;
-		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+	std::map<DirectionDistance::Direction, float> getMinSensorDistances() const {
+		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
+		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
 			it->second = _directionsDistances.at(it->first)->getMinDistance();
 		}
-		return copy_assigned_tmp_map;
+		return tmpMap;
 	};
 
-	std::map<Category::Direction, float> getMaxSensorDistances() const {
-		std::map<Category::Direction, float> copy_assigned_tmp_map = copyMap;
-		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+	std::map<DirectionDistance::Direction, float> getMaxSensorDistances() const {
+		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
+		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
 			it->second = _directionsDistances.at(it->first)->getMaxDistance();;
 		}
-		return copy_assigned_tmp_map;
+		return tmpMap;
 	};
 
-	std::map<Category::Direction, float> getWeightedMovingAverageSensorDistances() const {
-		std::map<Category::Direction, float> copy_assigned_tmp_map = copyMap;
-		for (auto it = copy_assigned_tmp_map.begin(); it != copy_assigned_tmp_map.end(); ++it) {
+	std::map<DirectionDistance::Direction, float> getWeightedMovingAverageSensorDistances() const {
+		std::map<DirectionDistance::Direction, float> tmpMap = copyMap;
+		for (auto it = tmpMap.begin(); it != tmpMap.end(); ++it) {
 			it->second = _directionsDistances.at(it->first)->getMovingAverageDistance();;
 		}
-		return copy_assigned_tmp_map;
+		return tmpMap;
 	};
 
 private:
 	const char *k_name;
-	std::map<Category::Direction, DirectionDistance*> _directionsDistances;
-	std::map<Category::Direction, float> copyMap;
+	std::map<DirectionDistance::Direction, DirectionDistance*> _directionsDistances;
+	std::map<DirectionDistance::Direction, float> copyMap;
 };
 
 class RuleBasedMotionStateRoboPilot : public RoboPilot {
 public:
-	RuleBasedMotionStateRoboPilot(const std::vector<Category::Direction> &directions);
+	RuleBasedMotionStateRoboPilot(const std::vector<DirectionDistance::Direction> &directions);
 
 	~RuleBasedMotionStateRoboPilot();
 

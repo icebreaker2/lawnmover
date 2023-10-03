@@ -69,6 +69,14 @@ public:
 		}
 	};
 
+private:
+	Category() = delete;
+
+	~Category() = delete;
+};
+
+class DirectionDistance {
+public:
 	enum Direction {
 		FRONT,
 		FRONT_LEFT,
@@ -106,19 +114,12 @@ public:
 				return "<unknown>";
 		}
 	};
-private:
-	Category() = delete;
 
-	~Category() = delete;
-};
-
-class DirectionDistance {
-public:
 	DirectionDistance(const char *name, const int buffer_size, const float weightedMovingAverageAlpha) :
 		k_name(name), k_buffer_size(buffer_size), k_weightedMovingAverageAlpha(weightedMovingAverageAlpha) {
 		const float averageDefaultDistance = CLOSE_RANGE_LIMIT;
-		SerialLogger::info("Creating %s distance buffers with size %d and add moving avg distances map entry with "
-							"default of %d centimeters", name, k_buffer_size, averageDefaultDistance);
+		SerialLogger::info("Creating %s distance buffer with size %d and intial default of %f centimeters",
+							name, k_buffer_size, averageDefaultDistance);
 		// reserve space for the vector
 		_distances.reserve(k_buffer_size);
 		// fill initial values of weighted moving average and distances vector

@@ -89,18 +89,18 @@ protected:
             const float new_distance = (duration_microseconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f;
             SerialLogger::trace(F("UltrasonicSensor %d has distance update: new %f vs. old %f"),
                                   k_id, new_distance, _latestDistance);
-            weightNewDistance(new_distance);
+            updateDistance(new_distance);
         } else {
             SerialLogger::warn(F("No txPin set. Cannot measure latest distance from ultrasonic response "
                                  "for UltrasonicSensor %d."), k_id);
         }
     };
 
-	float weightNewDistance(const float new_distance) {
+	float updateDistance(const float new_distance) {
 		const char *sensorName = SpiCommands::getNameFromId(k_id);
-        _latestDistance = (_latestDistance + new_distance) / 2.0f;
-        SerialLogger::trace(F("Setting distance of sensor=%s with id %d at rx pin %d to %f/%f"),
-			                   sensorName, k_id, k_rxPin, _latestDistance, new_distance);
+        _latestDistance = new_distance;
+        SerialLogger::trace(F("Setting distance of sensor=%s with id %d at rx pin %d to %f"),
+			                   sensorName, k_id, k_rxPin, _latestDistance);
 		return _latestDistance;
 	}
 

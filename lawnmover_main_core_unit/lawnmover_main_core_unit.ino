@@ -31,13 +31,13 @@ Esp32SpiMaster *esp32_spi_master = nullptr;
 const int restart_check_intervall = 1000;
 
 RoboPilot *_roboPilot = nullptr;
-const std::vector<Category::Direction> directions = {Category::Direction::FRONT, 
-                                                    Category::Direction::FRONT_LEFT, 
-                                                    Category::Direction::FRONT_RIGHT, 
-                                                    Category::Direction::LEFT, 
-                                                    Category::Direction::RIGHT, 
-                                                    Category::Direction::BACK_LEFT, 
-                                                    Category::Direction::BACK_RIGHT};
+const std::vector<DirectionDistance::Direction> directions = {DirectionDistance::Direction::FRONT,
+                                                    DirectionDistance::Direction::FRONT_LEFT,
+                                                    DirectionDistance::Direction::FRONT_RIGHT,
+                                                    DirectionDistance::Direction::LEFT,
+                                                    DirectionDistance::Direction::RIGHT,
+                                                    DirectionDistance::Direction::BACK_LEFT,
+                                                    DirectionDistance::Direction::BACK_RIGHT};
 
 void re_setup_spi_communication() {
 	// delete the master will tear down all slaves (inclusive their power supply) put into master

@@ -1,6 +1,6 @@
 #include "robo_pilot.h"
 
-RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot(const std::vector<Category::Direction> &directions) :
+RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot(const std::vector<DirectionDistance::Direction> &directions) :
 		RoboPilot("RuleBasedMotionStateRoboPilot", 5, directions) {
 	_errorMotion = new ErrorMotion();
 
@@ -45,9 +45,9 @@ RuleBasedMotionStateRoboPilot::~RuleBasedMotionStateRoboPilot() {
 
 MovementDecision RuleBasedMotionStateRoboPilot::makeMovementDecision() {
 	const char *last_name = _currentMotion->get_name();
-	const std::map<Category::Direction, float> &minDistances = getMinSensorDistances();
-	const std::map<Category::Direction, float> &maxDistances = getMaxSensorDistances();
-	const std::map<Category::Direction, float> &weightedMovingAvgDistances = getWeightedMovingAverageSensorDistances();
+	const std::map<DirectionDistance::Direction, float> &minDistances = getMinSensorDistances();
+	const std::map<DirectionDistance::Direction, float> &maxDistances = getMaxSensorDistances();
+	const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances = getWeightedMovingAverageSensorDistances();
 
 	_currentMotion = _currentMotion->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
 	if (_currentMotion == nullptr) {

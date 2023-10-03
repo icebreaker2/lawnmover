@@ -24,7 +24,7 @@ private:
 void UltrasonicSensorImpostor::updateLatestDistanceWithoutTx() {
 	const float new_distance = k_ultrasonicSensorSchedule[_iterator];
 	SerialLogger::info(F("Iterator: %d, distance: %f, sensor: %d"), _iterator, new_distance, getId());
-	weightNewDistance(new_distance);
+	updateDistance(new_distance);
 	_iterator = ++_iterator % k_scheduleEnd;
 }
 

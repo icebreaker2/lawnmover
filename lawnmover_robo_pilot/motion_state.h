@@ -50,9 +50,9 @@ public:
 	 * eligible by check and by max_iterations) or if both of them are not possible the fallbackState
 	 * @return
 	 */
-	virtual MotionState *getNextState(const std::map<Category::Direction, float> &minDistances,
-	                                  const std::map<Category::Direction, float> &maxDistances,
-	                                  const std::map<Category::Direction, float> &weightedMovingAvgDistances) {
+	virtual MotionState *getNextState(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                                  const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                                  const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) {
 		_self_iterations++;
 		if (_followUpState == nullptr) {
 			if ((k_max_self_iterations < 0 || _self_iterations <= k_max_self_iterations) &&
@@ -135,15 +135,15 @@ public:
 	 * @param weightedMovingAvgDistances The weighted moving averages of distances (configurable) for each direction.
 	 * @return Whether this state must be executed again or not by extra options.
 	 */
-	virtual bool delayedFollowUp(const std::map<Category::Direction, float> &minDistances,
-	                             const std::map<Category::Direction, float> &maxDistances,
-	                             const std::map<Category::Direction, float> &weightedMovingAvgDistances) const {
+	virtual bool delayedFollowUp(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                             const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                             const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const {
 		return _self_iterations <= k_min_self_iterations;
 	};
 
-	virtual bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                        const std::map<Category::Direction, float> &maxDistances,
-	                        const std::map<Category::Direction, float> &weightedMovingAvgDistances) const = 0;
+	virtual bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                        const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                        const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const = 0;
 
 protected:
 	const int k_min_self_iterations;
@@ -174,9 +174,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class IdleMotion : public MotionState {
@@ -186,9 +186,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class ForwardMotion : public MotionState {
@@ -199,7 +199,7 @@ public:
 		// nothing to do...
 	};
 
-	// TODO once added angle/azitmuth we need to take this value into account for the left, right speed to keep on the
+	// TODO once added heading/azitmuth we need to take this value into account for the left, right speed to keep on the
 	//  line. Therefore, we need to be able to modify the return value (maybe overwrite the getter) as well as being
 	//  able to set and reset an initial angle/azimuth once this state is used as currently active state. In addition,
 	//  we need to configure a tolerance within which we do nothing. We need pass this value once we return this state
@@ -214,9 +214,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class MidSpeedForwardMotion : public ForwardMotion {
@@ -227,9 +227,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class FullSpeedForwardMotion : public ForwardMotion {
@@ -240,9 +240,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class CollisionAvoidanceMotion : public MotionState {
@@ -257,9 +257,9 @@ public:
 		// nothing to do...
 	};
 
-	virtual bool delayedFollowUp(const std::map<Category::Direction, float> &minDistances,
-	                             const std::map<Category::Direction, float> &maxDistances,
-	                             const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override {
+	virtual bool delayedFollowUp(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                             const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                             const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override {
 		// TODO iterations are bad. We need to take the angle/azimuth difference from a starting angle/azimuth to the
 		//  current angle/azimuth into account (e. g. whether we performed a 90° turn already or are still on the line)
 		return _self_iterations <= k_max_self_iterations;
@@ -274,9 +274,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class RightTurnMotion : public CollisionAvoidanceMotion {
@@ -287,9 +287,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 class BackwardMotion : public CollisionAvoidanceMotion {
@@ -300,9 +300,9 @@ public:
 		// nothing to do...
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override;
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override;
 };
 
 
@@ -320,9 +320,9 @@ public:
 	 *
 	 * @return The next state based on this priority strategy
 	 */
-	MotionState *getNextState(const std::map<Category::Direction, float> &minDistances,
-	                          const std::map<Category::Direction, float> &maxDistances,
-	                          const std::map<Category::Direction, float> &weightedMovingAvgDistances) override {
+	MotionState *getNextState(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                          const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                          const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) override {
 		if (_fallbackState == nullptr) {
 			return nullptr;
 		} else {
@@ -335,9 +335,9 @@ public:
 		}
 	};
 
-	bool isEligible(const std::map<Category::Direction, float> &minDistances,
-	                const std::map<Category::Direction, float> &maxDistances,
-	                const std::map<Category::Direction, float> &weightedMovingAvgDistances) const override {
+	bool isEligible(const std::map<DirectionDistance::Direction, float> &minDistances,
+	                const std::map<DirectionDistance::Direction, float> &maxDistances,
+	                const std::map<DirectionDistance::Direction, float> &weightedMovingAvgDistances) const override {
 		if (_fallbackState == nullptr) {
 			return false;
 		} else {
