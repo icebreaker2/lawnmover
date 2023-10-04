@@ -34,14 +34,14 @@ public:
 	};
 
 	void printWeightedMovingAverageDistances() const {
-			Serial.print(F("MovingAverages -> "));
-			for (auto it = _directionsDistances.begin(); it != _directionsDistances.end(); ++it) {
-				Serial.print(it->second->getName());
-				Serial.print(F(":"));
-				Serial.print(it->second->getMovingAverageDistance());
-				Serial.print(F(", "));
-			}
-			Serial.println();
+		Serial.print(F("MovingAverages -> "));
+		for (auto it = _directionsDistances.begin(); it != _directionsDistances.end(); ++it) {
+			Serial.print(it->second->getName());
+			Serial.print(F(":"));
+			Serial.print(it->second->getMovingAverageDistance());
+			Serial.print(F(", "));
+		}
+		Serial.println();
 	};
 
 	virtual MovementDecision makeMovementDecision() = 0;

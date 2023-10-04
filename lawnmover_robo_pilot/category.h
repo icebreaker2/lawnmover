@@ -14,12 +14,6 @@
 #define CLOSE_RANGE_LIMIT (float) MAX_DISTANCE * CLOSE_RANGE_PERCENTAGE
 #define CRITICAL_RANGE_LIMIT (float) MAX_DISTANCE * CRITICAL_RANGE_PERCENTAGE
 
-const std::vector<DirectionDistance::Direction> create_default_directions() {
-	return {DirectionDistance::Direction::FRONT, DirectionDistance::Direction::FRONT_LEFT,
-			DirectionDistance::Direction::FRONT_RIGHT, DirectionDistance::Direction::LEFT,
-			DirectionDistance::Direction::RIGHT, DirectionDistance::Direction::BACK_LEFT,
-			DirectionDistance::Direction::BACK_RIGHT};
-}
 
 class DirectionDistance {
 public:
@@ -91,6 +85,11 @@ public:
 				return "<unknown>";
 		}
 	};
+
+	static const std::vector<Direction> create_default_directions() {
+		return {Direction::FRONT, Direction::FRONT_LEFT, Direction::FRONT_RIGHT, Direction::LEFT, Direction::RIGHT,
+				Direction::BACK_LEFT, Direction::BACK_RIGHT};
+	}
 
 	DirectionDistance(const char *name, const int buffer_size, const float weightedMovingAverageAlpha) :
 		k_name(name), k_buffer_size(buffer_size), k_weightedMovingAverageAlpha(weightedMovingAverageAlpha) {

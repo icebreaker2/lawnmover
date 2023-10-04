@@ -31,8 +31,9 @@ ESP32_PS4_Controller *esp32Ps4Ctrl = nullptr;
 Esp32SpiMaster *esp32_spi_master = nullptr;
 const int restart_check_interval = 1000;
 
-RoboPilot *_roboPilot = nullptr;
-const std::vector<DirectionDistance::Direction> directions = create_default_directions();
+RoboPilot *roboPilot = nullptr;
+Supervisor *supervisor = nullptr;
+const std::vector<DirectionDistance::Direction> directions = DirectionDistance::create_default_directions();
 
 void re_setup_spi_communication() {
 	// delete the master will tear down all slaves (inclusive their power supply) put into master
@@ -49,7 +50,7 @@ void re_setup_spi_communication() {
 			Esp32SpiMaster::put_free_id(engine_slave_id);
 		} else {
 			EngineSlave *spi_slave = new EngineSlave(spi_slave_handler, engine_slave_id, ENGINE_CONTROL_SS_PIN_BLUE,
-			                                         ENGINE_RESTART_PIN_PIN, esp32Ps4Ctrl, _roboPilot);
+			                                         ENGINE_RESTART_PIN_PIN, supervisor);
 			esp32_spi_master->put_slave(spi_slave);
 		}
 	} else {
@@ -65,7 +66,7 @@ void re_setup_spi_communication() {
 		} else {
 			ObstacleDetectionSlave *spi_slave = new ObstacleDetectionSlave(spi_slave_handler, obstacle_slave_id,
 			                                                               OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN,
-			                                                               OBSTACLE_DETECTION_RESTART_PIN_PIN, _roboPilot);
+			                                                               OBSTACLE_DETECTION_RESTART_PIN_PIN, roboPilot);
 			esp32_spi_master->put_slave(spi_slave);
 		}
 	} else {
@@ -78,7 +79,8 @@ void setup() {
 	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
 	esp32Ps4Ctrl = new ESP32_PS4_Controller(masterMac, _timer);
 
-	_roboPilot = new RuleBasedMotionStateRoboPilot(directions);
+	roboPilot = new RuleBasedMotionStateRoboPilot(directions);
+	supervisor = new Supervisor(esp32Ps4Ctrl, roboPilot);
 
 	_timer.every(restart_check_interval, [](void *) -> bool {
 		if (esp32_spi_master == nullptr || esp32_spi_master->stopped()) {
