@@ -7,7 +7,7 @@
 class Watchdog {
 public:
 
-	static Watchdog *getFromScheduled(const int validation_interval, const int valid_threshold,
+	static Watchdog *scheduled(const int validation_interval, const int valid_threshold,
 	                                  void (*safety_backup_routine)(), Timer<> &timer);
 
 	Watchdog(const int validation_interval, const int valid_threshold, void (*safety_backup_routine)()) :

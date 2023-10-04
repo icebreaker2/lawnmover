@@ -27,7 +27,8 @@ const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 2;
 // Debug
 const int DEBUG_PIN = 2; // is no PWM
 
-auto _timer = timer_create_default();
+// Create a timer object with default settings: millis resolution, TIMER_MAX_TASKS (=16) task slots, T = void *
+Timer<> _timer = timer_create_default();
 
 const int motor_spin_set_interval = 100;
 MotorService *_motorService;
@@ -36,7 +37,7 @@ MoverService *_moverService;
 
 const int k_watchdog_validation_interval = 1200;
 const int k_watchdog_valid_threshold = ENGINE_COMMANDS * EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS;
-Watchdog *_watchdog = Watchdog::getFromScheduled(k_watchdog_validation_interval, k_watchdog_valid_threshold,
+Watchdog *_watchdog = Watchdog::scheduled(k_watchdog_validation_interval, k_watchdog_valid_threshold,
                                                  [](void) -> bool {
 	                                                 _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND,
 	                                                                                      0);
@@ -75,17 +76,9 @@ void setup() {
 	                      k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands,
 	                      ENGINE_COMMANDS * COMMAND_FRAME_SIZE);
 
-	_timer.every(motor_spin_set_interval, [](void *) -> bool {
-		_motorService->spinMotor();
-		return true; // to repeat the action - false to stop
-	});
-
-	_timer.every(steering_set_interval, [](void *) -> bool {
-		_moverService->interpret_state();
-		return true; // to repeat the action - false to stop
-	});
-
-	SpiSlave::addDebugSlavePrinting(_timer, 1000);
+	_motorService->scheduleInterpretingState(_timer, motor_spin_set_interval);
+	_moverService->scheduleInterpretingState(_timer, steering_set_interval);
+	SpiSlave::scheduleBufferPrinting(_timer, 1000);
 
 	// debug pin always high
 	pinMode(DEBUG_PIN, OUTPUT);
@@ -94,7 +87,7 @@ void setup() {
 	// DEBUG START
 //     _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 255);
 //     _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, 255);
-//     _moverService->interpret_state();
+//     _moverService->interpretState();
 //   
 //     _motorService->startMotor();
 	// DEBUG END
@@ -138,5 +131,5 @@ void loop() {
 	// DEBUG END
 
 	// tick timers
-	auto ticks = _timer.tick();
+	_timer.tick<void>();
 }

@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <serial_logger.h>
 #include <spi_commands.h>
+#include <arduino_timer_uno.h>
 
 // TODO make MovementService
 #define MOVEMENT_DURATION 500
@@ -41,7 +42,14 @@ public:
 		}
 	};
 
-	void interpret_state();
+	void scheduleInterpretingState(Timer<> &timer, const int interval) {
+		timer.every(interval, [](MoverService *self) -> bool {
+			self->interpretState();
+			return true; // to repeat the action - false to stop
+		}, this);
+	};
+
+	void interpretState();
 
 private:
 	const int kLeftFwdPin;

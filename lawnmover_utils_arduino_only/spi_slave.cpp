@@ -217,7 +217,7 @@ void SpiSlave::reset() {
 	SerialLogger::info(F("SPI slave reset."));
 }
 
-void SpiSlave::addDebugSlavePrinting(Timer<> &timer, const int interval) {
+void SpiSlave::scheduleBufferPrinting(Timer<> &timer, const int interval) {
 	timer.every(interval, [](void *) -> bool {
 		if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG) || !_synchronized) {
 			Serial.print(F("RxBufferInput:"));

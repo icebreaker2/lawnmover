@@ -34,19 +34,24 @@ public:
 	};
 
 	void printWeightedMovingAverageDistances() const {
-		if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
-			Serial.print(F("MovingAverage of "));
+			Serial.print(F("MovingAverages -> "));
 			for (auto it = _directionsDistances.begin(); it != _directionsDistances.end(); ++it) {
 				Serial.print(it->second->getName());
-				Serial.print(F("is:"));
+				Serial.print(F(":"));
 				Serial.print(it->second->getMovingAverageDistance());
-				Serial.print(F(", of "));
+				Serial.print(F(", "));
 			}
 			Serial.println();
-		}
 	};
 
 	virtual MovementDecision makeMovementDecision() = 0;
+
+	MovementDecision getMovementDecision() {
+		if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
+			printWeightedMovingAverageDistances();
+		}
+		return makeMovementDecision();
+	};
 
 protected:
 	std::map<DirectionDistance::Direction, DirectionDistance*> _directionsDistances;

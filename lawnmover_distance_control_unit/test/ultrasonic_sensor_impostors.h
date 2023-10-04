@@ -30,13 +30,14 @@ void UltrasonicSensorImpostor::updateLatestDistanceWithoutTx() {
 
 class UltrasonicSensorImpostors : public UltrasonicSensors {
 public:
-	UltrasonicSensorImpostors(const int16_t ids[], const int amountSensors,
+	UltrasonicSensorImpostors(const int16_t ids[], const char *names[], const int amountSensors,
 	                          const int pulseMaxTimeoutMicroSeconds, const float **ultrasonicSensorsSchedules,
 	                          const int16_t scheduleEnd) : UltrasonicSensors(amountSensors),
 	                                                       k_ultrasonicSensorsSchedules(ultrasonicSensorsSchedules) {
 		_ultrasonicSensors = (UltrasonicSensorImpostor **) malloc(k_amountSensors * sizeof(UltrasonicSensorImpostor));
 		for (int i = 0; i < k_amountSensors; i++) {
-			_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensorImpostor(ids[i], pulseMaxTimeoutMicroSeconds,
+			_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensorImpostor(ids[i], name,
+																					pulseMaxTimeoutMicroSeconds,
 			                                                                        k_ultrasonicSensorsSchedules[i],
 			                                                                        scheduleEnd);
 		}
@@ -47,7 +48,7 @@ public:
 		delete k_ultrasonicSensorsSchedules;
 	};
 
-	static UltrasonicSensorImpostors *getFromScheduled(const int rxPins[], const int16_t ids[],
+	static UltrasonicSensorImpostors *scheduled(const int rxPins[], const int16_t ids[],
 	                                                   const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
 	                                                   Timer<> &timer, const float **ultrasonicSensorsSchedules,
 	                                                   const int16_t scheduleEnd);
@@ -56,11 +57,11 @@ private:
 	const float **k_ultrasonicSensorsSchedules;
 };
 
-UltrasonicSensorImpostors *UltrasonicSensorImpostors::getFromScheduled(
-		const int rxPins[], const int16_t ids[], const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
+UltrasonicSensorImpostors *UltrasonicSensorImpostors::scheduled(
+		const int rxPins[], const int16_t ids[], const char *names[], const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
 		Timer<> &timer, const float **ultrasonicSensorsSchedules, const int16_t scheduleEnd) {
 	UltrasonicSensorImpostors *ultrasonicSensors = new UltrasonicSensorImpostors(
-			ids, amountSensors, pulseMaxTimeoutMicroSeconds, ultrasonicSensorsSchedules, scheduleEnd);
+			ids, names, amountSensors, pulseMaxTimeoutMicroSeconds, ultrasonicSensorsSchedules, scheduleEnd);
 	UltrasonicSensors::schedule(timer, ultrasonicSensors);
 	return ultrasonicSensors;
 }

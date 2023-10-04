@@ -1,9 +1,10 @@
 #include "ultrasonic_sensors.h"
 
-UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
-                                                       const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-                                                       Timer<> &timer, const int updateFrequencyMS) {
-	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, amountSensors,
+UltrasonicSensors *UltrasonicSensors::scheduled(const int txPin, const int rxPins[], const int16_t ids[],
+												const char *names[], const int amountSensors,
+												const int pulseMaxTimeoutMicroSeconds, Timer<> &timer,
+												const int updateFrequencyMS) {
+	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, names, amountSensors,
 	                                                             pulseMaxTimeoutMicroSeconds);
     if (2*(pulseMaxTimeoutMicroSeconds / 1000.0) > updateFrequencyMS) {
         SerialLogger::error(F("Cannot add UltrasonicSensors schedule. The update frequency every %d milliseconds is "
@@ -34,8 +35,9 @@ UltrasonicSensors::UltrasonicSensors(const int amountSensors) : k_amountSensors(
 }
 
 
-UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int16_t ids[], const int amountSensors,
-                                     const int pulseMaxTimeoutMicroSeconds) : UltrasonicSensors(amountSensors) {
+UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int16_t ids[], const char *names[],
+									 const int amountSensors, const int pulseMaxTimeoutMicroSeconds) :
+									 UltrasonicSensors(amountSensors) {
 
 	_ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
 	int16_t ids_check[k_amountSensors] = {-1};
@@ -44,6 +46,7 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 	for (int i = 0; i < k_amountSensors; i++) {
 		const int rxPin = rxPins[i];
 		const int16_t id = ids[i];
+		const char *name = names[i];
 		SerialLogger::info(F("Creating sensor %d/%d with rxPin=%d and id=%d"), i + 1, k_amountSensors, rxPin, id);
 
 		bool duplicate = false;
@@ -60,7 +63,7 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 			ids_check[i] = id;
 			rxPins_check[i] = rxPin;
 			if (rxPin <= MAX_ARDUINO_PINS && rxPin >= 2) {
-				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, txPin, rxPin,
+				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, name, txPin, rxPin,
 				                                                                pulseMaxTimeoutMicroSeconds);
 			} else {
 				SerialLogger::warn(F("Cannot add sensor %d/%d at rx pin %d which is out of range. Max Pin is %d. "

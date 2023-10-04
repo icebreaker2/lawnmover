@@ -11,7 +11,7 @@ public:
 	                        bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
 	                        const int amount_data_request_command_callbacks, const int buffer_length);
 
-	static void addDebugSlavePrinting(Timer<> &timer, const int interval);
+	static void scheduleBufferPrinting(Timer<> &timer, const int interval);
 
 	static void reset();
 

@@ -7,7 +7,7 @@ MotorService::MotorService(const int motorPin) :
 
 	pinMode(kMotorPin, OUTPUT);
 	stopMotor();
-    spinMotor();
+    interpretState();
 }
 
 MotorService::~MotorService() {
@@ -22,6 +22,7 @@ bool MotorService::set_rotation_speed(const int16_t id, const int16_t rotation_s
 	// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate
 	// SerialLogger::debug("Inspecting motor speed with id %d and value %d", id, rotation_speed);
 	if (id == MOTOR_SPEED_COMMAND) {
+        _last_rotation_speed = _rotation_speed;
 		_rotation_speed = rotation_speed;
 		return true;
 	} else {
@@ -39,10 +40,12 @@ void MotorService::stopMotor() {
     set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
 }
 
-void MotorService::spinMotor() {
+void MotorService::interpretState() {
 	if (_rotation_speed > 10) {
-		SerialLogger::debug(F("Spinning motor with %d/%d"), _rotation_speed, 255);
-		analogWrite(kMotorPin, _rotation_speed);
+        if (_rotation_speed != _last_rotation_speed) {
+            SerialLogger::debug(F("Spinning motor with %d/%d"), _rotation_speed, 255);
+            analogWrite(kMotorPin, _rotation_speed);
+        }
 	} else {
         SerialLogger::trace(F("Rotation speed was below threshold (%d/10). Stop motor spinning."), _rotation_speed);
 		stopMotor();

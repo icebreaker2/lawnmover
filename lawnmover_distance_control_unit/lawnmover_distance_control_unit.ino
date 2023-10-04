@@ -29,10 +29,12 @@ const int LED_BUNDLE_3 = A2;
 // Note: Order matters. We alternate rear and front to reduce risiking receiving the echo of a previous tx if sensoring_frequency_delay was choosen too thin.
 const int sensorsRxPinList[] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_LEFT, ULTRA_RX_FRONT, ULTRA_RX_RIGHT, ULTRA_RX_REAR_LEFT,
                                 ULTRA_RX_FRONT_RIGHT};
-const int sensorsSpiIdList[] = {OBSTACLE_FRONT_LEFT_COMMAND, OBSTACLE_BACK_RIGHT_COMMAND, OBSTACLE_LEFT_COMMAND, OBSTACLE_FRONT_COMMAND,
+const int sensorsIdList[] = {OBSTACLE_FRONT_LEFT_COMMAND, OBSTACLE_BACK_RIGHT_COMMAND, OBSTACLE_LEFT_COMMAND, OBSTACLE_FRONT_COMMAND,
                                 OBSTACLE_RIGHT_COMMAND, OBSTACLE_BACK_LEFT_COMMAND, OBSTACLE_FRONT_RIGHT_COMMAND};
+const char *sensorsNameList[] = {"FRONT_LEFT", "BACK_RIGHT", "LEFT", "FRONT", "RIGHT", "BACK_LEFT", "FRONT_RIGHT"};
 
-auto _timer = timer_create_default();
+// Create a timer object with default settings: millis resolution, TIMER_MAX_TASKS (=16) task slots, T = void *
+Timer<> _timer = timer_create_default();
 
 UltrasonicSensors *_ultrasonicSensors;
 Led3Service *_ledService;
@@ -60,19 +62,19 @@ void setup() {
 
 	_ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
 
-	_ultrasonicSensors = UltrasonicSensors::getFromScheduled(ULTRA_TX_PIN, sensorsRxPinList, sensorsSpiIdList,
+	_ultrasonicSensors = UltrasonicSensors::scheduled(ULTRA_TX_PIN, sensorsRxPinList, sensorsIdList, sensorsNameList,
 	                                                         AMOUNT_ULTRA_SENSORS, PULSE_MAX_TIMEOUT_MICROSECONDS,
 	                                                         _timer);
 
 	if (SerialLogger::isBelow(SerialLogger::DEBUG)) {
-		_ultrasonicSensors->addStatusPrinting(_timer, DEBUG_PRINT_DISTANCE_DELAY);
+		_ultrasonicSensors->scheduleDistancePrinting(_timer, DEBUG_PRINT_DISTANCE_DELAY);
 	}
 
 	SpiSlave::ISRfromArgs(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands,
 	                      k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands,
 	                      OBSTACLE_COMMANDS * COMMAND_FRAME_SIZE);
 
-	SpiSlave::addDebugSlavePrinting(_timer, 1000);
+	SpiSlave::scheduleBufferPrinting(_timer, 1000);
 }
 
 void loop() {

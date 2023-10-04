@@ -12,18 +12,20 @@
 
 class UltrasonicSensor {
 public:
-	UltrasonicSensor(const int16_t id, const int pulseMaxTimeoutMicroSeconds) :
-			UltrasonicSensor(id, -1, -1, pulseMaxTimeoutMicroSeconds) {
+	UltrasonicSensor(const int16_t id, const char *name, const int pulseMaxTimeoutMicroSeconds) :
+			UltrasonicSensor(id, name, -1, -1, pulseMaxTimeoutMicroSeconds) {
 		// nothing to do here...
 	};
 
-    UltrasonicSensor(const int16_t id, const int rxPin, const int pulseMaxTimeoutMicroSeconds) :
-			UltrasonicSensor(id, -1, rxPin, pulseMaxTimeoutMicroSeconds) {
+    UltrasonicSensor(const int16_t id, const char *name, const int rxPin, const int pulseMaxTimeoutMicroSeconds) :
+			UltrasonicSensor(id, name, -1, rxPin, pulseMaxTimeoutMicroSeconds) {
 		// nothing to do here...
 	};
 
-	UltrasonicSensor(const int16_t id, const int txPin, const int rxPin, const int pulseMaxTimeoutMicroSeconds) :
-			k_id(id), k_txPin(txPin), k_rxPin(rxPin), k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
+	UltrasonicSensor(const int16_t id, const char *name, const int txPin, const int rxPin,
+					const int pulseMaxTimeoutMicroSeconds) :
+			k_id(id), k_name(name), k_txPin(txPin), k_rxPin(rxPin),
+			k_pulseMaxTimeoutMicroSeconds(pulseMaxTimeoutMicroSeconds),
 			k_maxDistance((k_pulseMaxTimeoutMicroSeconds / ULTRASONIC_CM_PER_MICROSECOND_AIR) / 2.0f) {
 		SerialLogger::debug(F("Initiating ultrasonic sensor %s on rxPin=%d with id=%d with txPin=%d and max "
 		                      "possible distance at %f"), SpiCommands::getNameFromId(id), k_rxPin, k_id, k_txPin,
@@ -53,6 +55,10 @@ public:
 
 	int16_t getId() const {
 		return k_id;
+	};
+
+	const char *getName() const {
+		return k_name;
 	};
 
 	float getLatestDistance() const {
@@ -108,6 +114,7 @@ private:
 	const int k_txPin;
 	const int k_rxPin;
 	const int16_t k_id;
+	const char *k_name;
 	const int k_pulseMaxTimeoutMicroSeconds;
 	const float k_maxDistance;
 	// Note: Assuming there is one writer and multiple readers, i. e. volatile is enough
@@ -117,14 +124,14 @@ private:
 class UltrasonicSensors {
 public:
 
-	static UltrasonicSensors *getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
-	                                           const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-	                                           Timer<> &timer, const int updateFrequencyMS = SENSORING_FREQUENCY_DELAY);
+	static UltrasonicSensors *scheduled(const int txPin, const int rxPins[], const int16_t ids[], const char *names[],
+	                                    const int amountSensors, const int pulseMaxTimeoutMicroSeconds, Timer<> &timer,
+	                                    const int updateFrequencyMS = SENSORING_FREQUENCY_DELAY);
 
 	static void schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors, const int updateFrequencyMS);
 
-	UltrasonicSensors(const int txPin, const int *rxPins, const int16_t ids[], const int amountSensors,
-	                  const int pulseMaxTimeoutMicroSeconds);
+	UltrasonicSensors(const int txPin, const int *rxPins, const int16_t ids[], const char *names[],
+					  const int amountSensors, const int pulseMaxTimeoutMicroSeconds);
 
 	UltrasonicSensors(const int amountSensors);
 
@@ -134,21 +141,21 @@ public:
 		return k_amountSensors;
 	};
 
-	void addStatusPrinting(Timer<> &timer, const int frequency) const {
+	void scheduleDistancePrinting(Timer<> &timer, const int frequency) const {
 		timer.every(frequency, [](UltrasonicSensors *ultrasonicSensors) -> bool {
 			if (ultrasonicSensors == nullptr) {
 				SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
 				return false;
 			} else {
-			    // TODO this depends on the configuration....we should fix this to work dynamically
-				SerialLogger::debug(F("F: %f, FR: %f, FL: %f, L: %f, R: %f, BR: %f, BL: %f"),
-				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_COMMAND),
-				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_RIGHT_COMMAND),
-				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_FRONT_LEFT_COMMAND),
-                                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_LEFT_COMMAND),
-				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_RIGHT_COMMAND),
-				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_BACK_RIGHT_COMMAND),
-				                   ultrasonicSensors->getLatestDistanceFromSensorById(OBSTACLE_BACK_LEFT_COMMAND));
+				const UltrasonicSensor **sensors = ultrasonicSensors->getSensors();
+				for (int i = 0; i < ultrasonicSensors->getAmountSensors(); i++) {
+					const UltrasonicSensor *ultrasonicSensor = sensors[i];
+					Serial.print(ultrasonicSensor->getName());
+					Serial.print(F(": "));
+					Serial.print(ultrasonicSensor->getLatestDistance());
+					Serial.print(F(", "));
+				}
+				Serial.println();
 				return true; // to repeat the action - false to stop
 			}
 		}, this);
@@ -164,6 +171,11 @@ public:
 
 
 protected:
+
+	const UltrasonicSensor **getSensors() const {
+		return _ultrasonicSensors;
+	};
+
 	const int k_amountSensors;
 	UltrasonicSensor **_ultrasonicSensors;
 	int _registeredSensors = 0;

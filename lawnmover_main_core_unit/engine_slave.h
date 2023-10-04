@@ -22,10 +22,7 @@ public:
 		                                                            _esp32Ps4Ctrl->getRStickY(),
 		                                                            _esp32Ps4Ctrl->getRtValue()) :
 		                                           (_roboPilot == nullptr ?
-		                                            MovementDecision(0, 0, 0) : _roboPilot->makeMovementDecision());
-		if (!_esp32Ps4Ctrl->isConnected()) {
-			_roboPilot->printWeightedMovingAverageDistances();
-		}
+		                                            MovementDecision(0, 0, 0) : _roboPilot->getMovementDecision());
 
 		SpiCommands::putCommandToBuffer(LEFT_WHEEL_STEERING_COMMAND, movementDecision.get_left_wheel_power(),
 		                                tx_buffer);

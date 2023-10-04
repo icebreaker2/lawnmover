@@ -77,7 +77,7 @@ void MoverService::changeRightPwmRate(const int rate) {
 	}
 }
 
-void MoverService::interpret_state() {
+void MoverService::interpretState() {
 	const bool left_forward = left_wheels_power >= 0;
 	const bool right_forward = right_wheels_power >= 0;
 	const int left_rate = left_wheels_power < 0 ? left_wheels_power * -1 : left_wheels_power;
@@ -111,7 +111,6 @@ void MoverService::interpret_state() {
     		}
     	}
     }
-
 
 	changeLeftPwmRate(left_rate);
 	changeRightPwmRate(right_rate);

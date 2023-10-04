@@ -43,7 +43,7 @@ Esp32SpiMaster::~Esp32SpiMaster() {
 }
 
 /**
-    Method to add slave communication to timer given the intervall, where suppliers yield the
+    Method to add slave communication to timer given the interval, where suppliers yield the
     commands to send and consumer consumes the results read from slave. Consumer must respond
     with if received values were valid (true) or not (false).
 

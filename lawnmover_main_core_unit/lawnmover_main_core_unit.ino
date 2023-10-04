@@ -21,23 +21,18 @@ const int ENGINE_RESTART_PIN_PIN = 13;
 const int OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN = 12;
 const int OBSTACLE_DETECTION_RESTART_PIN_PIN = 14;
 
-const int spi_schedule_next_slave_commands_intervall = 165;
+const int spi_schedule_next_slave_commands_interval = 165;
 
+// Create a timer object with default settings: millis resolution, TIMER_MAX_TASKS (=16) task slots, T = void *
+Timer<> _timer = timer_create_default();
 // General processing + PS4 (Bluetooth) settings
-auto _timer = timer_create_default();
 const char *masterMac = "ac:89:95:b8:7f:be";
 ESP32_PS4_Controller *esp32Ps4Ctrl = nullptr;
 Esp32SpiMaster *esp32_spi_master = nullptr;
-const int restart_check_intervall = 1000;
+const int restart_check_interval = 1000;
 
 RoboPilot *_roboPilot = nullptr;
-const std::vector<DirectionDistance::Direction> directions = {DirectionDistance::Direction::FRONT,
-                                                    DirectionDistance::Direction::FRONT_LEFT,
-                                                    DirectionDistance::Direction::FRONT_RIGHT,
-                                                    DirectionDistance::Direction::LEFT,
-                                                    DirectionDistance::Direction::RIGHT,
-                                                    DirectionDistance::Direction::BACK_LEFT,
-                                                    DirectionDistance::Direction::BACK_RIGHT};
+const std::vector<DirectionDistance::Direction> directions = create_default_directions();
 
 void re_setup_spi_communication() {
 	// delete the master will tear down all slaves (inclusive their power supply) put into master
@@ -76,16 +71,16 @@ void re_setup_spi_communication() {
 	} else {
 		SerialLogger::error(F("Cannot add a new obstacle detection slave to. Got no free id from Esp32SpiMaster"));
 	}
-	esp32_spi_master->schedule(spi_schedule_next_slave_commands_intervall, _timer);
+	esp32_spi_master->schedule(spi_schedule_next_slave_commands_interval, _timer);
 }
 
 void setup() {
-	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::INFO);
+	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
 	esp32Ps4Ctrl = new ESP32_PS4_Controller(masterMac, _timer);
 
 	_roboPilot = new RuleBasedMotionStateRoboPilot(directions);
 
-	_timer.every(restart_check_intervall, [](void *) -> bool {
+	_timer.every(restart_check_interval, [](void *) -> bool {
 		if (esp32_spi_master == nullptr || esp32_spi_master->stopped()) {
 			re_setup_spi_communication();
 		}
@@ -96,5 +91,5 @@ void setup() {
 
 void loop() {
 	// tick timers
-	auto ticks = _timer.tick();
+	_timer.tick<void>();
 }
