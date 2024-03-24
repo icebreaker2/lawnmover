@@ -2,7 +2,6 @@
 #include <serial_logger.h>
 #include <spi_slave.h>
 
-#include "src/led.h"
 #include "src/ultrasonic_sensors.h"
 
 const int SCK_PIN_ORANGE = 13; // D13 = pin19 = PortB.5
@@ -22,9 +21,6 @@ const int ULTRA_TX_PIN = 7;
 const int PULSE_MAX_TIMEOUT_MICROSECONDS = 6000; // 1m distance
 const int DEBUG_PRINT_DISTANCE_DELAY = 1000;
 
-const int LED_BUNDLE_1 = A0;
-const int LED_BUNDLE_2 = A1;
-const int LED_BUNDLE_3 = A2;
 
 // Note: Order matters. We alternate rear and front to reduce risiking receiving the echo of a previous tx if sensoring_frequency_delay was choosen too thin.
 const int sensorsRxPinList[] = {ULTRA_RX_FRONT_LEFT, ULTRA_RX_REAR_RIGHT, ULTRA_RX_LEFT, ULTRA_RX_FRONT, ULTRA_RX_RIGHT, ULTRA_RX_REAR_LEFT,
@@ -37,7 +33,6 @@ const char *sensorsNameList[] = {"FRONT_LEFT", "BACK_RIGHT", "LEFT", "FRONT", "R
 Timer<> _timer = timer_create_default();
 
 UltrasonicSensors *_ultrasonicSensors;
-Led3Service *_ledService;
 
 int k_amount_data_push_commands = 0;
 bool (*_data_push_commands[])(int16_t, int16_t) = {};
@@ -59,8 +54,6 @@ bool (*_data_request_commands[])(int16_t, uint8_t *) = {
 
 void setup() {
 	SerialLogger::init(9600, SerialLogger::LOG_LEVEL::DEBUG);
-
-	_ledService = new Led3Service(LED_BUNDLE_1, LED_BUNDLE_2, LED_BUNDLE_3, _timer);
 
 	_ultrasonicSensors = UltrasonicSensors::scheduled(ULTRA_TX_PIN, sensorsRxPinList, sensorsIdList, sensorsNameList,
 	                                                         AMOUNT_ULTRA_SENSORS, PULSE_MAX_TIMEOUT_MICROSECONDS,
