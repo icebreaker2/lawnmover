@@ -11,7 +11,7 @@ void toggle(const int pin) {
 }
 
 ESP32_PS4_Controller::ESP32_PS4_Controller(const char *masterMac, Timer<> &timer, const unsigned long timerDelay,
-										   const int readyPin, const int connectedPin, const int commandReceivedPin) :
+                                           const int readyPin, const int connectedPin, const int commandReceivedPin) :
 		k_masterMac(masterMac), k_timerDelay(timerDelay), k_readyPin(), k_connectedPin(connectedPin),
 		k_commandReceivedPin(commandReceivedPin) {
 

@@ -7,6 +7,7 @@ https://www.arduino.cc/en/reference/SPI
 * Arduino (Battery Active + Motor Active + LED Active Pin + LED + PWM + MotorCtrl connected)
   * At 8V 
   *
+* 3 LEDs per StepUp on external power supply
 
 ## Motor needs:
 * 116mA at 6v (laut Angabe)

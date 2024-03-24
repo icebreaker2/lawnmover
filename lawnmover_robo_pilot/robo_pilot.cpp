@@ -1,7 +1,7 @@
 #include "robo_pilot.h"
 
-RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot() :
-		RoboPilot("RuleBasedMotionStateRoboPilot", 10) {
+RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot(const std::vector<DirectionDistance::Direction> &directions) :
+		RoboPilot("RuleBasedMotionStateRoboPilot", 5, directions) {
 	_errorMotion = new ErrorMotion();
 
 	// Collision avoidance chaining
@@ -9,7 +9,8 @@ RuleBasedMotionStateRoboPilot::RuleBasedMotionStateRoboPilot() :
 	_leftTurnMotion = new LeftTurnMotion(nullptr, _backwardMotion);
 	_rightTurnMotion = new RightTurnMotion(nullptr, _backwardMotion);
 
-	_priorityStrategy = new PriorityStrategy(_leftTurnMotion, _rightTurnMotion);
+	std::vector < MotionState * > priorityFollowUpStates = {_leftTurnMotion, _rightTurnMotion, _backwardMotion};
+	_priorityStrategy = new PriorityStrategy(priorityFollowUpStates, _errorMotion);
 	_idleMotion = new IdleMotion(nullptr, _priorityStrategy);
 
 	// Cutting chaining
@@ -44,18 +45,17 @@ RuleBasedMotionStateRoboPilot::~RuleBasedMotionStateRoboPilot() {
 
 MovementDecision RuleBasedMotionStateRoboPilot::makeMovementDecision() {
 	const char *last_name = _currentMotion->get_name();
-	const std::map<Category::Direction, float> &minDistances = getMinSensorDistances();
-	const std::map<Category::Direction, float> &maxDistances = getMaxSensorDistances();
-	const std::map<Category::Direction, float> &weightedMovingAvgDistances = getWeightedMovingAverageSensorDistances();
 
-	_currentMotion = _currentMotion->getNextState(minDistances, maxDistances, weightedMovingAvgDistances);
+	_currentMotion = _currentMotion->getNextState(_directionsDistances);
 	if (_currentMotion == nullptr) {
 		_currentMotion = _idleMotion;
 		SerialLogger::error(F("MotionState chaining did not work and caused a next state that was nullptr. Last motion "
-							  "state was %s. Resetting to initial motion %s"), last_name, _currentMotion->get_name());
+		                      "state was %s. Resetting to initial motion %s"), last_name, _currentMotion->get_name());
 		return StopMovementDecision();
 	} else {
-		SerialLogger::debug(F("Switched MotionState from %s to %s"), last_name, _currentMotion->get_name());
+		if (strcmp(last_name, _currentMotion->get_name()) != 0) {
+			SerialLogger::info(F("Switched MotionState from %s to %s"), last_name, _currentMotion->get_name());
+		}
 		const MovementDecision &movementDecision = MovementDecision::fromState(*_currentMotion);
 		return movementDecision;
 	}

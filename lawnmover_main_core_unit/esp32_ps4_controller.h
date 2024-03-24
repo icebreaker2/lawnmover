@@ -7,7 +7,7 @@
 class ESP32_PS4_Controller {
 public:
 	ESP32_PS4_Controller(const char *masterMac, Timer<> &timer, const unsigned long timerDelay = 100,
-						 const int readyPin = 2, const int connectedPin = 2, const int commandReceivedPin = 2);
+	                     const int readyPin = 2, const int connectedPin = 2, const int commandReceivedPin = 2);
 
 	~ESP32_PS4_Controller();
 

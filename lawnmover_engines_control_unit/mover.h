@@ -4,59 +4,71 @@
 #include <Arduino.h>
 #include <serial_logger.h>
 #include <spi_commands.h>
+#include <arduino_timer_uno.h>
 
 // TODO make MovementService
 #define MOVEMENT_DURATION 500
 
 class MoverService {
-    public:
-        MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
-                     const int rightFwdPin, const int rightBwdPin);
-        ~MoverService();
+public:
+	MoverService(const int leftFwdPin, const int leftBwdPin, const int leftPwmPin, const int rightPwmPin,
+	             const int rightFwdPin, const int rightBwdPin);
 
-        void printInit();
+	~MoverService();
 
-        void printState();
+	void printInit();
 
-        bool set_left_wheels_power(const int16_t id, const int16_t wheels_power) {
-            // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
-            // SerialLogger::debug("Inspecting left wheels power with id %d and value %d", id, wheels_power);
-            if (id == LEFT_WHEEL_STEERING_COMMAND) {
-                left_wheels_power = wheels_power;
-                return true;
-            } else {
-                return false;
-            }
-        };
+	void printState();
 
-        bool set_right_wheels_power(const int16_t id, const int16_t wheels_power) {
-            // Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate 
-            // SerialLogger::debug("Inspecting right wheels power with id %d and value %d", id, wheels_power);
-            if (id == RIGHT_WHEEL_STEERING_COMMAND) {
-                right_wheels_power = wheels_power;
-                return true;
-            } else {
-                return false;
-            }
-        };
+	bool set_left_wheels_power(const int16_t id, const int16_t wheels_power) {
+		// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate
+		// SerialLogger::debug("Inspecting left wheels power with id %d and value %d", id, wheels_power);
+		if (id == LEFT_WHEEL_STEERING_COMMAND) {
+			left_wheels_power = wheels_power;
+			return true;
+		} else {
+			return false;
+		}
+	};
 
-        void interpret_state();
-    private:
-        const int kLeftFwdPin;
-        const int kLeftBwdPin;
-        const int kLeftPwmPin;
-        const int kRightPwmPin;
-        const int kRightFwdPin;
-        const int kRightBwdPin;
+	bool set_right_wheels_power(const int16_t id, const int16_t wheels_power) {
+		// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI command callback depending on the logging baudrate
+		// SerialLogger::debug("Inspecting right wheels power with id %d and value %d", id, wheels_power);
+		if (id == RIGHT_WHEEL_STEERING_COMMAND) {
+			right_wheels_power = wheels_power;
+			return true;
+		} else {
+			return false;
+		}
+	};
 
-        volatile int left_wheels_power = 0;
-        volatile int right_wheels_power = 0;
+	void scheduleInterpretingState(Timer<> &timer, const int interval) {
+		timer.every(interval, [](MoverService *self) -> bool {
+			self->interpretState();
+			return true; // to repeat the action - false to stop
+		}, this);
+	};
 
-        void stopMovement();
+	void interpretState();
 
-        void changeLeftPwmRate(const int rate);
+private:
+	const int kLeftFwdPin;
+	const int kLeftBwdPin;
+	const int kLeftPwmPin;
+	const int kRightPwmPin;
+	const int kRightFwdPin;
+	const int kRightBwdPin;
 
-        void changeRightPwmRate(const int rate);
+	volatile int left_wheels_power = 0;
+	volatile int right_wheels_power = 0;
+    volatile int _last_left_wheels_power = 0;
+    volatile int _last_right_wheels_power = 0;
+    
+	void stopMovement();
+
+	void changeLeftPwmRate(const int rate);
+
+	void changeRightPwmRate(const int rate);
 };
 
 #endif // MOVER_H

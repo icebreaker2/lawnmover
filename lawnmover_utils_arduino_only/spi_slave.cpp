@@ -19,10 +19,10 @@ int _amount_data_request_command_callbacks;
 bool (**_data_request_command_callbacks)(int16_t, uint8_t *);
 
 void SpiSlave::ISRfromArgs(const int sck_pin, const int miso_pin, const int mosi_pin, const int ss_pin,
-						   bool (*data_push_command_callbacks[])(int16_t, int16_t),
-						   const int amount_data_push_command_callbacks,
-						   bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
-						   const int amount_data_request_command_callbacks, const int buffer_length) {
+                           bool (*data_push_command_callbacks[])(int16_t, int16_t),
+                           const int amount_data_push_command_callbacks,
+                           bool (*data_request_command_callbacks[])(int16_t, uint8_t *),
+                           const int amount_data_request_command_callbacks, const int buffer_length) {
 	pinMode(sck_pin, INPUT);
 	pinMode(mosi_pin, INPUT);
 	pinMode(miso_pin, OUTPUT);
@@ -60,8 +60,8 @@ void SpiSlave::ISRfromArgs(const int sck_pin, const int miso_pin, const int mosi
 int _current_command_cursor = 0;
 uint8_t _current_command_id_bytes[COMMAND_FRAME_ID_SIZE];
 int16_t _current_command_id = -1;
-uint8_t _current_command_value_bytes[COMMAND_FRAME_VALUE_SIZE];
-bool _current_command_data_request = false;
+uint8_t _current_command_value_ring_buffer[COMMAND_FRAME_VALUE_SIZE];
+bool _current_command_data_request_filled = false;
 
 void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 	if (rx_byte == SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]) {
@@ -73,7 +73,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 				return;
 			} else {
 				SerialLogger::trace(F("Bad end-of-sequence-byte was %x != %x"), rx_byte,
-									SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
+				                    SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 			}
 		} else {
 			tx_byte = SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor];
@@ -82,7 +82,7 @@ void synchronize(const uint8_t rx_byte, uint8_t &tx_byte) {
 	} else {
 		_current_command_cursor = 0;
 		SerialLogger::trace(F("Bad sync-sequence-byte was %x != %x"), rx_byte,
-							SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
+		                    SpiCommands::COMMUNICATION_START_SEQUENCE[_current_command_cursor]);
 	}
 	_synchronized = false;
 }
@@ -105,7 +105,7 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 		if (_current_command_cursor == 0) {
 			// new command; new id but we need to set it at the beginning or the id cannot be used at interpretation
 			_current_command_id = -1;
-			_current_command_data_request = false;
+			_current_command_data_request_filled = false;
 		}
 		_current_command_id_bytes[_current_command_cursor] = rx_byte;
 		_current_command_cursor++;
@@ -122,18 +122,17 @@ bool process_partial_command(const uint8_t rx_byte, uint8_t &tx_byte) {
 				return false;
 			}
 			// inspect for data request commands
-			for (int i = 0; i < _amount_data_request_command_callbacks && !_current_command_data_request; i++) {
-				_current_command_data_request = (*_data_request_command_callbacks[i])(_current_command_id,
-																					  _current_command_value_bytes);
+			for (int i = 0; i < _amount_data_request_command_callbacks && !_current_command_data_request_filled; i++) {
+				_current_command_data_request_filled = (*_data_request_command_callbacks[i])(
+				_current_command_id, _current_command_value_ring_buffer);
 			}
 		}
-		if (_current_command_data_request) {
-			// This is a data request command and a callback filled the value buffer
-			write_byte = _current_command_value_bytes[_current_command_cursor - COMMAND_FRAME_ID_SIZE];
-		} else {
-			// This is a data push command and a callback will need the value bytes
-			_current_command_value_bytes[_current_command_cursor - COMMAND_FRAME_ID_SIZE] = rx_byte;
+		if (_current_command_data_request_filled) {
+			// This is also a data request command and a callback filled the value buffer
+			write_byte = _current_command_value_ring_buffer[_current_command_cursor - COMMAND_FRAME_ID_SIZE];
 		}
+		// In case any callback needs the value bytes later
+		_current_command_value_ring_buffer[_current_command_cursor - COMMAND_FRAME_ID_SIZE] = rx_byte;
 		tx_byte = write_byte;
 		_current_command_cursor++;
 	} else if (_current_command_cursor < COMMAND_FRAME_SIZE - COMMAND_SPI_RX_OFFSET) {
@@ -169,17 +168,17 @@ bool post_process_spi_interrupt_routine(const uint8_t rx_byte, const uint8_t tx_
 */
 template<typename V>
 void interpret_data_push_command(const int id, uint8_t *value_bytes, bool (*data_push_callbacks[])(int16_t, V),
-								 const int amount_data_push_callbacks) {
-	bool valid = false;
+                                 const int amount_data_push_callbacks) {
 	V value;
 	memcpy(&value, value_bytes, sizeof(value));
-	for (int i = 0; i < amount_data_push_callbacks && !valid; i++) {
-		valid = (*data_push_callbacks[i])(id, value);
+	bool processed = false;
+	for (int i = 0; i < amount_data_push_callbacks && !processed; i++) {
+		processed = (*data_push_callbacks[i])(id, value);
 	}
 
-	if (!valid) {
+	if (!processed && amount_data_push_callbacks > 0) {
 		// Logging (serial printing is faster) must be kept to an absolute minimum for this SPI routine depending on the logging baudrate.
-		SerialLogger::warn(F("Did not receive valid data push command. Cannot interpret value."));
+		SerialLogger::warn(F("Cannot interpret value. No push_callback could process data for id %i."), id);
 		_synchronized = false;
 	}
 }
@@ -194,11 +193,10 @@ ISR (SPI_STC_vect) {
 
 		if (_synchronized) {
 			if (process_partial_command(rx_byte, tx_byte) &
-				post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
-				if (!_current_command_data_request) {
-					interpret_data_push_command(_current_command_id, _current_command_value_bytes,
-												_data_push_command_callbacks, _amount_data_push_command_callbacks);
-				}
+			    post_process_spi_interrupt_routine(rx_byte, tx_byte)) {
+				// Once the command is complete, we can interpret received values if of interest by any push callbacks
+				interpret_data_push_command(_current_command_id, _current_command_value_ring_buffer,
+				                            _data_push_command_callbacks, _amount_data_push_command_callbacks);
 			}
 		} else {
 			synchronize(rx_byte, tx_byte);
@@ -207,7 +205,17 @@ ISR (SPI_STC_vect) {
 		}
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
-void SpiSlave::addDebugSlavePrinting(Timer<> &timer, const int interval) {
+
+void SpiSlave::reset() {
+	_current_command_cursor = 0;
+	_buffer_counter = _current_command_cursor;
+	_synchronized = false;
+	memset(_rx_buffer, 0, _commands_size * sizeof *_rx_buffer);
+	memset(_tx_buffer, 0, _commands_size * sizeof *_tx_buffer);
+	SerialLogger::info(F("SPI slave reset."));
+}
+
+void SpiSlave::scheduleBufferPrinting(Timer<> &timer, const int interval) {
 	timer.every(interval, [](void *) -> bool {
 		if (SerialLogger::isBelow(SerialLogger::LOG_LEVEL::DEBUG) || !_synchronized) {
 			Serial.print(F("RxBufferInput:"));

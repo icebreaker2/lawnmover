@@ -7,8 +7,8 @@
 class Watchdog {
 public:
 
-	static Watchdog *getFromScheduled(const int validation_interval, const int valid_threshold,
-									  void (*safety_backup_routine)(), Timer<> &timer);
+	static Watchdog *scheduled(const int validation_interval, const int valid_threshold,
+	                                  void (*safety_backup_routine)(), Timer<> &timer);
 
 	Watchdog(const int validation_interval, const int valid_threshold, void (*safety_backup_routine)()) :
 			k_validation_interval(validation_interval), k_valid_threshold(valid_threshold), _watchdog_counter(0) {
@@ -22,11 +22,11 @@ public:
 	bool validate() const {
 		if (_watchdog_counter < k_valid_threshold) {
 			SerialLogger::error(F("This is Watchdog. Did not receive enough commands (%d/%d) for some time. Stopping "
-								  "all engines"), _watchdog_counter, k_valid_threshold);
+			                      "all engines"), _watchdog_counter, k_valid_threshold);
 			return false;
 		} else {
 			SerialLogger::debug(F("This is the watchdog. Everything normal. Received enough commands (%d/%d)."),
-								_watchdog_counter, k_valid_threshold);
+			                    _watchdog_counter, k_valid_threshold);
 			return true;
 		}
 	}
@@ -39,8 +39,9 @@ public:
 		(*_safety_backup_routine)();
 	}
 
-	void incrementCounter() {
+	bool incrementCounter() {
 		_watchdog_counter++;
+		return true;
 	};
 
 	int getValidationInterval() const { return k_validation_interval; };

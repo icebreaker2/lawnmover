@@ -1,19 +1,23 @@
 #include "ultrasonic_sensors.h"
 
-void UltrasonicSensor::triggerTx(const int txPin) {
-	digitalWrite(txPin, LOW);
-	delayMicroseconds(2);
-	digitalWrite(txPin, HIGH);
-	delayMicroseconds(10);
-	digitalWrite(txPin, LOW);
+UltrasonicSensors *UltrasonicSensors::scheduled(const int txPin, const int rxPins[], const int16_t ids[],
+												const char *names[], const int amountSensors,
+												const int pulseMaxTimeoutMicroSeconds, Timer<> &timer,
+												const int updateFrequencyMS) {
+	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, names, amountSensors,
+	                                                             pulseMaxTimeoutMicroSeconds);
+    if (2*(pulseMaxTimeoutMicroSeconds / 1000.0) > updateFrequencyMS) {
+        SerialLogger::error(F("Cannot add UltrasonicSensors schedule. The update frequency every %d milliseconds is "
+                              "too high for the pulseTimeout of %d microseconds. Increase update frequency or "
+                              "reduce timeout!!!"), updateFrequencyMS, pulseMaxTimeoutMicroSeconds);
+    } else {
+        UltrasonicSensors::schedule(timer, ultrasonicSensors, updateFrequencyMS);
+    }
+	return ultrasonicSensors;
 }
 
-UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const int rxPins[], const int16_t ids[],
-													   const int amountSensors, const int pulseMaxTimeoutMicroSeconds,
-													   Timer<> &timer, const int sensoring_frequency_delay) {
-	UltrasonicSensors *ultrasonicSensors = new UltrasonicSensors(txPin, rxPins, ids, amountSensors,
-																 pulseMaxTimeoutMicroSeconds);
-	timer.every(sensoring_frequency_delay, [](UltrasonicSensors *ultrasonicSensors) -> bool {
+void UltrasonicSensors::schedule(Timer<> &timer, UltrasonicSensors *ultrasonicSensors, const int updateFrequencyMS) {
+	timer.every(updateFrequencyMS, [](UltrasonicSensors *ultrasonicSensors) -> bool {
 		if (ultrasonicSensors == nullptr) {
 			SerialLogger::error(F("UltrasonicSensor is nullptr. Something wrong, stopping timer iteration"));
 			return false;
@@ -22,28 +26,35 @@ UltrasonicSensors *UltrasonicSensors::getFromScheduled(const int txPin, const in
 			return true; // to repeat the action - false to stop
 		}
 	}, ultrasonicSensors);
+	SerialLogger::info(F("Scheduled UltrasonicSensor update every %d ms in round-robin."), updateFrequencyMS);
 	return ultrasonicSensors;
 }
 
-UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int16_t ids[], const int amountSensors,
-									 const int pulseMaxTimeoutMicroSeconds) :
-		k_txPin(txPin), k_amountSensors(amountSensors) {
+UltrasonicSensors::UltrasonicSensors(const int amountSensors) : k_amountSensors(amountSensors) {
+	// nothing to do here...
+}
+
+
+UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const int16_t ids[], const char *names[],
+									 const int amountSensors, const int pulseMaxTimeoutMicroSeconds) :
+									 UltrasonicSensors(amountSensors) {
 
 	_ultrasonicSensors = (UltrasonicSensor **) malloc(k_amountSensors * sizeof _ultrasonicSensors);
 	int16_t ids_check[k_amountSensors] = {-1};
 	int rxPins_check[k_amountSensors] = {-1};
-
+    SerialLogger::info(F("Creating %d UltrasonicSensors with txPin %d"), k_amountSensors, txPin);
 	for (int i = 0; i < k_amountSensors; i++) {
 		const int rxPin = rxPins[i];
 		const int16_t id = ids[i];
+		const char *name = names[i];
 		SerialLogger::info(F("Creating sensor %d/%d with rxPin=%d and id=%d"), i + 1, k_amountSensors, rxPin, id);
 
 		bool duplicate = false;
 		for (int j = 0; j < k_amountSensors; j++) {
 			if (ids_check[j] == id || rxPins_check[j] == rxPin) {
 				SerialLogger::error(F("Attempt to add the same sensor twice with id %d on rx pin %d where at index %d"
-									  " of the check arrays the same value already exists with id=%d and rxpin=%d"), id,
-									rxPin, j, ids_check[j], rxPins_check[j]);
+				                      " of the check arrays the same value already exists with id=%d and rxpin=%d"), id,
+				                    rxPin, j, ids_check[j], rxPins_check[j]);
 				duplicate = true;
 				break;
 			}
@@ -52,25 +63,24 @@ UltrasonicSensors::UltrasonicSensors(const int txPin, const int rxPins[], const 
 			ids_check[i] = id;
 			rxPins_check[i] = rxPin;
 			if (rxPin <= MAX_ARDUINO_PINS && rxPin >= 2) {
-				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, k_txPin, rxPin,
-																				pulseMaxTimeoutMicroSeconds);
+				_ultrasonicSensors[_registeredSensors++] = new UltrasonicSensor(id, name, txPin, rxPin,
+				                                                                pulseMaxTimeoutMicroSeconds);
 			} else {
 				SerialLogger::warn(F("Cannot add sensor %d/%d at rx pin %d which is out of range. Max Pin is %d. "
-									 "Assuming a bad malfunctioning and stopping..."), i + 1, k_amountSensors,
-								   rxPin, MAX_ARDUINO_PINS);
+				                     "Assuming a bad malfunctioning and stopping..."), i + 1, k_amountSensors,
+				                   rxPin, MAX_ARDUINO_PINS);
 				break;
 			}
 		}
 	}
 	if (_registeredSensors == k_amountSensors) {
-		SerialLogger::info(F("Scheduling ultrasonic sonic distance sensoring from pin %d to echo pins"), k_txPin);
+		SerialLogger::info(F("Scheduling ultrasonic sonic distance sensoring from pin %d to echo pins"), txPin);
 	} else {
 		SerialLogger::error(F("Could only add %d/%d sensors. Expect issues."), _registeredSensors, k_amountSensors);
 	}
 }
 
 UltrasonicSensors::~UltrasonicSensors() {
-	digitalWrite(k_txPin, LOW);
 	for (int i = 0; i < _registeredSensors; i++) {
 		delete _ultrasonicSensors[i];
 	}
@@ -85,9 +95,12 @@ void UltrasonicSensors::updateNextDistanceFromSensors() {
 	  to allow other callbacks to get executed without (or smaller) delay.
 	*/
 	if (_registeredSensors > 0) {
+	    SerialLogger::trace(F("Updating next distance from UltrasonicSensor %d"), _nextSensorIndex);
 		UltrasonicSensor *sensor = _ultrasonicSensors[_nextSensorIndex];
 		sensor->updateLatestDistanceWithTx();
 		_nextSensorIndex = (_nextSensorIndex + 1) % _registeredSensors;
+	} else {
+        SerialLogger::warn(F("Cannot update any UltrasonicSensor. None registered"));
 	}
 }
 

@@ -23,7 +23,7 @@ Led3Service::Led3Service(const int led1Pin, const int led2Pin, const int led3Pin
 
 	__nextState = _nextState;
 	SerialLogger::info(F("Scheduling blinking rotation at %d %s %d, %d, %d"), LED_INTRA_ROTATION_TIME_DELAY,
-					   "ms for Pin:", _led1Pin, _led2Pin, _led3Pin);
+	                   "ms for Pin:", _led1Pin, _led2Pin, _led3Pin);
 
 	timer.every(LED_INTRA_ROTATION_TIME_DELAY, [](void *) -> bool {
 		switch (__nextState) {

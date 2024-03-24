@@ -42,7 +42,9 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
 #else
+
 #include <WProgram.h>
+
 #endif
 
 #ifndef TIMER_MAX_TASKS
@@ -58,218 +60,184 @@
 #define timer_foreach_const_task(T) \
     _timer_foreach_task(const struct task *, T)
 
-template <
-    size_t max_tasks = TIMER_MAX_TASKS, /* max allocated tasks */
-    unsigned long (*time_func)() = millis, /* time function for timer */
-    typename T = void * /* handler argument type */
-    >
+template<
+        size_t max_tasks = TIMER_MAX_TASKS, /* max allocated tasks */
+		unsigned long (*time_func)() = millis, /* time function for timer */
+		typename T = void * /* handler argument type */
+>
 class Timer {
-    public:
+public:
 
-        typedef uintptr_t Task; /* public task handle */
-        typedef std::function<bool(T)> handler_t; /* task handler func signature */
+	typedef uintptr_t Task; /* public task handle */
+	typedef std::function<bool(T)> handler_t; /* task handler func signature */
 
-        /* Calls handler with opaque as argument in delay units of time */
-        Task
-        in(const unsigned long delay, handler_t h, T opaque = T())
-        {
-            return task_id(add_task(time_func(), delay, h, opaque));
-        }
+	/* Calls handler with opaque as argument in delay units of time */
+	Task in(const unsigned long delay, handler_t h, T opaque = T()) {
+		return task_id(add_task(time_func(), delay, h, opaque));
+	}
 
-        /* Calls handler with opaque as argument at time */
-        Task
-        at(const unsigned long time, handler_t h, T opaque = T())
-        {
-            const unsigned long now = time_func();
-            return task_id(add_task(now, time - now, h, opaque));
-        }
+	/* Calls handler with opaque as argument at time */
+	Task at(const unsigned long time, handler_t h, T opaque = T()) {
+		const unsigned long now = time_func();
+		return task_id(add_task(now, time - now, h, opaque));
+	}
 
-        /* Calls handler with opaque as argument every interval units of time */
-        Task
-        every(const unsigned long interval, handler_t h, T opaque = T())
-        {
-            return task_id(add_task(time_func(), interval, h, opaque, interval));
-        }
+	/* Calls handler with opaque as argument every interval units of time */
+	Task every(const unsigned long interval, handler_t h, T opaque = T()) {
+		return task_id(add_task(time_func(), interval, h, opaque, interval));
+	}
 
-        /* Cancel the timer task */
-        void
-        cancel(Task &task)
-        {
-            if (!task) return;
+	/* Cancel the timer task */
+	void cancel(Task &task) {
+		if (!task) return;
 
-            timer_foreach_task(t) {
-                if (t->handler && task_id(t) == task) {
-                    remove(t);
-                    break;
-                }
-            }
+		timer_foreach_task(t) {
+			if (t->handler && task_id(t) == task) {
+				remove(t);
+				break;
+			}
+		}
 
-            task = static_cast<Task>(NULL);
-        }
+		task = static_cast<Task>(NULL);
+	}
 
-        /* Cancel all timer tasks */
-        void
-        cancel()
-        {
-            timer_foreach_task(t) {
-                remove(t);
-            }
-        }
+	/* Cancel all timer tasks */
+	void cancel() {
+		timer_foreach_task(t) {
+			remove(t);
+		}
+	}
 
-        /* Ticks the timer forward - call this function in loop() */
-        unsigned long
-        tick()
-        {
-            tick<void>();
-            return ticks();
-        }
+	/* Ticks the timer forward - call this function in loop() */
+	unsigned long tick() {
+		tick < void > ();
+		return ticks();
+	}
 
-        template <typename R> void
-        tick()
-        {
-            timer_foreach_task(task) {
-                if (task->handler) {
-                    const unsigned long t = time_func();
-                    const unsigned long duration = t - task->start;
+	template<typename R> void tick() {
+		timer_foreach_task(task) {
+			if (task->handler) {
+				const unsigned long t = time_func();
+				const unsigned long duration = t - task->start;
 
-                    if (duration >= task->expires) {
-                        task->repeat = task->handler(task->opaque) && task->repeat;
+				if (duration >= task->expires) {
+					task->repeat = task->handler(task->opaque) && task->repeat;
 
-                        if (task->repeat) task->start = t;
-                        else remove(task);
-                    }
-                }
-            }
-        }
+					if (task->repeat) task->start = t;
+					else remove(task);
+				}
+			}
+		}
+	}
 
-        /* Ticks until the next event */
-        unsigned long
-        ticks() const
-        {
-            unsigned long ticks = (unsigned long) - 1, elapsed;
-            const unsigned long start = time_func();
+	/* Ticks until the next event */
+	unsigned long ticks() const {
+		unsigned long ticks = (unsigned long) -1, elapsed;
+		const unsigned long start = time_func();
 
-            timer_foreach_const_task(task) {
-                if (task->handler) {
-                    const unsigned long t = time_func();
-                    const unsigned long duration = t - task->start;
+		timer_foreach_const_task(task) {
+			if (task->handler) {
+				const unsigned long t = time_func();
+				const unsigned long duration = t - task->start;
 
-                    if (duration >= task->expires) {
-                        ticks = 0;
-                        break;
-                    } else {
-                        const unsigned long remaining = task->expires - duration;
-                        ticks = remaining < ticks ? remaining : ticks;
-                    }
-                }
-            }
+				if (duration >= task->expires) {
+					ticks = 0;
+					break;
+				} else {
+					const unsigned long remaining = task->expires - duration;
+					ticks = remaining < ticks ? remaining : ticks;
+				}
+			}
+		}
 
-            elapsed = time_func() - start;
+		elapsed = time_func() - start;
 
-            if (elapsed >= ticks || ticks == (unsigned long) - 1) ticks = 0;
-            else ticks -= elapsed;
+		if (elapsed >= ticks || ticks == (unsigned long) -1) ticks = 0;
+		else ticks -= elapsed;
 
-            return ticks;
-        }
+		return ticks;
+	}
 
-        /* Number of active tasks in the timer */
-        size_t
-        size() const
-        {
-            size_t s = 0;
+	/* Number of active tasks in the timer */
+	size_t size() const {
+		size_t s = 0;
 
-            timer_foreach_const_task(task) {
-                if (task->handler) ++s;
-            }
+		timer_foreach_const_task(task) {
+			if (task->handler) ++s;
+		}
 
-            return s;
-        }
+		return s;
+	}
 
-        /* True if there are no active tasks */
-        bool
-        empty() const
-        {
-            timer_foreach_const_task(task) {
-                if (task->handler) return false;
-            }
+	/* True if there are no active tasks */
+	bool empty() const {
+		timer_foreach_const_task(task) {
+			if (task->handler) return false;
+		}
 
-            return true;
-        }
+		return true;
+	}
 
-        Timer() : ctr(0), tasks{} {}
+	Timer() : ctr(0), tasks{} {}
 
-    private:
+private:
 
-        size_t ctr;
+	size_t ctr;
 
-        struct task {
-            handler_t handler; /* task handler callback func */
-            T opaque; /* argument given to the callback handler */
-            unsigned long start,
-                     expires; /* when the task expires */
-            size_t repeat, /* repeat task */
-                   id;
-        } tasks[max_tasks];
+	struct task {
+		handler_t handler; /* task handler callback func */
+		T opaque; /* argument given to the callback handler */
+		unsigned long start,
+				expires; /* when the task expires */
+		size_t repeat, /* repeat task */
+		id;
+	} tasks[max_tasks];
 
-        inline
-        void
-        remove(struct task *task)
-        {
-            task->handler = NULL;
-            task->opaque = T();
-            task->start = 0;
-            task->expires = 0;
-            task->repeat = 0;
-            task->id = 0;
-        }
+	inline 	void remove(struct task *task) {
+		task->handler = NULL;
+		task->opaque = T();
+		task->start = 0;
+		task->expires = 0;
+		task->repeat = 0;
+		task->id = 0;
+	}
 
-        inline
-        Task
-        task_id(const struct task * const t)
-        {
-            const Task id = reinterpret_cast<Task>(t);
+	inline Task task_id(const struct task *const t) {
+		const Task id = reinterpret_cast<Task>(t);
 
-            return id ? id ^ t->id : id;
-        }
+		return id ? id ^ t->id : id;
+	}
 
-        inline
-        struct task *
-        next_task_slot()
-        {
-            timer_foreach_task(slot) {
-                if (slot->handler == NULL) return slot;
-            }
+	inline struct task *next_task_slot() {
+		timer_foreach_task(slot) {
+			if (slot->handler == NULL) return slot;
+		}
 
-            return NULL;
-        }
+		return NULL;
+	}
 
-        inline
-        struct task *
-        add_task(unsigned long start, unsigned long expires,
-                 handler_t h, T opaque, bool repeat = 0)
-        {
-            struct task * const slot = next_task_slot();
+	inline struct task *add_task(unsigned long start, unsigned long expires,
+	         handler_t h, T opaque, bool repeat = 0) {
+		struct task *const slot = next_task_slot();
 
-            if (!slot) return NULL;
+		if (!slot) return NULL;
 
-            if (++ctr == 0) ++ctr; // overflow
+		if (++ctr == 0) ++ctr; // overflow
 
-            slot->id = ctr;
-            slot->handler = h;
-            slot->opaque = opaque;
-            slot->start = start;
-            slot->expires = expires;
-            slot->repeat = repeat;
+		slot->id = ctr;
+		slot->handler = h;
+		slot->opaque = opaque;
+		slot->start = start;
+		slot->expires = expires;
+		slot->repeat = repeat;
 
-            return slot;
-        }
+		return slot;
+	}
 };
 
 /* create a timer with the default settings */
-inline Timer<>
-timer_create_default()
-{
-    return Timer<>();
+inline Timer<> timer_create_default() {
+	return Timer<>();
 }
 
 #undef _timer_foreach_task
