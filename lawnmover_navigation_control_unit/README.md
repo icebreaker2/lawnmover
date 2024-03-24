@@ -1,4 +1,4 @@
-# Distance Control Unit
+# Navigation Control Unit
 
 ## SPI consumption
 https://www.arduino.cc/en/reference/SPI

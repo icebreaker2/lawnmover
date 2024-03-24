@@ -4,7 +4,7 @@
 #include "ESP32_PS4_Controller.h"
 #include "esp32_spi_master.h"
 #include "engine_slave.h"
-#include "obstacle_detection_Slave.h"
+#include "navigation_slave.h"
 
 // General SPI settings
 const int MOSI_PIN_GREEN = 23;
@@ -18,8 +18,8 @@ const int ENGINE_CONTROL_SS_PIN_BLUE = 5;
 const int ENGINE_RESTART_PIN_PIN = 13;
 
 // Object Detection SPI slave settings
-const int OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN = 12;
-const int OBSTACLE_DETECTION_RESTART_PIN_PIN = 14;
+const int NAVIGATION_CONTROL_SS_PIN_BROWN = 12;
+const int NAVIGATION_RESTART_PIN_PIN = 14;
 
 const int spi_schedule_next_slave_commands_interval = 165;
 
@@ -57,20 +57,20 @@ void re_setup_spi_communication() {
 		SerialLogger::error(F("Cannot add a new engine slave to. Got no free id from Esp32SpiMaster"));
 	}
 
-	const int obstacle_slave_id = Esp32SpiMaster::take_free_id();
-	if (obstacle_slave_id >= 0) {
-		SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN);
+	const int navigation_slave_id = Esp32SpiMaster::take_free_id();
+	if (navigation_slave_id >= 0) {
+		SpiSlaveHandler *spi_slave_handler = esp32_spi_master->get_handler(NAVIGATION_CONTROL_SS_PIN_BROWN);
 		if (spi_slave_handler == nullptr) {
-			SerialLogger::error(F("Cannot add a new obstacle slave. Failed to set up a new spi slave handler"));
-			Esp32SpiMaster::put_free_id(obstacle_slave_id);
+			SerialLogger::error(F("Cannot add a new navigation slave. Failed to set up a new spi slave handler"));
+			Esp32SpiMaster::put_free_id(navigation_slave_id);
 		} else {
-			ObstacleDetectionSlave *spi_slave = new ObstacleDetectionSlave(spi_slave_handler, obstacle_slave_id,
-			                                                               OBSTACLE_DETECTION_CONTROL_SS_PIN_BROWN,
-			                                                               OBSTACLE_DETECTION_RESTART_PIN_PIN, roboPilot);
+			NavigationSlave *spi_slave = new NavigationSlave(spi_slave_handler, navigation_slave_id,
+			                                                               NAVIGATION_CONTROL_SS_PIN_BROWN,
+			                                                               NAVIGATION_RESTART_PIN_PIN, roboPilot);
 			esp32_spi_master->put_slave(spi_slave);
 		}
 	} else {
-		SerialLogger::error(F("Cannot add a new obstacle detection slave to. Got no free id from Esp32SpiMaster"));
+		SerialLogger::error(F("Cannot add a new navigation slave to. Got no free id from Esp32SpiMaster"));
 	}
 	esp32_spi_master->schedule(spi_schedule_next_slave_commands_interval, _timer);
 }

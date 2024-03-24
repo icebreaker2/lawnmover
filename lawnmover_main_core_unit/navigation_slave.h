@@ -1,16 +1,16 @@
-#ifndef OBSTACLE_DETECTION_SLAVE_H
-#define OBSTACLE_DETECTION_SLAVE_H
+#ifndef NAVIGATION_SLAVE_H
+#define NAVIGATION_SLAVE_H
 
 #include <robo_pilot.h>
 
 #include "master_spi_slave.h"
 
-class ObstacleDetectionSlave : public MasterSpiSlave {
+class NavigationSlave : public MasterSpiSlave {
 public:
-	ObstacleDetectionSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const int slave_pin,
+	NavigationSlave(SpiSlaveHandler *spi_slave_handler, const int slave_id, const int slave_pin,
 	                       const int slave_restart_pin, RoboPilot *roboPilot,
-	                       const char *name = "ObstacleDetectionSlave") :
-			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 0, OBSTACLE_COMMANDS),
+	                       const char *name = "NavigationSlave") :
+			MasterSpiSlave(spi_slave_handler, slave_id, name, slave_pin, slave_restart_pin, 0, NAVIGATION_COMMANDS),
 			_roboPilot(roboPilot) {
 		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
 			if (id == OBSTACLE_FRONT_COMMAND && _roboPilot != nullptr) {
@@ -68,6 +68,14 @@ public:
 				return false;
 			}
 		});
+		_data_request_callbacks.push_back([&](int16_t id, float distance) -> bool {
+			if (id == GYRO_COMMAND && _roboPilot != nullptr) {
+				// TODO interpret results
+				return true;
+			} else {
+				return false;
+			}
+		});
 	};
 
 	void fill_commands_bytes(uint8_t *tx_buffer) override {
@@ -84,6 +92,8 @@ public:
 		                                tx_buffer + 5 * COMMAND_FRAME_SIZE);
 		SpiCommands::putCommandToBuffer(OBSTACLE_BACK_RIGHT_COMMAND, DATA_REQUEST_VALUE_BYTES,
 		                                tx_buffer + 6 * COMMAND_FRAME_SIZE);
+        SpiCommands::putCommandToBuffer(GYRO_COMMAND, DATA_REQUEST_VALUE_BYTES,
+		                                tx_buffer + 7 * COMMAND_FRAME_SIZE);
 	};
 
 	bool
@@ -97,4 +107,4 @@ private:
 	std::vector <std::function<bool(int16_t, float)>> _data_request_callbacks;
 };
 
-#endif // OBSTACLE_DETECTION_SLAVE_H
+#endif // NAVIGATION_SLAVE_H

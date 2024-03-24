@@ -23,8 +23,8 @@ Is the [Main Core Unit](lawnmover_main_core_unit/README.md) of the lawnmover set
 [Lawnmover engine controller](lawnmover_engines_control_unit/README.md) is a SPI-slave to Main Core Unit receiving movement and motor (rotor blades) commands. 
 Any received command must be acknowledged by slave within defined time or master will initiate a restart via HW restart pin.
 
-## lawnmover_distance_control_unit
-[Lawnmover distance controller](lawnmover_distance_control_unit/README.md) is a SPI-slave to Main Core Unit sending distances in multiple directions upon request of MCU. 
+## lawnmover_navigation_control_unit
+[Lawnmover navigation controller](lawnmover_navigation_control_unit/README.md) is a SPI-slave to Main Core Unit sending distances in multiple directions upon request of MCU and the heading. 
 Any received command must be answered by slave within defined time or master will initiate a restart via HW restart pin.
 
 ## object_detection

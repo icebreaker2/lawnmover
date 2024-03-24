@@ -34,12 +34,30 @@ Timer<> _timer = timer_create_default();
 
 UltrasonicSensors *_ultrasonicSensors;
 
-int k_amount_data_push_commands = 0;
-bool (*_data_push_commands[])(int16_t, int16_t) = {};
+int k_amount_data_push_commands = 1;
+bool (*_data_push_commands[])(int16_t, int16_t) = {
+        [](int16_t id, int16_t wheelsPower) -> bool {
+            if (id == GYRO_COMMAND) {
+                // TODO implement
+                return true;
+            } else {
+                // id not known
+                return false;
+            }
+        }
+};
 
-int k_amount_data_request_commands = 1;
-
+int k_amount_data_request_commands = 2;
 bool (*_data_request_commands[])(int16_t, uint8_t *) = {
+		[](int16_t id, uint8_t *value_bytes_buffer) -> bool {
+          if (id == GYRO_COMMAND) {
+              // TODO implement
+              return true;
+          } else {
+              // id not known
+              return false;
+          }
+        },
 		[](int16_t id, uint8_t *value_bytes_buffer) -> bool {
 			const float latestDistance = _ultrasonicSensors->getLatestDistanceFromSensorById(id);
 			if (latestDistance >= 0.0f) {
@@ -65,7 +83,7 @@ void setup() {
 
 	SpiSlave::ISRfromArgs(SCK_PIN_ORANGE, MISO_PIN_YELLOW, MOSI_PIN_GREEN, SS_PIN_BLUE, _data_push_commands,
 	                      k_amount_data_push_commands, _data_request_commands, k_amount_data_request_commands,
-	                      OBSTACLE_COMMANDS * COMMAND_FRAME_SIZE);
+	                      NAVIGATION_COMMANDS * COMMAND_FRAME_SIZE);
 
 	SpiSlave::scheduleBufferPrinting(_timer, 1000);
 }
