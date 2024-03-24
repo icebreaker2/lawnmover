@@ -21,7 +21,7 @@ const int ENGINE_RESTART_PIN_PIN = 13;
 const int NAVIGATION_CONTROL_SS_PIN_BROWN = 12;
 const int NAVIGATION_RESTART_PIN_PIN = 14;
 
-const int spi_schedule_next_slave_commands_interval = 165;
+const int spi_schedule_next_slave_commands_interval = 100;
 
 // Create a timer object with default settings: millis resolution, TIMER_MAX_TASKS (=16) task slots, T = void *
 Timer<> _timer = timer_create_default();

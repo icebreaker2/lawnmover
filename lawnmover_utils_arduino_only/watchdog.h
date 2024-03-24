@@ -39,8 +39,9 @@ public:
 		(*_safety_backup_routine)();
 	}
 
-	void incrementCounter() {
+	bool incrementCounter() {
 		_watchdog_counter++;
+		return true;
 	};
 
 	int getValidationInterval() const { return k_validation_interval; };

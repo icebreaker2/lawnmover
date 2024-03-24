@@ -26,7 +26,7 @@ const int LED_BUNDLE_1 = A0;
 const int LED_BUNDLE_2 = A1;
 const int LED_BUNDLE_3 = A2;
 
-const int EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS = 2;
+const int EXPECTED_SPI_COMMANDS_BURSTS = 2;
 
 
 // Debug
@@ -41,29 +41,24 @@ const int steering_set_interval = 100;
 MoverService *_moverService;
 Led3Service *_ledService;
 
-const int k_watchdog_validation_interval = 1200;
-const int k_watchdog_valid_threshold = ENGINE_COMMANDS * EXPECTED_SPI_COMMANDS_BURSTS_PER_SECONDS;
+const int k_watchdog_validation_interval = 2000;
+const int k_watchdog_valid_threshold = ENGINE_COMMANDS * EXPECTED_SPI_COMMANDS_BURSTS;
 Watchdog *_watchdog = Watchdog::scheduled(k_watchdog_validation_interval, k_watchdog_valid_threshold,
                                                  [](void) -> bool {
-	                                                 _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND,
-	                                                                                      0);
-	                                                 _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND,
-	                                                                                       0);
+	                                                 _moverService->set_left_wheels_power(LEFT_WHEEL_STEERING_COMMAND, 0);
+	                                                 _moverService->set_right_wheels_power(RIGHT_WHEEL_STEERING_COMMAND, 0);
 	                                                 _motorService->set_rotation_speed(MOTOR_SPEED_COMMAND, 0);
 	                                                 SpiSlave::reset();
                                                  }, _timer);
 
 int k_amount_data_push_commands = 3;
 bool (*_data_push_commands[])(int16_t, int16_t) = {
-		[](int16_t id, int16_t wheelsPower) -> bool {
-			_watchdog->incrementCounter();
-			return _moverService->set_left_wheels_power(id, wheelsPower);
+		[](int16_t id, int16_t wheelsPower) -> bool {   
+			return _moverService->set_left_wheels_power(id, wheelsPower) && _watchdog->incrementCounter();
 			}, [](int16_t id, int16_t wheelsPower) -> bool {
-			_watchdog->incrementCounter();
-			return _moverService->set_right_wheels_power(id, wheelsPower);
+			return _moverService->set_right_wheels_power(id, wheelsPower) && _watchdog->incrementCounter();
 			}, [](int16_t id, int16_t rotation_speed) -> bool {
-			_watchdog->incrementCounter();
-			return _motorService->set_rotation_speed(id, rotation_speed);
+			return _motorService->set_rotation_speed(id, rotation_speed) && _watchdog->incrementCounter();
 		}};
 
 int k_amount_data_request_commands = 0;
